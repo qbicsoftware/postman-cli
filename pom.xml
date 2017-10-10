@@ -23,9 +23,9 @@
 
   <repositories>
     <repository>
-			<id>qbic-realese</id>
+			<id>qbic-release</id>
 			<name>qbic release</name>
-			<url>https://qbic-repo.am10.uni-tuebingen.de/repository/maven-realeases</url>
+			<url>https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases</url>
 		</repository>
   </repositories>
 </project>
