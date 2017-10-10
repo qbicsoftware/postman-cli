@@ -1,10 +1,17 @@
 package life.qbic;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.fetchoptions.SampleFetchOptions;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.search.SampleSearchCriteria;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownload;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
@@ -14,7 +21,7 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 
 /**
- * Hello world!
+ * qPostMan for staging data from openBIS
  *
  */
 public class App {
@@ -30,21 +37,41 @@ public class App {
     IApplicationServerApi as = HttpInvokerUtils.createServiceStub(IApplicationServerApi.class,
         AS_URL + IApplicationServerApi.SERVICE_URL, 10000);
 
-    String sessionToken = as.login("admin", "password");
+    String sessionToken = as.login(args[0], args[1]);
 
-    // Download the files and print the contents
-    DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
-    IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId("20161205154857065-25"));
-    options.setRecursive(true);
-    InputStream stream = dss.downloadFiles(sessionToken, Arrays.asList(fileId), options);
-    DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
-    DataSetFileDownload file = null;
+    SampleSearchCriteria criteria = new SampleSearchCriteria();
+    criteria.withCode().thatEquals(args[2]);
 
-    while ((file = reader.read()) != null) {
-      file.getInputStream();
-      System.out.println("Downloaded " + file.getDataSetFile().getPath() + " "
-          + file.getDataSetFile().getFileLength());
+    // tell the API to fetch all descendents for each returned sample
+    SampleFetchOptions fetchOptions = new SampleFetchOptions();
+    fetchOptions.withChildrenUsing(fetchOptions);
+    SearchResult<Sample> result = as.searchSamples(sessionToken, criteria, fetchOptions);
+
+    // get all datasets of sample with provided sample code and all descendents
+    List<DataSet> foundDatasets = new ArrayList<DataSet>();
+    for (Sample sample : result.getObjects()) {
+      foundDatasets.addAll(sample.getDataSets());
+      for (Sample desc : sample.getChildren()) {
+        foundDatasets.addAll(desc.getDataSets());
+      }
     }
+
+    // Download the files of found datasets
+    for (DataSet dataset : foundDatasets) {
+      DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
+      IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId("20161205154857065-25"));
+      options.setRecursive(true);
+      InputStream stream = dss.downloadFiles(sessionToken, Arrays.asList(fileId), options);
+      DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
+      DataSetFileDownload file = null;
+
+      while ((file = reader.read()) != null) {
+        file.getInputStream();
+        System.out.println("Downloaded " + file.getDataSetFile().getPath() + " "
+            + file.getDataSetFile().getFileLength());
+      }
+    }
+
   }
 
 }
