@@ -1,6 +1,6 @@
 package life.qbic;
 
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,6 +8,7 @@ import java.util.List;
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.fetchoptions.DataSetFetchOptions;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.fetchoptions.SampleFetchOptions;
@@ -25,8 +26,8 @@ import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
  *
  */
 public class App {
-  public static void main(String[] args) {
-    String AS_URL = "https://qbis.qbic.uni-tuebingen.de:443/openbis/openbis";
+  public static void main(String[] args) throws IOException{
+    String AS_URL = "https://qbis.qbic.uni-tuebingen.de/openbis/openbis";
     String DSS_URL = "https://qbis.qbic.uni-tuebingen.de:444/datastore_server";
 
     // Reference the DSS
@@ -44,34 +45,72 @@ public class App {
 
     // tell the API to fetch all descendents for each returned sample
     SampleFetchOptions fetchOptions = new SampleFetchOptions();
+    DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
     fetchOptions.withChildrenUsing(fetchOptions);
+    fetchOptions.withDataSetsUsing(dsFetchOptions);
     SearchResult<Sample> result = as.searchSamples(sessionToken, criteria, fetchOptions);
+    System.out.println(result.getTotalCount());
 
     // get all datasets of sample with provided sample code and all descendents
     List<DataSet> foundDatasets = new ArrayList<DataSet>();
     for (Sample sample : result.getObjects()) {
       foundDatasets.addAll(sample.getDataSets());
+      System.out.println(sample.getDataSets());
       for (Sample desc : sample.getChildren()) {
+        System.out.println(desc.getDataSets());
         foundDatasets.addAll(desc.getDataSets());
       }
     }
 
     // Download the files of found datasets
+    System.out.println(foundDatasets.size());
     for (DataSet dataset : foundDatasets) {
+      DataSetPermId permID = dataset.getPermId();
+      System.out.println(permID.toString());
+
       DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
-      IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId("20161205154857065-25"));
+      IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId(permID.toString()));
       options.setRecursive(true);
       InputStream stream = dss.downloadFiles(sessionToken, Arrays.asList(fileId), options);
       DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
       DataSetFileDownload file = null;
 
       while ((file = reader.read()) != null) {
-        file.getInputStream();
-        System.out.println("Downloaded " + file.getDataSetFile().getPath() + " "
-            + file.getDataSetFile().getFileLength());
+        InputStream initialStream = file.getInputStream();
+
+        if(file.getDataSetFile().getFileLength() > 0) {
+          String[] splitted = file.getDataSetFile().getPath().split("/");
+          String lastOne = splitted[splitted.length - 1];
+          OutputStream os = new FileOutputStream("/home/sven1103/Downloads/" + lastOne);
+
+          byte[] buffer = new byte[1024];
+          int bytesRead;
+          //read from is to buffer
+          while ((bytesRead = initialStream.read(buffer)) != -1) {
+            os.write(buffer, 0, bytesRead);
+          }
+          initialStream.close();
+          //flush OutputStream to write any buffered data to file
+          os.flush();
+          os.close();
+        }
+
+        //System.out.println("Downloaded " + file.getDataSetFile().getPath() + " "
+          //  + file.getDataSetFile().getFileLength());
+          //while ((outfile = initialStream.read()) != null){
+
+
+
+/*
+          String[] splitted = file.getDataSetFile().getPath().split("/");
+          String lastOne = splitted[splitted.length-1];
+          File targetFile = new File("/home/sven1103/Downloads/" +  lastOne);
+          OutputStream outStream = new FileOutputStream(targetFile);
+          outStream.write(buffer);
+          */
+        }
+      }
       }
     }
 
-  }
 
-}
