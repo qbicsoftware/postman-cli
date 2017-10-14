@@ -21,6 +21,7 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFil
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import com.sun.org.apache.xpath.internal.SourceTree;
 
 
 /**
@@ -34,12 +35,20 @@ public class App {
 
       String user = cmdValues.get(Argparser.Attribute.USERNAME);
 
+      String id = cmdValues.get(Argparser.Attribute.ID);
+
       if (cmdValues.containsKey(Argparser.Attribute.HELP)){
           Argparser.printHelp();
           System.exit(0);
       }
       
       if (user == null){
+          Argparser.printHelp();
+          System.exit(1);
+      }
+
+      if (id == null || id.isEmpty()){
+          System.out.println("You have to provide an ID.");
           Argparser.printHelp();
           System.exit(1);
       }
@@ -65,10 +74,10 @@ public class App {
     IApplicationServerApi as = HttpInvokerUtils.createServiceStub(IApplicationServerApi.class,
         AS_URL + IApplicationServerApi.SERVICE_URL, 10000);
 
-    String sessionToken = as.login(user, args[1]);
+    String sessionToken = as.login(user, password);
 
     SampleSearchCriteria criteria = new SampleSearchCriteria();
-    criteria.withCode().thatEquals("QICGC0001AE");
+    criteria.withCode().thatEquals(id);
 
     // tell the API to fetch all descendents for each returned sample
     SampleFetchOptions fetchOptions = new SampleFetchOptions();
@@ -108,7 +117,7 @@ public class App {
         if(file.getDataSetFile().getFileLength() > 0) {
           String[] splitted = file.getDataSetFile().getPath().split("/");
           String lastOne = splitted[splitted.length - 1];
-          OutputStream os = new FileOutputStream("/home/sven1103/Downloads/" + lastOne);
+          OutputStream os = new FileOutputStream("/home/sven/Downloads/" + lastOne);
 
           byte[] buffer = new byte[1024];
           int bytesRead;
