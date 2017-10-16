@@ -25,12 +25,20 @@ public class App {
 
       String user = cmdValues.get(Argparser.Attribute.USERNAME);
 
+      String id = cmdValues.get(Argparser.Attribute.ID);
+
       if (cmdValues.containsKey(Argparser.Attribute.HELP)){
           Argparser.printHelp();
           System.exit(0);
       }
 
       if (user == null){
+          Argparser.printHelp();
+          System.exit(1);
+      }
+
+      if (id == null || id.isEmpty()){
+          System.out.println("You have to provide an ID.");
           Argparser.printHelp();
           System.exit(1);
       }
