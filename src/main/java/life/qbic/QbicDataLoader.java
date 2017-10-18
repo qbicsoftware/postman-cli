@@ -153,7 +153,7 @@ public class QbicDataLoader {
             options.setRecursive(true);
             InputStream stream = this.dataStoreServer.downloadFiles(sessionToken, Arrays.asList(fileId), options);
             DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
-            DataSetFileDownload file = null;
+            DataSetFileDownload file;
 
             while ((file = reader.read()) != null) {
                 InputStream initialStream = file.getInputStream();
@@ -162,13 +162,16 @@ public class QbicDataLoader {
                     String[] splitted = file.getDataSetFile().getPath().split("/");
                     String lastOne = splitted[splitted.length - 1];
                     OutputStream os = new FileOutputStream("/home/sven1103/Downloads/" + lastOne);
-
-                    byte[] buffer = new byte[1024];
+                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
+                    int bufferSize = 1024;
+                    byte[] buffer = new byte[bufferSize];
                     int bytesRead;
                     //read from is to buffer
                     while ((bytesRead = initialStream.read(buffer)) != -1) {
                         os.write(buffer, 0, bytesRead);
+                        progressBar.updateProgress(bufferSize);
                     }
+                    System.out.print("\n");
                     initialStream.close();
                     //flush OutputStream to write any buffered data to file
                     os.flush();
