@@ -41,6 +41,8 @@ public class QbicDataLoader {
 
     private IApplicationServerApi applicationServer;
 
+    private IDataStoreServerApi dataStoreServer;
+
     private static Logger log = LogManager.getLogger(QbicDataLoader.class);
 
     private String sessionToken;
@@ -63,6 +65,14 @@ public class QbicDataLoader {
         } else {
             this.applicationServer = null;
         }
+        if (!DataServerUri.isEmpty()){
+            this.dataStoreServer = HttpInvokerUtils.createStreamSupportingServiceStub(
+                    IDataStoreServerApi.class,
+                    this.DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
+        } else {
+            this.dataStoreServer = null;
+        }
+
         this.setCredentials(user, password);
     }
 
@@ -104,11 +114,11 @@ public class QbicDataLoader {
      * @param sampleId An openBIS sample ID
      * @return A list of all data sets attached to the sample ID
      */
-    public List<DataSet> findDatasets(String sampleId) {
+    public List<DataSet> findAllDatasets(String sampleId) {
 
 
         SampleSearchCriteria criteria = new SampleSearchCriteria();
-        criteria.withCode().thatEquals("QICGC0001AE");
+        criteria.withCode().thatEquals(sampleId);
 
         // tell the API to fetch all descendents for each returned sample
         SampleFetchOptions fetchOptions = new SampleFetchOptions();
@@ -116,20 +126,30 @@ public class QbicDataLoader {
         fetchOptions.withChildrenUsing(fetchOptions);
         fetchOptions.withDataSetsUsing(dsFetchOptions);
         SearchResult<Sample> result = applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-        System.out.println(result.getTotalCount());
 
         // get all datasets of sample with provided sample code and all descendents
         List<DataSet> foundDatasets = new ArrayList<DataSet>();
         for (Sample sample : result.getObjects()) {
             foundDatasets.addAll(sample.getDataSets());
-            System.out.println(sample.getDataSets());
             for (Sample desc : sample.getChildren()) {
-                System.out.println(desc.getDataSets());
                 foundDatasets.addAll(desc.getDataSets());
             }
         }
 
         return foundDatasets;
+    }
+
+    /**
+     * Download a given list of data sets
+     * @param dataSetList A list of data sets
+     * @return 0 if successful, 1 else
+     */
+    public int downloadDataset(List<DataSet> dataSetList) {
+        for (DataSet dataset : dataSetList) {
+            DataSetPermId permID = dataset.getPermId();
+            System.out.println(permID.toString());
+        }
+        return 0;
     }
 }
         /*

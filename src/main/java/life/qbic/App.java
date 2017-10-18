@@ -1,10 +1,12 @@
 package life.qbic;
 
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -62,6 +64,12 @@ public class App {
       }
       log.info("Connection to openBIS was successful.");
 
+
+      List<DataSet> foundDataSets = qbicDataLoader.findAllDatasets(id);
+
+      foundDataSets.forEach(System.out::println);
+
+      qbicDataLoader.downloadDataset(foundDataSets);
 
       }
     }
