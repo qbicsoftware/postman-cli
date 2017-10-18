@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.sun.org.apache.xalan.internal.xsltc.compiler.sym.error;
+
 
 public class QbicDataLoader {
 
@@ -43,6 +45,13 @@ public class QbicDataLoader {
 
     private String sessionToken;
 
+    /**
+     * Constructor for a QBiCDataLoaderInstance
+     * @param AppServerUri The openBIS application server URL (AS)
+     * @param DataServerUri The openBIS datastore server URL (DSS)
+     * @param user The openBIS user
+     * @param password The openBis password
+     */
     public QbicDataLoader(String AppServerUri, String DataServerUri,
                                          String user, String password){
         this.AppServerUri = AppServerUri;
@@ -58,24 +67,43 @@ public class QbicDataLoader {
     }
 
 
+    /**
+     * Setter for user and password credentials
+     * @param user The openBIS user
+     * @param password The openBIS user's password
+     * @return QBiCDataLoader instance
+     */
     public QbicDataLoader setCredentials(String user, String password) {
         this.user = user;
         this.password = password;
         return this;
     }
 
-    public int testConnection() {
-        try {
-            String sessionToken = this.applicationServer.login(this.user, this.password);
-        } catch (Exception exc) {
-            log.error(String.format("Connection to the application server %s failed.", this.AppServerUri));
-            log.error(exc);
+
+    /**
+     * Login method for openBIS authentication
+     * @return 0 if successful, 1 else
+     */
+    public int login() {
+        try{
+            this.sessionToken = this.applicationServer.login(this.user, this.password);
+            this.applicationServer.getSessionInformation(this.sessionToken);
+        } catch (AssertionError err){
+            log.debug(err);
+            return 1;
+        } catch (Exception exc){
+            log.debug(exc);
             return 1;
         }
         return 0;
     }
 
 
+    /**
+     * Search method for a given openBIS identifier.
+     * @param sampleId An openBIS sample ID
+     * @return A list of all data sets attached to the sample ID
+     */
     public List<DataSet> findDatasets(String sampleId) {
 
 

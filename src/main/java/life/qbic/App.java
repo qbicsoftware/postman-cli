@@ -54,7 +54,14 @@ public class App {
       }
 
       QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, user, password);
-      log.info(String.format("Connection test returned: %s", qbicDataLoader.testConnection()));
+      int returnCode = qbicDataLoader.login();
+      log.info(String.format("OpenBis login returned with %s", returnCode));
+      if(returnCode != 0){
+          log.error("Connection to openBIS failed.");
+          System.exit(1);
+      }
+      log.info("Connection to openBIS was successful.");
+
 
       }
     }
