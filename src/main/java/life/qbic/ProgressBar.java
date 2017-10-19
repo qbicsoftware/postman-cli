@@ -1,6 +1,9 @@
 package life.qbic;
 
 
+import life.qbic.UnitConverter.UnitConverterFactory;
+import life.qbic.UnitConverter.UnitDisplay;
+
 public class ProgressBar {
 
     private float nextProgressJump;
@@ -10,6 +13,7 @@ public class ProgressBar {
     private Long downloadedSize;
     private final int BARSIZE=jline.TerminalFactory.get().getWidth()/3;
     private final int MAXFILENAMESIZE=jline.TerminalFactory.get().getWidth()/3;
+    private UnitDisplay unitDisplay;
 
     public ProgressBar(){}
 
@@ -19,6 +23,7 @@ public class ProgressBar {
         this.downloadedSize = 0L;
         this.stepSize = totalFileSize / BARSIZE;
         this.nextProgressJump = this.stepSize;
+        this.unitDisplay = UnitConverterFactory.determineBestUnitType(totalFileSize);
 
     }
 
@@ -45,7 +50,7 @@ public class ProgressBar {
     }
 
     private void drawProgress() {
-        System.out.print(String.format("%-" + computeLeftPadding() +"s: %s\r", this.fileName,buildProgressBar()));
+        System.out.print(String.format("%-" + computeLeftPadding() +"s %s\r", this.fileName,buildProgressBar()));
     }
 
     private int computeLeftPadding(){
@@ -62,9 +67,9 @@ public class ProgressBar {
         for (int i = numberProgressStrings; i<BARSIZE; i++){
             progressBar += " ";
         }
-        progressBar += "]";
-        progressBar += String.format("%.02f/%.02f", (1.0/(1024*1024))*this.downloadedSize,
-                (1.0/(1024*1024))*this.totalFileSize);
+        progressBar += "]\t";
+        progressBar += String.format("%6.02f/%-7.02f%s", unitDisplay.convertBytesToUnit(this.downloadedSize),
+                unitDisplay.convertBytesToUnit(this.totalFileSize), unitDisplay.getUnitType());
         return progressBar;
     }
 
