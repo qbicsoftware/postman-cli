@@ -67,10 +67,16 @@ public class App {
 
       List<DataSet> foundDataSets = qbicDataLoader.findAllDatasets(id);
 
-      foundDataSets.forEach(System.out::println);
+      log.info(String.format("Number of data sets found: %s", foundDataSets.size()));
 
-      qbicDataLoader.downloadDataset(foundDataSets);
+      if(foundDataSets.size() > 0){
+          log.info("Initialize download ...");
+          qbicDataLoader.downloadDataset(foundDataSets);
+          log.info("Download finished.");
 
+      } else {
+          log.info("Nothing to download.");
+      }
       }
     }
 
