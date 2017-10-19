@@ -2,6 +2,7 @@ package life.qbic;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,11 @@ public class App {
 
     String user = cmdValues.get(Argparser.Attribute.USERNAME);
 
-    String idPath = cmdValues.get(Argparser.Attribute.ID);
+    String id = cmdValues.get(Argparser.Attribute.ID);
+
+    String filePath = cmdValues.get(Argparser.Attribute.FILE);
+
+    List<String> identifiers = new ArrayList<String>();
 
     if (cmdValues.containsKey(Argparser.Attribute.HELP)) {
       Argparser.printHelp();
@@ -40,10 +45,20 @@ public class App {
       System.exit(1);
     }
 
-    if (idPath == null || idPath.isEmpty()) {
-      System.out.println("You have to provide a file containing IDs.");
+    if ((id == null || id.isEmpty()) && (filePath == null || filePath.isEmpty())) {
+      System.out
+          .println("You have to provide one ID as command line argument or a file containing IDs.");
       Argparser.printHelp();
       System.exit(1);
+    } else if ((id != null) && (filePath != null)) {
+      System.out.println(
+          "Arguments --identifier and --file are mutually exclusive, please provide only one.");
+      Argparser.printHelp();
+      System.exit(1);
+    } else if ((id != null)) {
+      identifiers.add(id);
+    } else {
+      identifiers.addAll(Argparser.readProvidedIndentifiers(new File(filePath)));
     }
 
     System.out.format("Provide password for user \'%s\':\n", user);
@@ -64,14 +79,12 @@ public class App {
     }
     log.info("Connection to openBIS was successful.");
 
-    List<String> identifiers = Argparser.readProvidedIndentifiers(new File(idPath));
     log.info(String.format("%s provided openBIS identifiers have been found: %s",
         identifiers.size(), identifiers.toString()));
 
-    // Download datasets for all provided identifiers
-    for (String id : identifiers) {
-      log.info(String.format("Downloading files for provided identifier %s", id));
-      List<DataSet> foundDataSets = qbicDataLoader.findAllDatasets(id);
+    for (String ident : identifiers) {
+      log.info(String.format("Downloading files for provided identifier %s", ident));
+      List<DataSet> foundDataSets = qbicDataLoader.findAllDatasets(ident);
 
       log.info(String.format("Number of data sets found: %s", foundDataSets.size()));
 

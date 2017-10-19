@@ -34,8 +34,9 @@ public class Argparser {
      */
     options.addOption("h", "help", false, "Print this help");
     options.addOption("u", "user-name", true, "openBIS user name");
-    options.addOption("i", "identifiers", true,
-        "File containing openBis sample IDs (one per line)");
+    options.addOption("i", "identifier", true, "openBis sample ID [mutually exclusive]");
+    options.addOption("f", "file", true,
+        "File containing openBis sample IDs (one per line) [mutually exclusive]");
 
     /*
      * container for parsed attributes
@@ -54,6 +55,7 @@ public class Argparser {
       CommandLine cmd = parser.parse(options, args);
       parsedArguments.put(Attribute.USERNAME, cmd.getOptionValue("u"));
       parsedArguments.put(Attribute.ID, cmd.getOptionValue("i"));
+      parsedArguments.put(Attribute.FILE, cmd.getOptionValue("f"));
       if (cmd.hasOption("h")) {
         parsedArguments.put(Attribute.HELP, "");
       }
@@ -108,7 +110,7 @@ public class Argparser {
    * Definition of some useful enum types for the cmd attributes
    */
   public enum Attribute {
-    HELP, USERNAME, ID
+    HELP, USERNAME, ID, FILE
   }
 
 }
