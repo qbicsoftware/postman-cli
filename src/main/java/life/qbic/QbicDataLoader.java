@@ -19,10 +19,9 @@ import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -161,7 +160,7 @@ public class QbicDataLoader {
                 if (file.getDataSetFile().getFileLength() > 0) {
                     String[] splitted = file.getDataSetFile().getPath().split("/");
                     String lastOne = splitted[splitted.length - 1];
-                    OutputStream os = new FileOutputStream("/home/sven1103/Downloads/" + lastOne);
+                    OutputStream os = new FileOutputStream(System.getProperty("user.dir")+ File.separator + lastOne);
                     ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
                     int bufferSize = 1024;
                     byte[] buffer = new byte[bufferSize];
