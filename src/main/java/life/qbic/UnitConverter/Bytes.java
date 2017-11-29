@@ -5,7 +5,7 @@ class Bytes implements UnitDisplay{
 
     private String unit = "bytes";
 
-    private double divisor = Math.pow(10, 1);
+    private double divisor = 1;
 
 
     @Override
