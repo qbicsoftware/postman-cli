@@ -162,7 +162,7 @@ public class QbicDataLoader {
                     String lastOne = splitted[splitted.length - 1];
                     OutputStream os = new FileOutputStream(System.getProperty("user.dir")+ File.separator + lastOne);
                     ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
-                    int bufferSize = Math.min(1024, Integer.valueOf(file.getDataSetFile().getFileLength().intValue()));
+                    int bufferSize = (file.getDataSetFile().getFileLength() < 1024) ? (int) file.getDataSetFile().getFileLength() : 1024;
                     byte[] buffer = new byte[bufferSize];
                     int bytesRead;
                     //read from is to buffer
