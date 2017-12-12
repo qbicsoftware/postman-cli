@@ -53,4 +53,13 @@ Provide password for user 'bbbfs01':
 QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###                                                            ]    0.38/7.94   Gb       
 ```
 
+### Provide a file with several QBiC IDs
+In order to download datasets from several samples at once, you can provide a simple text file with multiple, line-separated, QBiC IDs and hand it to qPostMan with the `-i` option.
 
+qPostMan will automatically iterate over the IDs and try to download them.
+
+
+### Performance issues
+We discovered, that a default buffer size of 1024 bytes seems not always to get all out of the performance that is possible for the dataset download. Therefore, we allow you to enter a multipler Integer value that increases the buffer size. For example a multipler of 2 will result in 2x1024 = 2048 bytes and so on.
+
+Just use the `-b` option for that. The default buffer size remains 1024 bytes, if you don't specify this value.
