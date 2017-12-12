@@ -70,7 +70,7 @@ public class App {
       System.exit(1);
     }
 
-    QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, user, password);
+    QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, user, password, cmdValues.get(Argparser.Attribute.BUFFER_SIZE));
     int returnCode = qbicDataLoader.login();
     log.info(String.format("OpenBis login returned with %s", returnCode));
     if (returnCode != 0) {
