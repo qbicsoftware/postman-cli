@@ -8,8 +8,9 @@ We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/op
 ## Download
 You can download qPostMan from our repositoy with i.e. `wget`:
 ```bash
-~$ wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/0.1.2.1/qpostman-0.1.2.1-jar-with-dependencies.jar
-~$ wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/0.1.2.1/qpostman-0.1.2.1-jar-with-dependencies.jar.md5
+VERSION=0.1.2.3
+wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/$VERSION/qpostman-$VERSION-jar-with-dependencies.jar
+wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/$VERSION/qpostman-$VERSION-jar-with-dependencies.jar.md5
 ```
 Please compare the md5 checksum after the download.
 
