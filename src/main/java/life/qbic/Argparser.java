@@ -37,6 +37,7 @@ public class Argparser {
     options.addOption("i", "identifier", true, "openBis sample ID [mutually exclusive]");
     options.addOption("f", "file", true,
         "File containing openBis sample IDs (one per line) [mutually exclusive]");
+    options.addOption("b", "buffer-size", true, "A integer muliple of 1024 bytes (default). Only change this if you know what you are doing.");
 
     /*
      * container for parsed attributes
@@ -58,6 +59,18 @@ public class Argparser {
       parsedArguments.put(Attribute.FILE, cmd.getOptionValue("f"));
       if (cmd.hasOption("h")) {
         parsedArguments.put(Attribute.HELP, "");
+      }
+      if (cmd.hasOption("b")){
+        Integer mult = 1;
+        try{
+          mult = Integer.parseInt(cmd.getOptionValue("b"));
+        } catch (Exception exc){
+          exc.printStackTrace();
+          System.err.println("buffer size must be an Integer > 0");
+        }
+        parsedArguments.put(Attribute.BUFFER_SIZE, Integer.toString(mult * 1024));
+      } else  {
+        parsedArguments.put(Attribute.BUFFER_SIZE, Integer.toString(1024));
       }
     } catch (ParseException exc) {
       System.err.println(exc);
@@ -110,7 +123,7 @@ public class Argparser {
    * Definition of some useful enum types for the cmd attributes
    */
   public enum Attribute {
-    HELP, USERNAME, ID, FILE
+    HELP, USERNAME, ID, FILE, BUFFER_SIZE
   }
 
 }

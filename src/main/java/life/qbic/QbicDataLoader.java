@@ -47,15 +47,20 @@ public class QbicDataLoader {
 
     private String sessionToken;
 
+    private final int defaultBufferSize;
+
     /**
      * Constructor for a QBiCDataLoaderInstance
      * @param AppServerUri The openBIS application server URL (AS)
      * @param DataServerUri The openBIS datastore server URL (DSS)
      * @param user The openBIS user
      * @param password The openBis password
+     * @param bufferSize The buffer size for the InputStream reader
      */
     public QbicDataLoader(String AppServerUri, String DataServerUri,
-                                         String user, String password){
+                                         String user, String password,
+                                         String bufferSize){
+        this.defaultBufferSize = Integer.parseInt(bufferSize);
         this.AppServerUri = AppServerUri;
         this.DataServerUri = DataServerUri;
         if (!AppServerUri.isEmpty()){
@@ -162,13 +167,14 @@ public class QbicDataLoader {
                     String lastOne = splitted[splitted.length - 1];
                     OutputStream os = new FileOutputStream(System.getProperty("user.dir")+ File.separator + lastOne);
                     ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
-                    int bufferSize = (file.getDataSetFile().getFileLength() < 1024) ? (int) file.getDataSetFile().getFileLength() : 1024;
+                    int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
                     byte[] buffer = new byte[bufferSize];
                     int bytesRead;
                     //read from is to buffer
                     while ((bytesRead = initialStream.read(buffer)) != -1) {
                         os.write(buffer, 0, bytesRead);
-                        progressBar.updateProgress(bufferSize);
+                        os.flush();
+                        
                     }
                     System.out.print("\n");
                     initialStream.close();
@@ -182,54 +188,4 @@ public class QbicDataLoader {
         return 0;
     }
 }
-        /*
-        // Reference the DSS
-        IDataStoreServerApi dataStoreServer = HttpInvokerUtils.createStreamSupportingServiceStub(
-                IDataStoreServerApi.class, this.DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
-        // Download the files of found datasets
-        System.out.println(foundDatasets.size());
-        for (DataSet dataset : foundDatasets) {
-            DataSetPermId permID = dataset.getPermId();
-            System.out.println(permID.toString());
-
-            DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
-            IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId(permID.toString()));
-            options.setRecursive(true);
-            InputStream stream = dss.downloadFiles(sessionToken, Arrays.asList(fileId), options);
-            DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
-            DataSetFileDownload file = null;
-
-            while ((file = reader.read()) != null) {
-                InputStream initialStream = file.getInputStream();
-
-                if(file.getDataSetFile().getFileLength() > 0) {
-                    String[] splitted = file.getDataSetFile().getPath().split("/");
-                    String lastOne = splitted[splitted.length - 1];
-                    OutputStream os = new FileOutputStream("/home/sven1103/Downloads/" + lastOne);
-
-                    byte[] buffer = new byte[1024];
-                    int bytesRead;
-                    //read from is to buffer
-                    while ((bytesRead = initialStream.read(buffer)) != -1) {
-                        os.write(buffer, 0, bytesRead);
-                    }
-                    initialStream.close();
-                    //flush OutputStream to write any buffered data to file
-                    os.flush();
-                    os.close();
-                }
-
-                //System.out.println("Downloaded " + file.getDataSetFile().getPath() + " "
-                //  + file.getDataSetFile().getFileLength());
-                //while ((outfile = initialStream.read()) != null){
-
-*/
-
-/*
-          String[] splitted = file.getDataSetFile().getPath().split("/");
-          String lastOne = splitted[splitted.length-1];
-          File targetFile = new File("/home/sven1103/Downloads/" +  lastOne);
-          OutputStream outStream = new FileOutputStream(targetFile);
-          outStream.write(buffer);
-          */
-
+    
