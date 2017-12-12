@@ -21,14 +21,15 @@ You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at lea
 Just execute qPostMan with `java -jar qpostman.jar` or `java -jar qpostman.jar -h` to get an overview of the options:
 ```bash
 
-~$ java -jar qpostman.jar
-usage: qPostMan [-f <arg>] [-h] [-i <arg>] [-u <arg>]                                   
- -f,--file <arg>         File containing openBis sample IDs (one per line)              
-                         [mutually exclusive]                                           
- -h,--help               Print this help                                                
- -i,--identifier <arg>   openBis sample ID [mutually exclusive]                         
- -u,--user-name <arg>    openBIS user name                                              
-
+~$ java -jar qpostman.jar                    
+usage: qPostMan [-b <arg>] [-f <arg>] [-h] [-i <arg>] [-u <arg>]                      
+ -b,--buffer-size <arg>   A integer muliple of 1024 bytes (default). Only             
+                          change this if you know what you are doing.                 
+ -f,--file <arg>          File containing openBis sample IDs (one per                 
+                          line) [mutually exclusive]                                  
+ -h,--help                Print this help                                             
+ -i,--identifier <arg>    openBis sample ID [mutually exclusive]                      
+ -u,--user-name <arg>     openBIS user name                                           
 ```
 ### Provide a QBiC ID
 The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide the QBiC ID for that sample and your username (same as the one you use for the qPortal):
