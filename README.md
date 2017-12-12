@@ -9,7 +9,8 @@ We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/op
 
 ```bash
 
-~$ java -jar qpostman.jar                                                                                                       usage: qPostMan [-f <arg>] [-h] [-i <arg>] [-u <arg>]                                   
+~$ java -jar qpostman.jar
+usage: qPostMan [-f <arg>] [-h] [-i <arg>] [-u <arg>]                                   
  -f,--file <arg>         File containing openBis sample IDs (one per line)              
                          [mutually exclusive]                                           
  -h,--help               Print this help                                                
