@@ -8,8 +8,9 @@ We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/op
 ## Download
 You can download qPostMan from our repositoy with i.e. `wget`:
 ```bash
-~$ wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/0.1.2.1/qpostman-0.1.2.1-jar-with-dependencies.jar
-~$ wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/0.1.2.1/qpostman-0.1.2.1-jar-with-dependencies.jar.md5
+VERSION=0.1.2.3
+wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/$VERSION/qpostman-$VERSION-jar-with-dependencies.jar
+wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/qpostman/$VERSION/qpostman-$VERSION-jar-with-dependencies.jar.md5
 ```
 Please compare the md5 checksum after the download.
 
@@ -21,14 +22,15 @@ You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at lea
 Just execute qPostMan with `java -jar qpostman.jar` or `java -jar qpostman.jar -h` to get an overview of the options:
 ```bash
 
-~$ java -jar qpostman.jar
-usage: qPostMan [-f <arg>] [-h] [-i <arg>] [-u <arg>]                                   
- -f,--file <arg>         File containing openBis sample IDs (one per line)              
-                         [mutually exclusive]                                           
- -h,--help               Print this help                                                
- -i,--identifier <arg>   openBis sample ID [mutually exclusive]                         
- -u,--user-name <arg>    openBIS user name                                              
-
+~$ java -jar qpostman.jar                    
+usage: qPostMan [-b <arg>] [-f <arg>] [-h] [-i <arg>] [-u <arg>]                      
+ -b,--buffer-size <arg>   A integer muliple of 1024 bytes (default). Only             
+                          change this if you know what you are doing.                 
+ -f,--file <arg>          File containing openBis sample IDs (one per                 
+                          line) [mutually exclusive]                                  
+ -h,--help                Print this help                                             
+ -i,--identifier <arg>    openBis sample ID [mutually exclusive]                      
+ -u,--user-name <arg>     openBIS user name                                           
 ```
 ### Provide a QBiC ID
 The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide the QBiC ID for that sample and your username (same as the one you use for the qPortal):
@@ -52,4 +54,13 @@ Provide password for user 'bbbfs01':
 QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###                                                            ]    0.38/7.94   Gb       
 ```
 
+### Provide a file with several QBiC IDs
+In order to download datasets from several samples at once, you can provide a simple text file with multiple, line-separated, QBiC IDs and hand it to qPostMan with the `-i` option.
 
+qPostMan will automatically iterate over the IDs and try to download them.
+
+
+### Performance issues
+We discovered, that a default buffer size of 1024 bytes seems not always to get all out of the performance that is possible for the dataset download. Therefore, we allow you to enter a multipler Integer value that increases the buffer size. For example a multipler of 2 will result in 2x1024 = 2048 bytes and so on.
+
+Just use the `-b` option for that. The default buffer size remains 1024 bytes, if you don't specify this value.
