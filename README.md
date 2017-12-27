@@ -1,6 +1,9 @@
 [![Build Status](https://qbic-intranet.am10.uni-tuebingen.de/jenkins/job/qPostMan-development/badge/icon)](https://qbic-intranet.am10.uni-tuebingen.de/jenkins/job/qPostMan-development/)
 
 # qPostMan
+
+**Current stable version: 0.1.2.3**
+
 A client software written in Java for dataset downloads from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
 
 We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from command line, in order to provide a quick data retreaval on server or cluster resources, where the download via the qPortal is impractical.
@@ -42,7 +45,7 @@ qPostMan will prompt you for your password, which is the password from your QBiC
 After you have provided your password and authenticate successfully, qPostMan tries to download all datasets that are registered for that given sample ID and downloads them to the current working directory:
 
 ```bash
-[bbbfs01@u-003-ncmu03 ~]$ qpostman-0.1.2.1 -i QMFKD003AG -u bbbfs01                                                                                            
+[bbbfs01@u-003-ncmu03 ~]$ qpostman-0.1.2.3 -i QMFKD003AG -u bbbfs01                                                                                            
 Provide password for user 'bbbfs01':                                                                                                                           
                                                                                                                                                                
 12:32:02.038 [main] INFO  life.qbic.App - OpenBis login returned with 0                                                                                        
