@@ -29,6 +29,11 @@ public class App {
     MyCommandLine commandLine = new MyCommandLine();
     new CommandLine(commandLine).parse(args);
 
+    if (commandLine.helpRequested){
+      CommandLine.usage(new MyCommandLine(), System.out);
+      System.exit(0);
+    }
+
     if ((commandLine.ids == null || commandLine.ids.isEmpty()) && (commandLine.filePath == null || commandLine.filePath == null)) {
       System.out
           .println("You have to provide one ID as command line argument or a file containing IDs.");
