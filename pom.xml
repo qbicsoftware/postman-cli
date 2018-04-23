@@ -4,7 +4,7 @@
   <groupId>life.qbic</groupId>
   <artifactId>qpostman</artifactId>
   <packaging>jar</packaging>
-  <version>0.1.3</version>
+  <version>0.1.3-SNAPSHOT</version>
   <name>qpostman</name>
   <url>http://maven.apache.org</url>
     <properties>
