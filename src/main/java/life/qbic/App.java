@@ -14,7 +14,7 @@ import picocli.CommandLine;
 
 
 /**
- * qPostMan for staging data from openBIS
+ * postman for staging data from openBIS
  *
  */
 public class App {
