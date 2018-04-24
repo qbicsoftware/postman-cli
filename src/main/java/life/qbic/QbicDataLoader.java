@@ -47,6 +47,8 @@ public class QbicDataLoader {
 
     private String sessionToken;
 
+    private String filterType;
+
     private final int defaultBufferSize;
 
     /**
@@ -59,10 +61,12 @@ public class QbicDataLoader {
      */
     public QbicDataLoader(String AppServerUri, String DataServerUri,
                                          String user, String password,
-                                         int bufferSize){
+                                         int bufferSize, String filterType){
         this.defaultBufferSize = bufferSize;
         this.AppServerUri = AppServerUri;
         this.DataServerUri = DataServerUri;
+        this.filterType = filterType;
+
         if (!AppServerUri.isEmpty()){
             this.applicationServer = HttpInvokerUtils.createServiceStub(
                     IApplicationServerApi.class,
@@ -128,12 +132,13 @@ public class QbicDataLoader {
         // tell the API to fetch all descendents for each returned sample
         SampleFetchOptions fetchOptions = new SampleFetchOptions();
         DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
+        dsFetchOptions.withType();
         fetchOptions.withChildrenUsing(fetchOptions);
         fetchOptions.withDataSetsUsing(dsFetchOptions);
         SearchResult<Sample> result = applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
 
         // get all datasets of sample with provided sample code and all descendents
-        List<DataSet> foundDatasets = new ArrayList<DataSet>();
+        List<DataSet> foundDatasets = new ArrayList<>();
         for (Sample sample : result.getObjects()) {
             foundDatasets.addAll(sample.getDataSets());
             for (Sample desc : sample.getChildren()) {
@@ -141,7 +146,18 @@ public class QbicDataLoader {
             }
         }
 
-        return foundDatasets;
+        if (filterType.isEmpty())
+            return foundDatasets;
+        
+        List<DataSet> filteredDatasets = new ArrayList<>();
+        for (DataSet ds : foundDatasets){
+            System.out.println(ds.getType().getCode() + " found.");
+            if (this.filterType.equals(ds.getType().getCode())){
+            
+                filteredDatasets.add(ds);
+            }
+        }
+        return filteredDatasets;
     }
 
     /**

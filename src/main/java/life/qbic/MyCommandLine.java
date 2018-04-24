@@ -22,4 +22,8 @@ public class MyCommandLine {
 
     @Option(names = {"-b", "--buffer-size"}, description = "a integer muliple of 1024 bytes (default). Only change this if you know what you are doing.")
     protected int bufferMultiplier = 1;
+
+    @Option(names = {"-t", "--type"}, description = "filter for a given openBIS dataset type")
+    protected String datasetType = "";
+
 }

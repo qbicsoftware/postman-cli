@@ -60,7 +60,8 @@ public class App {
       System.exit(1);
     }
 
-    QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, commandLine.user, password, commandLine.bufferMultiplier*1024);
+    QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, commandLine.user, password,
+        commandLine.bufferMultiplier*1024, commandLine.datasetType);
     int returnCode = qbicDataLoader.login();
     log.info(String.format("OpenBis login returned with %s", returnCode));
     if (returnCode != 0) {
