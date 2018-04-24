@@ -59,8 +59,8 @@ public class QbicDataLoader {
      */
     public QbicDataLoader(String AppServerUri, String DataServerUri,
                                          String user, String password,
-                                         String bufferSize){
-        this.defaultBufferSize = Integer.parseInt(bufferSize);
+                                         int bufferSize){
+        this.defaultBufferSize = bufferSize;
         this.AppServerUri = AppServerUri;
         this.DataServerUri = DataServerUri;
         if (!AppServerUri.isEmpty()){
