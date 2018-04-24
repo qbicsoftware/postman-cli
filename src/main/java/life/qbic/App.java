@@ -26,6 +26,11 @@ public class App {
 
   public static void main(String[] args) throws IOException {
 
+    if (args.length == 0){
+      CommandLine.usage(new MyCommandLine(), System.out);
+      System.exit(0);
+    }
+
     MyCommandLine commandLine = new MyCommandLine();
     new CommandLine(commandLine).parse(args);
 
