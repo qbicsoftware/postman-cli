@@ -24,6 +24,6 @@ public class MyCommandLine {
     protected int bufferMultiplier = 1;
 
     @Option(names = {"-t", "--type"}, description = "filter for a given openBIS dataset type")
-    protected String datasetType = null;
+    protected String datasetType = "";
 
 }
