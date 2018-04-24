@@ -38,9 +38,9 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
   -u, --user=<user>           openBIS user name                          
 ```
 ### Provide a QBiC ID
-The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide the QBiC ID for that sample and your username (same as the one you use for the qPortal):
+The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide one or more QBiC IDs for that sample and your username (same as the one you use for the qPortal):
 ```bash
-~$ java -jar postman.jar -i <QBiC ID> -u <your_qbic_username>
+~$ java -jar postman.jar -u <your_qbic_username> [QBiC ID]...
 ```
 postman will prompt you for your password, which is the password from your QBiC user account.
 
