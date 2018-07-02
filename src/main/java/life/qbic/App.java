@@ -10,11 +10,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
-
+import picocli.CommandLine;
 
 
 /**
- * qPostMan for staging data from openBIS
+ * postman for staging data from openBIS
  *
  */
 public class App {
@@ -23,45 +23,35 @@ public class App {
   static String DSS_URL = "https://qbis.qbic.uni-tuebingen.de:444/datastore_server";
   static Logger log = LogManager.getLogger(App.class);
 
+
   public static void main(String[] args) throws IOException {
 
-    Map<Argparser.Attribute, String> cmdValues = Argparser.parseCmdArguments(args);
-
-    String user = cmdValues.get(Argparser.Attribute.USERNAME);
-
-    String id = cmdValues.get(Argparser.Attribute.ID);
-
-    String filePath = cmdValues.get(Argparser.Attribute.FILE);
-
-    List<String> identifiers = new ArrayList<String>();
-
-    if (cmdValues.containsKey(Argparser.Attribute.HELP)) {
-      Argparser.printHelp();
+    if (args.length == 0){
+      CommandLine.usage(new MyCommandLine(), System.out);
       System.exit(0);
     }
 
-    if (user == null) {
-      Argparser.printHelp();
-      System.exit(1);
+    MyCommandLine commandLine = new MyCommandLine();
+    new CommandLine(commandLine).parse(args);
+
+    if (commandLine.helpRequested){
+      CommandLine.usage(new MyCommandLine(), System.out);
+      System.exit(0);
     }
 
-    if ((id == null || id.isEmpty()) && (filePath == null || filePath.isEmpty())) {
+    if ((commandLine.ids == null || commandLine.ids.isEmpty()) && (commandLine.filePath == null || commandLine.filePath == null)) {
       System.out
           .println("You have to provide one ID as command line argument or a file containing IDs.");
-      Argparser.printHelp();
       System.exit(1);
-    } else if ((id != null) && (filePath != null)) {
+    } else if ((commandLine.ids != null) && (commandLine.filePath != null)) {
       System.out.println(
           "Arguments --identifier and --file are mutually exclusive, please provide only one.");
-      Argparser.printHelp();
       System.exit(1);
-    } else if ((id != null)) {
-      identifiers.add(id);
-    } else {
-      identifiers.addAll(Argparser.readProvidedIndentifiers(new File(filePath)));
+    } else if (commandLine.filePath != null) {
+      commandLine.ids = Argparser.readProvidedIndentifiers(commandLine.filePath.toFile());
     }
 
-    System.out.format("Provide password for user \'%s\':\n", user);
+    System.out.format("Provide password for user \'%s\':\n", commandLine.user);
 
     String password = Argparser.readPasswordFromInputStream();
 
@@ -70,7 +60,8 @@ public class App {
       System.exit(1);
     }
 
-    QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, user, password, cmdValues.get(Argparser.Attribute.BUFFER_SIZE));
+    QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, commandLine.user, password,
+        commandLine.bufferMultiplier*1024, commandLine.datasetType);
     int returnCode = qbicDataLoader.login();
     log.info(String.format("OpenBis login returned with %s", returnCode));
     if (returnCode != 0) {
@@ -80,9 +71,9 @@ public class App {
     log.info("Connection to openBIS was successful.");
 
     log.info(String.format("%s provided openBIS identifiers have been found: %s",
-        identifiers.size(), identifiers.toString()));
+        commandLine.ids.size(), commandLine.ids.toString()));
 
-    for (String ident : identifiers) {
+    for (String ident : commandLine.ids) {
       log.info(String.format("Downloading files for provided identifier %s", ident));
       List<DataSet> foundDataSets = qbicDataLoader.findAllDatasets(ident);
 
