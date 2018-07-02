@@ -4,7 +4,7 @@
   <groupId>life.qbic.cli</groupId>
   <artifactId>postman-cli</artifactId>
   <packaging>jar</packaging>
-  <version>0.1.3-alpha</version>
+  <version>0.1.3</version>
   <name>postman</name>
   <url>http://maven.apache.org</url>
     <properties>
