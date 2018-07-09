@@ -72,7 +72,7 @@ public class App {
 
     for (String ident : commandLineParameters.ids) {
       LOG.info(String.format("Downloading files for provided identifier %s", ident));
-      List<DataSet> foundDataSets = qbicDataLoader.findAllDatasets(ident);
+      List<DataSet> foundDataSets = qbicDataLoader.findAllDatasetsRecursive(ident);
 
       LOG.info(String.format("Number of data sets found: %s", foundDataSets.size()));
 
