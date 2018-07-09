@@ -2,27 +2,21 @@
 
 # postman
 
-**Current stable version: 0.1.2.3**
+**Current stable version: 0.1.3 (2. July 2018)**
 
 A client software written in Java for dataset downloads from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
 
 We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from command line, in order to provide a quick data retreaval on server or cluster resources, where the download via the qPortal is impractical.
 
 ## Download
-You can download postman from our repositoy with i.e. `wget`:
-```bash
-VERSION=0.1.2.3
-wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/postman/$VERSION/postman-$VERSION-jar-with-dependencies.jar
-wget https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases/life/qbic/postman/$VERSION/postman-$VERSION-jar-with-dependencies.jar.md5
-```
-Please compare the md5 checksum after the download.
+You can download postman from the GitHub release page: https://github.com/qbicsoftware/postman-cli/releases .
 
 ## Requirements
-You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at least version 1.8 or 9. And the client's host must have allowance to connect to the server, which is determined by our firewall settings.
+You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at least version 1.8 or 9. And the client's host must have allowance to connect to the server, which is determined by our firewall settings. If you are unsure, if your client is allowed to connect, contact us at support@qbic.zendesk.com.
 
 ## Usage
 ### Options
-Just execute postman with `java -jar postman.jar` or `java -jar postman.jar -h` to get an overview of the options:
+Just execute postman with `java -jar postman-cli.jar` or `java -jar postman.jar -h` to get an overview of the options:
 ```bash
 
 ~$ java -jar postman.jar                    
@@ -40,7 +34,7 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
 ### Provide a QBiC ID
 The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide one or more QBiC IDs for that sample and your username (same as the one you use for the qPortal):
 ```bash
-~$ java -jar postman.jar -u <your_qbic_username> [QBiC ID]...
+~$ java -jar postman.jar -u <your_qbic_username> <QBiC Sample ID>
 ```
 postman will prompt you for your password, which is the password from your QBiC user account.
 
