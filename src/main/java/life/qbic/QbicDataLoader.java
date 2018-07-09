@@ -15,25 +15,17 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFil
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import org.apache.commons.logging.impl.Log4JLogger;
+import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.sym.error;
-
 
 public class QbicDataLoader {
-
-    private String AppServerUri;
-
-    private String DataServerUri;
 
     private String user;
 
@@ -43,7 +35,7 @@ public class QbicDataLoader {
 
     private IDataStoreServerApi dataStoreServer;
 
-    private static Logger log = LogManager.getLogger(QbicDataLoader.class);
+    private final static Logger LOG = LogManager.getLogger(QbicDataLoader.class);
 
     private String sessionToken;
 
@@ -63,21 +55,21 @@ public class QbicDataLoader {
                                          String user, String password,
                                          int bufferSize, String filterType){
         this.defaultBufferSize = bufferSize;
-        this.AppServerUri = AppServerUri;
-        this.DataServerUri = DataServerUri;
+        String appServerUri = AppServerUri;
+        String dataServerUri = DataServerUri;
         this.filterType = filterType;
 
         if (!AppServerUri.isEmpty()){
             this.applicationServer = HttpInvokerUtils.createServiceStub(
                     IApplicationServerApi.class,
-                    this.AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
+                    appServerUri + IApplicationServerApi.SERVICE_URL, 10000);
         } else {
             this.applicationServer = null;
         }
         if (!DataServerUri.isEmpty()){
             this.dataStoreServer = HttpInvokerUtils.createStreamSupportingServiceStub(
                     IDataStoreServerApi.class,
-                    this.DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
+                    dataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
         } else {
             this.dataStoreServer = null;
         }
@@ -108,10 +100,10 @@ public class QbicDataLoader {
             this.sessionToken = this.applicationServer.login(this.user, this.password);
             this.applicationServer.getSessionInformation(this.sessionToken);
         } catch (AssertionError err){
-            log.debug(err);
+            LOG.debug(err);
             return 1;
         } catch (Exception exc){
-            log.debug(exc);
+            LOG.debug(exc);
             return 1;
         }
         return 0;
@@ -124,8 +116,6 @@ public class QbicDataLoader {
      * @return A list of all data sets attached to the sample ID
      */
     public List<DataSet> findAllDatasets(String sampleId) {
-
-
         SampleSearchCriteria criteria = new SampleSearchCriteria();
         criteria.withCode().thatEquals(sampleId);
 
