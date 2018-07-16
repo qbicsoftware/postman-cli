@@ -19,6 +19,7 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import life.qbic.util.ProgressBar;
+import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -234,7 +235,7 @@ public class QbicDataLoader {
             for (DataSetFile file : files)
             {
                 for (String suffix : suffixes) {
-                    if (file.getPermId().toString().endsWith(suffix)) {
+                    if (StringUtil.endsWithIgnoreCase(file.getPermId().toString(), suffix)) {
                         fileIds.add(file.getPermId());
                     }
                 }
