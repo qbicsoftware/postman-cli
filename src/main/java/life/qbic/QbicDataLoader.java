@@ -9,11 +9,14 @@ import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.fetchoptions.SampleFetchOptions;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.search.SampleSearchCriteria;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
+import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownload;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadReader;
+import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
+import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
@@ -54,21 +57,19 @@ public class QbicDataLoader {
                                          String user, String password,
                                          int bufferSize, String filterType){
         this.defaultBufferSize = bufferSize;
-        String appServerUri = AppServerUri;
-        String dataServerUri = DataServerUri;
         this.filterType = filterType;
 
         if (!AppServerUri.isEmpty()){
             this.applicationServer = HttpInvokerUtils.createServiceStub(
                     IApplicationServerApi.class,
-                    appServerUri + IApplicationServerApi.SERVICE_URL, 10000);
+                    AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
         } else {
             this.applicationServer = null;
         }
         if (!DataServerUri.isEmpty()){
             this.dataStoreServer = HttpInvokerUtils.createStreamSupportingServiceStub(
                     IDataStoreServerApi.class,
-                    dataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
+                    DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
         } else {
             this.dataStoreServer = null;
         }
@@ -139,7 +140,6 @@ public class QbicDataLoader {
         for (DataSet ds : foundDatasets){
             LOG.info(ds.getType().getCode() + " found.");
             if (this.filterType.equals(ds.getType().getCode())){
-
                 filteredDatasets.add(ds);
             }
         }
@@ -164,56 +164,11 @@ public class QbicDataLoader {
 
         return foundSets;
     }
-    
-    /**
-     * Download a given list of data sets
-     * @param dataSetList A list of data sets
-     * @return 0 if successful, 1 else
-     */
-    int downloadDataset(List<DataSet> dataSetList) throws IOException{
-        for (DataSet dataset : dataSetList) {
-            DataSetPermId permID = dataset.getPermId();
-            DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
-            IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId(permID.toString()));
-            options.setRecursive(true);
-            InputStream stream = this.dataStoreServer.downloadFiles(sessionToken, Arrays.asList(fileId), options);
-            DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
-            DataSetFileDownload file;
-
-            while ((file = reader.read()) != null) {
-                InputStream initialStream = file.getInputStream();
-
-                if (file.getDataSetFile().getFileLength() > 0) {
-                    String[] splitted = file.getDataSetFile().getPath().split("/");
-                    String lastOne = splitted[splitted.length - 1];
-                    OutputStream os = new FileOutputStream(System.getProperty("user.dir")+ File.separator + lastOne);
-                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
-                    int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
-                    byte[] buffer = new byte[bufferSize];
-                    int bytesRead;
-                    //read from is to buffer
-                    while ((bytesRead = initialStream.read(buffer)) != -1) {
-                        progressBar.updateProgress(bufferSize);
-                        os.write(buffer, 0, bytesRead);
-                        os.flush();
-                        
-                    }
-                    System.out.print("\n");
-                    initialStream.close();
-                    //flush OutputStream to write any buffered data to file
-                    os.flush();
-                    os.close();
-                }
-
-            }
-        }
-        return 0;
-    }
 
     /**
      * Search method for a given openBIS identifier.
      *
-     * LIKELY NOT USEFUL ANYMORE - RECURSIVE METHOD SHOULD WORK JUST AS WELL
+     * LIKELY NOT USEFUL ANYMORE - RECURSIVE METHOD SHOULD WORK JUST AS WELL -> use findAllDatasetsRecursive
      *
      * @param sampleId An openBIS sample ID
      * @return A list of all data sets attached to the sample ID
@@ -253,6 +208,133 @@ public class QbicDataLoader {
         }
 
         return filteredDatasets;
+    }
+
+    /**
+     * Finds all IDs of files filtered by a suffix
+     *
+     * @param ident
+     * @param suffixes
+     * @return
+     */
+    public List<IDataSetFileId> findAllSuffixFilteredIDs(String ident, List<String> suffixes) throws IOException {
+        List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
+        List<IDataSetFileId> allFileIDs = new ArrayList<>();
+
+        for (DataSet ds : allDatasets) {
+            // we cannot access the files directly of the datasets -> we need to query for the files first using the datasetID
+            DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
+            criteria.withDataSet().withCode().thatEquals(ds.getCode());
+            SearchResult<DataSetFile> result = dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
+            List<DataSetFile> files = result.getObjects();
+
+            List<IDataSetFileId> fileIds = new ArrayList<>();
+
+            // remove everything that doesn't match the suffix -> only add if suffix matches
+            for (DataSetFile file : files)
+            {
+                for (String suffix : suffixes) {
+                    if (file.getPermId().toString().endsWith(suffix)) {
+                        fileIds.add(file.getPermId());
+                    }
+                }
+            }
+
+            allFileIDs.addAll(fileIds);
+        }
+
+        return allFileIDs;
+    }
+
+    /**
+     * downloads files that have been found after filtering for suffixes by a list of supplied IDs
+     *
+     * @param foundSuffixFilteredIDs
+     * @return exitcode
+     * @throws IOException
+     */
+    public int downloadFilesByID(List<IDataSetFileId> foundSuffixFilteredIDs) throws IOException{
+        for (IDataSetFileId id : foundSuffixFilteredIDs) {
+            DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
+            options.setRecursive(true);
+            InputStream stream = this.dataStoreServer.downloadFiles(sessionToken, Collections.singletonList(id), options);
+            DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
+            DataSetFileDownload file;
+
+            while ((file = reader.read()) != null) {
+                InputStream initialStream = file.getInputStream();
+
+                if (file.getDataSetFile().getFileLength() > 0) {
+                    String[] splitted = file.getDataSetFile().getPath().split("/");
+                    String lastOne = splitted[splitted.length - 1];
+                    OutputStream os = new FileOutputStream(System.getProperty("user.dir") + File.separator + lastOne);
+                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
+                    int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
+                    byte[] buffer = new byte[bufferSize];
+                    int bytesRead;
+                    //read from is to buffer
+                    while ((bytesRead = initialStream.read(buffer)) != -1) {
+                        progressBar.updateProgress(bufferSize);
+                        os.write(buffer, 0, bytesRead);
+                        os.flush();
+
+                    }
+                    System.out.print("\n");
+                    initialStream.close();
+                    //flush OutputStream to write any buffered data to file
+                    os.flush();
+                    os.close();
+                }
+
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Download a given list of data sets
+     * @param dataSetList A list of data sets
+     * @return 0 if successful, 1 else
+     */
+    int downloadDataset(List<DataSet> dataSetList) throws IOException{
+        for (DataSet dataset : dataSetList) {
+            DataSetPermId permID = dataset.getPermId();
+            DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
+            IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId(permID.toString()));
+            options.setRecursive(true);
+            InputStream stream = this.dataStoreServer.downloadFiles(sessionToken, Arrays.asList(fileId), options);
+            DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
+            DataSetFileDownload file;
+
+            while ((file = reader.read()) != null) {
+                InputStream initialStream = file.getInputStream();
+
+                if (file.getDataSetFile().getFileLength() > 0) {
+                    String[] splitted = file.getDataSetFile().getPath().split("/");
+                    String lastOne = splitted[splitted.length - 1];
+                    OutputStream os = new FileOutputStream(System.getProperty("user.dir") + File.separator + lastOne);
+                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
+                    int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
+                    byte[] buffer = new byte[bufferSize];
+                    int bytesRead;
+                    //read from is to buffer
+                    while ((bytesRead = initialStream.read(buffer)) != -1) {
+                        progressBar.updateProgress(bufferSize);
+                        os.write(buffer, 0, bytesRead);
+                        os.flush();
+
+                    }
+                    System.out.print("\n");
+                    initialStream.close();
+                    //flush OutputStream to write any buffered data to file
+                    os.flush();
+                    os.close();
+                }
+
+            }
+        }
+        return 0;
     }
 }
     
