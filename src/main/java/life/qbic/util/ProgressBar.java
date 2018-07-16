@@ -24,7 +24,6 @@ public class ProgressBar {
         this.stepSize = totalFileSize / BARSIZE;
         this.nextProgressJump = this.stepSize;
         this.unitDisplay = UnitConverterFactory.determineBestUnitType(totalFileSize);
-
     }
 
     public void updateProgress(int addDownloadedSize){
