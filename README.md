@@ -44,12 +44,12 @@ After you have provided your password and authenticate successfully, postman tri
 [bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar -u bbbfs01 QMFKD003AG                                                                                          
 Provide password for user 'bbbfs01':                                                                                                                           
                                                                                                                                                                
-12:32:02.038 [main] INFO  life.qbic.App - OpenBis login returned with 0                                                                                        
-12:32:02.043 [main] INFO  life.qbic.App - Connection to openBIS was successful.                                                                                
-12:32:02.043 [main] INFO  life.qbic.App - 1 provided openBIS identifiers have been found: [QMFKD003AG]                                                         
-12:32:02.044 [main] INFO  life.qbic.App - Downloading files for provided identifier QMFKD003AG                                                                 
-12:32:02.278 [main] INFO  life.qbic.App - Number of data sets found: 2                                                                                         
-12:32:02.279 [main] INFO  life.qbic.App - Initialize download ...                                                                                              
+12:32:02.038 [main] INFO  life.qbic.App - OpenBis login returned with 0
+12:32:02.043 [main] INFO  life.qbic.App - Connection to openBIS was successful.
+12:32:02.043 [main] INFO  life.qbic.App - 1 provided openBIS identifiers have been found: [QMFKD003AG]
+12:32:02.044 [main] INFO  life.qbic.App - Downloading files for provided identifier QMFKD003AG
+12:32:02.278 [main] INFO  life.qbic.App - Number of data sets found: 2
+12:32:02.279 [main] INFO  life.qbic.App - Initialize download ...
 QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###                                                            ]    0.38/7.94   Gb       
 ```
 

@@ -19,6 +19,7 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import life.qbic.util.ProgressBar;
+import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -211,6 +212,12 @@ public class QbicDataLoader {
         return filteredDatasets;
     }
 
+    public List<IDataSetFileId> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
+        List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
+
+        return QbicDataLoaderRegexUtil.findAllRegexFilteredIDsGroovy(regexPatterns, allDatasets, dataStoreServer, sessionToken);
+    }
+
     /**
      * Finds all IDs of files filtered by a suffix
      *
@@ -218,7 +225,7 @@ public class QbicDataLoader {
      * @param suffixes
      * @return
      */
-    public List<IDataSetFileId> findAllSuffixFilteredIDs(String ident, List<String> suffixes) throws IOException {
+    public List<IDataSetFileId> findAllSuffixFilteredIDs(String ident, List<String> suffixes) {
         List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
         List<IDataSetFileId> allFileIDs = new ArrayList<>();
 

@@ -7,10 +7,14 @@
   <version>0.2.0-alpha</version>
   <name>postman</name>
   <url>http://maven.apache.org</url>
+
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <groovy.version>2.5.1</groovy.version>
     </properties>
+
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-dependency-plugin -->
         <dependency>
@@ -54,6 +58,14 @@
             <artifactId>picocli</artifactId>
             <version>3.3.0</version>
         </dependency>
+
+        <dependency>
+           <groupId>org.codehaus.groovy</groupId>
+           <artifactId>groovy</artifactId>
+           <version>${groovy.version}</version>
+           <classifier>indy</classifier>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -72,6 +84,82 @@
                   <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
             </plugin>
+
+            <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>default-compile</id>
+                    <phase>none</phase>
+                </execution>
+                <execution>
+                    <id>default-testCompile</id>
+                    <phase>none</phase>
+                </execution>
+            </executions>
+        </plugin>
+
+            <!-- The following maven antrun plugin is required for the integration of groovy code into java code -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <configuration>
+                            <target>
+                                <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc">
+                                    <classpath refid="maven.compile.classpath" />
+                                </taskdef>
+                                <mkdir dir="${project.build.outputDirectory}" />
+                                <groovyc srcdir="${basedir}/src/main/groovy" destdir="${project.build.outputDirectory}" encoding="${project.build.sourceEncoding}">
+                                    <classpath refid="maven.compile.classpath" />
+                                    <src>
+                                        <pathelement path="${project.basedir}/src/main/java" />
+                                    </src>
+                                    <javac source="${maven.compiler.source}" target="${maven.compiler.target}" />
+                                </groovyc>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <configuration>
+                            <target>
+                                <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc">
+                                    <classpath refid="maven.test.classpath" />
+                                </taskdef>
+                                <mkdir dir="${project.build.testOutputDirectory}" />
+                                <groovyc srcdir="${basedir}/src/test/groovy" destdir="${project.build.testOutputDirectory}" encoding="${project.build.sourceEncoding}">
+                                    <classpath refid="maven.test.classpath" />
+                                    <src>
+                                        <pathelement path="${project.basedir}/src/test/java" />
+                                    </src>
+                                    <javac source="${maven.compiler.source}" target="${maven.compiler.target}" />
+                                </groovyc>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-ant</artifactId>
+                        <version>${groovy.version}</version>
+                        <classifier>indy</classifier>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
         </plugins>
     </build>
 

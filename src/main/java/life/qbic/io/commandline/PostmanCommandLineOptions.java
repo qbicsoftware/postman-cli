@@ -19,12 +19,15 @@ public class PostmanCommandLineOptions {
     @Option(names = {"-f", "--file"}, description = "a file with line-separated list of QBiC sample ids")
     public Path filePath;
 
-    @Option(names = {"-b", "--buffer-size"}, description = " Dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
+    @Option(names = {"-b", "--buffer-size"}, description = "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
             + " Only change this if you know what you are doing.")
     public int bufferMultiplier = 1;
 
-    @Option(names = {"-s", "--suffix"}, description = "Returns all datasets containing the supplied suffix")
+    @Option(names = {"-s", "--suffix"}, description = "returns all files of datasets containing the supplied suffix")
     public List<String> suffixes = new ArrayList<>();
+
+    @Option(names = {"-r", "--regex"}, description = "returns all files of datasets using your supplied regular expression")
+    public List<String> regexPatterns = new ArrayList<>();
 
     @Option(names = {"-t", "--type"}, description = "filter for a given openBIS dataset type")
     public String datasetType = "";

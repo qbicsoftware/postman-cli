@@ -78,20 +78,20 @@ public class App {
 
                 LOG.info(String.format("Number of files found: %s", foundSuffixFilteredIDs.size()));
 
-                if (foundSuffixFilteredIDs.size() > 0) {
-                    LOG.info("Initialize download ...");
-                    int filesDownloadReturnCode = qbicDataLoader.downloadFilesByID(foundSuffixFilteredIDs);
-                    if (filesDownloadReturnCode != 0) {
-                        LOG.error("Error while downloading dataset: " + ident);
-                    }
+                downloadFilteredIDs(qbicDataLoader, ident, foundSuffixFilteredIDs);
+            }
+            // a regex pattern was provided -> only download files which contain the regex pattern
+        } else if (!commandLineParameters.regexPatterns.isEmpty()) {
+            for (String ident : commandLineParameters.ids) {
+                LOG.info(String.format("Downloading files for provided identifier %s", ident));
+                List<IDataSetFileId> foundRegexFilteredIDs = qbicDataLoader.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
 
-                    LOG.info("Download successfully finished");
-                } else {
-                    LOG.info("Nothing to download.");
-                }
+                LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
+
+                downloadFilteredIDs(qbicDataLoader, ident, foundRegexFilteredIDs);
             }
         } else {
-            // no suffix was supplied -> download all datasets
+            // no suffix or regex was supplied -> download all datasets
             for (String ident : commandLineParameters.ids) {
                 LOG.info(String.format("Downloading files for provided identifier %s", ident));
                 List<DataSet> foundDataSets = qbicDataLoader.findAllDatasetsRecursive(ident);
@@ -111,6 +111,28 @@ public class App {
                     LOG.info("Nothing to download.");
                 }
             }
+        }
+    }
+
+    /**
+     * downloads all IDs which were previously filtered by either suffixes or regexes
+     *
+     * @param qbicDataLoader
+     * @param ident
+     * @param foundFilteredIDs
+     * @throws IOException
+     */
+    private static void downloadFilteredIDs(QbicDataLoader qbicDataLoader, String ident, List<IDataSetFileId> foundFilteredIDs) throws IOException {
+        if (foundFilteredIDs.size() > 0) {
+            LOG.info("Initialize download ...");
+            int filesDownloadReturnCode = qbicDataLoader.downloadFilesByID(foundFilteredIDs);
+            if (filesDownloadReturnCode != 0) {
+                LOG.error("Error while downloading dataset: " + ident);
+            }
+
+            LOG.info("Download successfully finished");
+        } else {
+            LOG.info("Nothing to download.");
         }
     }
 
