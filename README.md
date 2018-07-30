@@ -143,12 +143,12 @@ VCF
 
 ### Filter for file suffix
 
-You can filter for file suffixes, using the `-s` option:
+You can filter for file suffixes, using the `-s` option:    
 Example: -s .pdf
 
 ### Filter for file regex
 
-You can filter for files by a provided regex, using the `-r` option:
+You can filter for files by a provided regex, using the `-r` option:    
 Example: -r .jobscript.FastQC.*
 
 Please note that depending on your favorite shell, you may need quote your regex. 
