@@ -29,10 +29,12 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
   -f, --file=<filePath>       a file with line-separated list of QBiC sample ids
   -h, --help                  display a help message
   -t, --type=<datasetType>    filter for a given openBIS dataset type
+  -s, --type=<suffix>         filter for a given openBIS file suffix
+  -r, --type=<regex>          filter for a given file regex
   -u, --user=<user>           openBIS user name                          
 ```
 ### Provide a QBiC ID
-The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide one or more QBiC IDs for that sample and your username (same as the one you use for the qPortal):
+The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide the QBiC ID for that sample and your username (same as the one you use for the qPortal):
 ```bash
 ~$ java -jar postman.jar -u <your_qbic_username> <QBiC Sample ID>
 ```
@@ -44,12 +46,12 @@ After you have provided your password and authenticate successfully, postman tri
 [bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar -u bbbfs01 QMFKD003AG                                                                                          
 Provide password for user 'bbbfs01':                                                                                                                           
                                                                                                                                                                
-12:32:02.038 [main] INFO  life.qbic.App - OpenBis login returned with 0
-12:32:02.043 [main] INFO  life.qbic.App - Connection to openBIS was successful.
-12:32:02.043 [main] INFO  life.qbic.App - 1 provided openBIS identifiers have been found: [QMFKD003AG]
-12:32:02.044 [main] INFO  life.qbic.App - Downloading files for provided identifier QMFKD003AG
-12:32:02.278 [main] INFO  life.qbic.App - Number of data sets found: 2
-12:32:02.279 [main] INFO  life.qbic.App - Initialize download ...
+12:32:02.038 [main] INFO  life.qbic.App - OpenBis login returned with 0                                                                                        
+12:32:02.043 [main] INFO  life.qbic.App - Connection to openBIS was successful.                                                                                
+12:32:02.043 [main] INFO  life.qbic.App - 1 provided openBIS identifiers have been found: [QMFKD003AG]                                                         
+12:32:02.044 [main] INFO  life.qbic.App - Downloading files for provided identifier QMFKD003AG                                                                 
+12:32:02.278 [main] INFO  life.qbic.App - Number of data sets found: 2                                                                                         
+12:32:02.279 [main] INFO  life.qbic.App - Initialize download ...                                                                                              
 QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###                                                            ]    0.38/7.94   Gb       
 ```
 
