@@ -30,7 +30,7 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
   -h, --help                  display a help message
   -t, --type=<datasetType>    filter for a given openBIS dataset type
   -s, --type=<suffix>         filter for a given openBIS file suffix
-  -r, --type=<regex>          filter for a given file regex
+  -r, --type=<regex>          filter for a given openBIS file regex
   -u, --user=<user>           openBIS user name                          
 ```
 ### Provide a QBiC ID
