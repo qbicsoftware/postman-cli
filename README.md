@@ -141,6 +141,18 @@ UNKNOWN
 VCF
 ```
 
+### Filter for file suffix
+
+You can filter for file suffixes, using the `-s` option:
+Example: -s .pdf
+
+### Filter for file regex
+
+You can filter for files by a provided regex, using the `-r` option:
+Example: -r .jobscript.FastQC.*
+
+Please note that depending on your favorite shell, you may need quote your regex. 
+
 ### Provide a file with several QBiC IDs
 In order to download datasets from several samples at once, you can provide a simple text file with multiple, line-separated, QBiC IDs and hand it to postman with the `-f` option.
 
