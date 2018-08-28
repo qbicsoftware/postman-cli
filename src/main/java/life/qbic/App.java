@@ -18,13 +18,11 @@ import picocli.CommandLine;
  */
 public class App {
 
-    final static String AS_URL = "https://qbis.qbic.uni-tuebingen.de/openbis/openbis";
-    final static String DSS_URL = "https://qbis.qbic.uni-tuebingen.de:444/datastore_server";
+    static String AS_URL;
+    static String DSS_URL;
     private final static Logger LOG = LogManager.getLogger(App.class);
 
-
     public static void main(String[] args) throws IOException {
-
         if (args.length == 0) {
             CommandLine.usage(new PostmanCommandLineOptions(), System.out);
             System.exit(0);
@@ -47,6 +45,10 @@ public class App {
         } else if (commandLineParameters.filePath != null) {
             commandLineParameters.ids = Argparser.readProvidedIndentifiers(commandLineParameters.filePath.toFile());
         }
+
+        // Set the server URLS specified by a config file/CLI argument -> use default if none is provided
+        AS_URL = commandLineParameters.as_url;
+        DSS_URL = commandLineParameters.dss_url;
 
         System.out.format("Please provide password for user \'%s\':\n", commandLineParameters.user);
 
