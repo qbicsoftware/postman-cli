@@ -32,6 +32,12 @@ public class PostmanCommandLineOptions {
     @Option(names = {"-t", "--type"}, description = "filter for a given openBIS dataset type")
     public String datasetType = "";
 
+    @Option(names = {"-dss", "--dss_url"}, description = "DataStoreServer URL")
+    public String dss_url = "https://qbis.qbic.uni-tuebingen.de:444/datastore_server";
+
+    @Option(names = {"-as", "-as_url"}, description = "ApplicationServer URL")
+    public String as_url = "https://qbis.qbic.uni-tuebingen.de/openbis/openbis";
+
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help message")
     public boolean helpRequested = false;
 
