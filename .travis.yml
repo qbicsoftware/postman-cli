@@ -1,0 +1,49 @@
+sudo: false
+dist: trusty
+language: java
+jdk: openjdk8
+cache:
+  directories:
+  - $HOME/.m2/repository
+branches:
+  only:
+  - master
+  - development
+before_install: unset _JAVA_OPTIONS
+install: true
+before_script: if [ "$VAADIN_CHARTS_LICENSE_CODE" != "" ]; then echo "$VAADIN_CHARTS_LICENSE_CODE"
+  > ~/.vaadin.charts.developer.license; fi;
+script: mvn --quiet --activate-profiles !development-build,!release-build --settings
+  .travis.settings.xml clean cobertura:cobertura install
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+- mvn --quiet --activate-profiles !development-build,!release-build --settings .travis.settings.xml
+  site
+deploy:
+- skip_cleanup: true
+  provider: script
+  script: mvn --quiet --activate-profiles development-build,!release-build --settings
+    .travis.settings.xml deploy
+  on:
+    branch: development
+    condition: '"$TRAVIS_EVENT_TYPE" = "push"'
+- skip_cleanup: true
+  provider: script
+  script: mvn --quiet --activate-profiles !development-build,release-build --settings
+    .travis.settings.xml deploy
+  on:
+    branch: master
+    condition: '"$TRAVIS_EVENT_TYPE" = "push"'
+notifications:
+  email:
+    on_success: never
+    on_failure: never
+  slack:
+    on_success: never
+    on_failure: always
+    rooms:
+    - secure: '***'
+env:
+  global:
+  - secure: WxQP7vKSfoX38BrHtxXPMWc8057YAehnnPFSkuzrF0I/DuvRv7YLD8oOYqDjEAbPmxS0ybrsoCGWv0NW0ieInWXky75VmALpBgHB2cl2gfkP+i3DhzoH7wmHaeaz81EvXGmiTc5yb42Bve0KM9GBxBLDKqItMdotbAAyLmpy7XedYBT1jWe/9l+psHlItlCsGMGgVJrHy4VxuvT4ytGCLGW6v08XULolyy4I0jRoG4xE+HIcNhg4FRkXSJdwpBQV1No6vXtV9kL7tjaB24vBws09jIxefJX8paRfXak+B6lS14JuowHQsKOMg/JFDsLVah/atKQjpDKcnoOy0njZW1erqYrGfnP/hfpTIKnhju8T3Tg8MMc2NLcd6GLtDNrvqaj8z331dUsUKNq+YpGCGTi2cgz1O8SxO91qkOj+BHiH9RM8VuuuImZ3ukor9C8Ytm9YBT86x9Ie4ia4lkbcQ9jqO/io23tJB3EeDbsFy7UpDyGOUP0svdzIvUUVvZS0actyEQgqXYSCcHtSEzuQDkrX4xY44M/s80MyboMAj5o9K1y1gST3BJWi9cvtexy013u7iPY2E+KSlntojHiZCtOMx1cVe/QXkroXo+jQDqCHwDXThoyBD77QGZUXRVX7geRsMNMkELeShBCglIJ9GoP4oJnHiBq/5iTG67ctQ4I=
+  - secure: MzH1SZyvHFzDeEyDqs2nUPsprMcfO56QLIBnUSaRs352m3zVtO1hwwhEejPEfBoQExYxGMH//m/wvF27QuMyJpbbvyp2e1s/2HYD1UsymE2mJgF32X20YlKI0xoor/FvEtShCQWxnm+8dPZftpUOaMUfpYAF3VupMy7RhGz0UNIUyP+zWqoZIBbvc0Rprnx63BJQMDPOOU3b24LKnhcXfzYOzbp+pbyE+IEKv4KWMzLO58BYpsTHQ066vF30yNL7D5VsulIqFf4svdFXdnD7Gc/P1DjCqdycxNO/2LNfs6mGP13mfOGyRko8BbHZsTjnBDokPc3d1RZqSflT4RxWL7eejZ9FrE9mK5b0nuThzqjPSrQlcYBZvSQMptP39Cvfw5RLg4Unpah+O8vRs4Cbxs9147q3Q52ApOt9PQdGpNdus0fvG/bzuc3O2P5PKUY+I9i++UfYC6xWRsV0LwxNnUpjVRJwCT/9EZCMu2/zyAX7a5yAIbp1wASr+d2zwohfVyimAGP7xd+K75G5UF0p8HRKX9O+mdSbBnmLaOYIomB7HoIhOQaVWM17LMPXBGlP1uDLpvG3QKBcGJoBJmrgpEB/I9kGxuPLxv4tP/MKgDUhLz9k7i063ovKojMjVHlsDgbgbyzjjamdFdRHV9pnVJ1YivkaKc+eHqe+3rRAD2U=
