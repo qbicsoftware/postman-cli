@@ -1,4 +1,4 @@
-[![Build Status](https://qbic-intranet.am10.uni-tuebingen.de/jenkins/job/postman-development/badge/icon)](https://qbic-intranet.am10.uni-tuebingen.de/jenkins/job/postman-development/)
+[![Build Status](https://travis-ci.com/qbicsoftware/postman-cli.svg?branch=development)](https://travis-ci.com/qbicsoftware/postman-cli)[![Code Coverage](https://codecov.io/gh/qbicsoftware/postman-cli/branch/development/graph/badge.svg)](https://codecov.io/gh/qbicsoftware/postman-cli)
 
 # postman
 
