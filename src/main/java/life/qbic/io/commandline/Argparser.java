@@ -1,4 +1,7 @@
-package life.qbic;
+package life.qbic.io.commandline;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.Console;
 import java.io.File;
@@ -9,17 +12,19 @@ import java.util.Scanner;
 
 public class Argparser {
 
+  private final static Logger LOG = LogManager.getLogger(Argparser.class);
+
     /**
    * Retrieve the password from input stream
    * 
    * @return The password
-   * @throws IOException
-   */
-  public static String readPasswordFromInputStream() throws IOException {
+     */
+  public static String readPasswordFromInputStream() {
     char[] password;
     Console console = System.console();
     if (console == null) {
-      System.err.println("Could not get console instance!");
+      LOG.error("Could not get console instance!" +
+              " Please make sure that you're running this from a normal console, a console supplied by an IDE will not suffice!");
       return "";
     }
     password = console.readPassword();
@@ -33,7 +38,7 @@ public class Argparser {
    * @throws IOException
    */
   public static List<String> readProvidedIndentifiers(File file) throws IOException {
-    List<String> identifiers = new ArrayList<String>();
+    List<String> identifiers = new ArrayList<>();
     Scanner scanner = new Scanner(file);
     while (scanner.hasNext()) {
       identifiers.add(scanner.nextLine());

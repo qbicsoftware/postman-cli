@@ -1,4 +1,4 @@
-package life.qbic;
+package life.qbic.util;
 
 
 import life.qbic.UnitConverter.UnitConverterFactory;
@@ -24,7 +24,6 @@ public class ProgressBar {
         this.stepSize = totalFileSize / BARSIZE;
         this.nextProgressJump = this.stepSize;
         this.unitDisplay = UnitConverterFactory.determineBestUnitType(totalFileSize);
-
     }
 
     public void updateProgress(int addDownloadedSize){
@@ -59,18 +58,21 @@ public class ProgressBar {
 
 
     private String buildProgressBar(){
-        String progressBar = "[";
+        StringBuilder progressBar = new StringBuilder("[");
         int numberProgressStrings = Math.min((int) (this.downloadedSize / this.stepSize), BARSIZE);
+
         for (int i = 0; i<numberProgressStrings; i++){
-            progressBar += "#";
+            progressBar.append("#");
         }
         for (int i = numberProgressStrings; i<BARSIZE; i++){
-            progressBar += " ";
+            progressBar.append(" ");
         }
-        progressBar += "]\t";
-        progressBar += String.format("%6.02f/%-7.02f%s", unitDisplay.convertBytesToUnit(this.downloadedSize),
-                unitDisplay.convertBytesToUnit(this.totalFileSize), unitDisplay.getUnitType());
-        return progressBar;
+
+        progressBar.append("]\t");
+        progressBar.append(String.format("%6.02f/%-7.02f%s", unitDisplay.convertBytesToUnit(this.downloadedSize),
+                unitDisplay.convertBytesToUnit(this.totalFileSize), unitDisplay.getUnitType()));
+
+        return progressBar.toString();
     }
 
 

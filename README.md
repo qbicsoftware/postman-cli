@@ -29,6 +29,8 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
   -f, --file=<filePath>       a file with line-separated list of QBiC sample ids
   -h, --help                  display a help message
   -t, --type=<datasetType>    filter for a given openBIS dataset type
+  -s, --type=<suffix>         filter for a given openBIS file suffix
+  -r, --type=<regex>          filter for a given openBIS file regex
   -u, --user=<user>           openBIS user name                          
 ```
 ### Provide a QBiC ID
@@ -138,6 +140,18 @@ TAR
 UNKNOWN
 VCF
 ```
+
+### Filter for file suffix
+
+You can filter for file suffixes, using the `-s` option:    
+Example: -s .pdf
+
+### Filter for file regex
+
+You can filter for files by a provided regex, using the `-r` option:    
+Example: -r .jobscript.FastQC.*
+
+Please note that depending on your favorite shell, you may need quote your regex. 
 
 ### Provide a file with several QBiC IDs
 In order to download datasets from several samples at once, you can provide a simple text file with multiple, line-separated, QBiC IDs and hand it to postman with the `-f` option.
