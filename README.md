@@ -23,15 +23,18 @@ Just execute postman with `java -jar postman-cli.jar` or `java -jar postman.jar 
 Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
                     [-t=<datasetType>] -u=<user> [SAMPLE_ID]...
       [SAMPLE_ID]...          one or more QBiC sample ids
-  -b, --buffer-size=<bufferMultiplier>
+  @/path/to/config.txt        config file which specifies the AS and DSS url
+  -as, --as_url=<url>         AS URL 
+  -dss,--dss_url=<url>        DSS URL 
+  -u,  --user=<user>          openBIS user name   
+  -f,  --file=<filePath>      a file with line-separated list of QBiC sample ids
+  -t,  --type=<datasetType>   filter for a given openBIS dataset type
+  -s,  --type=<suffix>        filter for a given openBIS file suffix
+  -r,  --type=<regex>         filter for a given openBIS file regex     
+  -b,  --buffer-size=<bufferMultiplier>
                               a integer muliple of 1024 bytes (default). Only
                                 change this if you know what you are doing.
-  -f, --file=<filePath>       a file with line-separated list of QBiC sample ids
   -h, --help                  display a help message
-  -t, --type=<datasetType>    filter for a given openBIS dataset type
-  -s, --type=<suffix>         filter for a given openBIS file suffix
-  -r, --type=<regex>          filter for a given openBIS file regex
-  -u, --user=<user>           openBIS user name                          
 ```
 ### Provide a QBiC ID
 The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide the QBiC ID for that sample and your username (same as the one you use for the qPortal):
