@@ -43,7 +43,7 @@ public class App {
             System.out.println("Arguments --identifier and --file are mutually exclusive, please provide only one.");
             System.exit(1);
         } else if (commandLineParameters.filePath != null) {
-            commandLineParameters.ids = Argparser.readProvidedIndentifiers(commandLineParameters.filePath.toFile());
+            commandLineParameters.ids = Argparser.readProvidedIdentifiers(commandLineParameters.filePath.toFile());
         }
 
         // Set the server URLS specified by a config file/CLI argument -> use default if none is provided
@@ -151,8 +151,6 @@ public class App {
             LOG.info("Nothing to download.");
         }
     }
-
-    //TODO fix that it always says download successfully finished even though errors occured blablablalbal
 
 }
 

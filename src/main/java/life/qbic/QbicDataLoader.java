@@ -100,11 +100,8 @@ public class QbicDataLoader {
         try{
             this.sessionToken = this.applicationServer.login(this.user, this.password);
             this.applicationServer.getSessionInformation(this.sessionToken);
-        } catch (AssertionError err){
+        } catch (AssertionError | Exception err) {
             LOG.debug(err);
-            return 1;
-        } catch (Exception exc){
-            LOG.debug(exc);
             return 1;
         }
         return 0;
@@ -129,9 +126,6 @@ public class QbicDataLoader {
         SearchResult<Sample> result = applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
 
         List<DataSet> foundDatasets = new ArrayList<>();
-
-        System.out.println(result.getObjects().get(0).getDataSets());
-
 
         for (Sample sample : result.getObjects()) {
             // add the datasets of the sample itself

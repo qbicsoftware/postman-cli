@@ -11,8 +11,8 @@ public class ProgressBar {
     private String fileName;
     private Long totalFileSize;
     private Long downloadedSize;
-    private final int BARSIZE=jline.TerminalFactory.get().getWidth()/3;
-    private final int MAXFILENAMESIZE=jline.TerminalFactory.get().getWidth()/3;
+    private final int BARSIZE = jline.TerminalFactory.get().getWidth()/3;
+    private final int MAXFILENAMESIZE = jline.TerminalFactory.get().getWidth()/3;
     private UnitDisplay unitDisplay;
 
     public ProgressBar(){}
