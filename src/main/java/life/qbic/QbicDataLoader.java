@@ -19,7 +19,6 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import life.qbic.util.ProgressBar;
-import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -121,7 +120,7 @@ public class QbicDataLoader {
         SampleSearchCriteria criteria = new SampleSearchCriteria();
         criteria.withCode().thatEquals(sampleId);
 
-        // tell the API to fetch all descendents for each returned sample
+        // tell the API to fetch all descendants for each returned sample
         SampleFetchOptions fetchOptions = new SampleFetchOptions();
         DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
         dsFetchOptions.withType();
@@ -131,7 +130,14 @@ public class QbicDataLoader {
 
         List<DataSet> foundDatasets = new ArrayList<>();
 
+        System.out.println(result.getObjects().get(0).getDataSets());
+
+
         for (Sample sample : result.getObjects()) {
+            // add the datasets of the sample itself
+            foundDatasets.addAll(sample.getDataSets());
+
+            // fetch all datasets of the children
             foundDatasets.addAll(fetchDesecendantDatasets(sample));
         }
 
@@ -158,6 +164,7 @@ public class QbicDataLoader {
     private static List<DataSet> fetchDesecendantDatasets(Sample sample) {
         List<DataSet> foundSets = new ArrayList<>();
 
+        // fetch all datasets of the children
         for (Sample child : sample.getChildren()) {
             List<DataSet> foundChildrenDatasets = child.getDataSets();
             foundSets.addAll(foundChildrenDatasets);
@@ -168,50 +175,13 @@ public class QbicDataLoader {
     }
 
     /**
-     * Search method for a given openBIS identifier.
+     * Calls groovy code
+     * filters all IDs by provided regex patterns
      *
-     * LIKELY NOT USEFUL ANYMORE - RECURSIVE METHOD SHOULD WORK JUST AS WELL -> use findAllDatasetsRecursive
-     *
-     * @param sampleId An openBIS sample ID
-     * @return A list of all data sets attached to the sample ID
+     * @param ident
+     * @param regexPatterns
+     * @return
      */
-    @Deprecated
-    public List<DataSet> findAllDatasets(String sampleId) {
-        SampleSearchCriteria criteria = new SampleSearchCriteria();
-        criteria.withCode().thatEquals(sampleId);
-
-        // tell the API to fetch all descendents for each returned sample
-        SampleFetchOptions fetchOptions = new SampleFetchOptions();
-        DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
-        dsFetchOptions.withType();
-        fetchOptions.withChildrenUsing(fetchOptions);
-        fetchOptions.withDataSetsUsing(dsFetchOptions);
-        SearchResult<Sample> result = applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-
-        // get all datasets of sample with provided sample code and all descendants
-        List<DataSet> foundDatasets = new ArrayList<>();
-        for (Sample sample : result.getObjects()) {
-            foundDatasets.addAll(sample.getDataSets());
-            for (Sample desc : sample.getChildren()) {
-                foundDatasets.addAll(desc.getDataSets());
-            }
-        }
-
-        if (filterType.isEmpty())
-            return foundDatasets;
-
-        List<DataSet> filteredDatasets = new ArrayList<>();
-        for (DataSet ds : foundDatasets){
-            LOG.info(ds.getType().getCode() + " found.");
-            if (this.filterType.equals(ds.getType().getCode())){
-
-                filteredDatasets.add(ds);
-            }
-        }
-
-        return filteredDatasets;
-    }
-
     public List<IDataSetFileId> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
         List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
 
@@ -344,5 +314,51 @@ public class QbicDataLoader {
         }
         return 0;
     }
+
+    /**
+     * Search method for a given openBIS identifier.
+     *
+     * LIKELY NOT USEFUL ANYMORE - RECURSIVE METHOD SHOULD WORK JUST AS WELL -> use findAllDatasetsRecursive
+     *
+     * @param sampleId An openBIS sample ID
+     * @return A list of all data sets attached to the sample ID
+     */
+    @Deprecated
+    public List<DataSet> findAllDatasets(String sampleId) {
+        SampleSearchCriteria criteria = new SampleSearchCriteria();
+        criteria.withCode().thatEquals(sampleId);
+
+        // tell the API to fetch all descendents for each returned sample
+        SampleFetchOptions fetchOptions = new SampleFetchOptions();
+        DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
+        dsFetchOptions.withType();
+        fetchOptions.withChildrenUsing(fetchOptions);
+        fetchOptions.withDataSetsUsing(dsFetchOptions);
+        SearchResult<Sample> result = applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
+
+        // get all datasets of sample with provided sample code and all descendants
+        List<DataSet> foundDatasets = new ArrayList<>();
+        for (Sample sample : result.getObjects()) {
+            foundDatasets.addAll(sample.getDataSets());
+            for (Sample desc : sample.getChildren()) {
+                foundDatasets.addAll(desc.getDataSets());
+            }
+        }
+
+        if (filterType.isEmpty())
+            return foundDatasets;
+
+        List<DataSet> filteredDatasets = new ArrayList<>();
+        for (DataSet ds : foundDatasets){
+            LOG.info(ds.getType().getCode() + " found.");
+            if (this.filterType.equals(ds.getType().getCode())){
+
+                filteredDatasets.add(ds);
+            }
+        }
+
+        return filteredDatasets;
+    }
+
 }
     
