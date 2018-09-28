@@ -12,7 +12,7 @@ We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/op
 You can download postman from the GitHub release page: https://github.com/qbicsoftware/postman-cli/releases .
 
 ## Requirements
-You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at least version 1.8 or 9. And the client's host must have allowance to connect to the server, which is determined by our firewall settings. If you are unsure, if your client is allowed to connect, contact us at support@qbic.zendesk.com.
+You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at least version 1.8 or 11. And the client's host must have allowance to connect to the server, which is determined by our firewall settings. If you are unsure, if your client is allowed to connect, contact us at support@qbic.zendesk.com.
 
 ## Usage
 ### Options
@@ -160,6 +160,24 @@ Please note that depending on your favorite shell, you may need quote your regex
 In order to download datasets from several samples at once, you can provide a simple text file with multiple, line-separated, QBiC IDs and hand it to postman with the `-f` option.
 
 postman will automatically iterate over the IDs and try to download them.
+
+### Config file
+
+Postman uses picocli file arguments. Therefore a config file has to be passed with the '@' prefix to its path:    
+Example: '@/path/to/config'    
+The structure of the configuration file is:       <code>[-cliOption] [value] </code>   
+For example: To set the ApplicationServerURL to another URL we have to use:    
+<code>-as [URL] </code>    
+Therefore to use our openbis URL we write the following line in the config file (Anything beginning with '#' is a comment):    
+<code># Set the AS_URL (ApplicationServerURL) to the value defined below </code>    
+<code>-as https://qbis.qbic.uni-tuebingen.de/openbis/openbis</code>       
+The following config file options are currently supported:    
+AS_URL (ApplicationServerURL)       
+-as [URL]       
+DSS_URL (DataStoreServerURL)     
+-dss [URL]       
+
+A default file is provided on this repository as 'config.txt'.    
 
 
 ### Performance issues
