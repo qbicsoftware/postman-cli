@@ -177,8 +177,7 @@ AS_URL (ApplicationServerURL)
 DSS_URL (DataStoreServerURL)     
 -dss [URL]       
 
-A default file is provided on this repository as 'config.txt'.    
-
+A default file is provided on this repository as 'config.txt'. If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.   
 
 ### Performance issues
 We discovered, that a default buffer size of 1024 bytes seems not always to get all out of the performance that is possible for the dataset download. Therefore, we allow you to enter a multipler Integer value that increases the buffer size. For example a multipler of 2 will result in 2x1024 = 2048 bytes and so on.
