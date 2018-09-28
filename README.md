@@ -164,7 +164,10 @@ postman will automatically iterate over the IDs and try to download them.
 ### Config file
 
 Postman uses picocli file arguments. Therefore a config file has to be passed with the '@' prefix to its path:    
-Example: '@/path/to/config'    
+Example: 
+```bash
+java -jar postman.jar -u <user> <sample> @path/to/config.txt 
+```
 The structure of the configuration file is:       <code>[-cliOption] [value] </code>   
 For example: To set the ApplicationServerURL to another URL we have to use:    
 <code>-as [URL] </code>    
