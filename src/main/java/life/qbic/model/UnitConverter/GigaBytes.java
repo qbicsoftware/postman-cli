@@ -1,11 +1,11 @@
-package life.qbic.UnitConverter;
+package life.qbic.model.UnitConverter;
 
 
-class TeraBytes implements UnitDisplay{
+class GigaBytes implements UnitDisplay{
 
-    private String unit = "Tb";
+    private String unit = "Gb";
 
-    private double divisor = Math.pow(10, 12);
+    private double divisor = Math.pow(10, 9);
 
 
     @Override

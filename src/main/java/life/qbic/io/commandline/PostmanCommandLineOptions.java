@@ -4,9 +4,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+
+@Command(name = "Postman",
+        footer = "Optional: specify a config file by running postman with '@/path/to/config.txt'. Details can be found in the README.",
+        description = "A client software for dataset downloads from QBiC's data management system openBIS.")
 public class PostmanCommandLineOptions {
 
     @Option(names = {"-u", "--user"}, required = true, description = "openBIS user name")

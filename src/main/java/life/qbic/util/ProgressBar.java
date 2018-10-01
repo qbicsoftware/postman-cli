@@ -1,8 +1,8 @@
 package life.qbic.util;
 
 
-import life.qbic.UnitConverter.UnitConverterFactory;
-import life.qbic.UnitConverter.UnitDisplay;
+import life.qbic.model.UnitConverter.UnitConverterFactory;
+import life.qbic.model.UnitConverter.UnitDisplay;
 
 public class ProgressBar {
 

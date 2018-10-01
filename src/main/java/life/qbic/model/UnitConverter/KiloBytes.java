@@ -1,11 +1,11 @@
-package life.qbic.UnitConverter;
+package life.qbic.model.UnitConverter;
 
 
-class Bytes implements UnitDisplay{
+class KiloBytes implements UnitDisplay{
 
-    private String unit = "bytes";
+    private String unit = "kb";
 
-    private double divisor = 1;
+    private double divisor = Math.pow(10, 3);
 
 
     @Override
