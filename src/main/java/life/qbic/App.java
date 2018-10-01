@@ -58,6 +58,7 @@ public class App {
             System.exit(1);
         }
         LOG.info("Connection to openBIS was successful.");
+
         return qbicDataDownloader;
     }
 

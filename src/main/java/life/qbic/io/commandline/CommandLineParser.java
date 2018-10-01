@@ -12,6 +12,8 @@ public class CommandLineParser {
      * Prints help menu if no commandline parameters were passed
      * verifies whether all mandatory commandline parameters have been passed (IDs and username)
      *
+     * also reads the provided identifiers if they were passed as a file
+     *
      * @param args
      * @return
      * @throws IOException
@@ -39,6 +41,7 @@ public class CommandLineParser {
         } else if (commandLineParameters.filePath != null) {
             commandLineParameters.ids = IdentifierParser.readProvidedIdentifiers(commandLineParameters.filePath.toFile());
         }
+
         return commandLineParameters;
     }
 }

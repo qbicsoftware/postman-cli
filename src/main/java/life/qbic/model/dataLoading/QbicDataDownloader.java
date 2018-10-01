@@ -48,18 +48,18 @@ public class QbicDataDownloader {
      */
     public QbicDataDownloader(String AppServerUri, String DataServerUri,
                               String user, String password,
-                              int bufferSize, String filterType){
+                              int bufferSize, String filterType) {
         this.defaultBufferSize = bufferSize;
         this.filterType = filterType;
 
-        if (!AppServerUri.isEmpty()){
+        if (!AppServerUri.isEmpty()) {
             this.applicationServer = HttpInvokerUtils.createServiceStub(
                     IApplicationServerApi.class,
                     AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
         } else {
             this.applicationServer = null;
         }
-        if (!DataServerUri.isEmpty()){
+        if (!DataServerUri.isEmpty()) {
             this.dataStoreServer = HttpInvokerUtils.createStreamSupportingServiceStub(
                     IDataStoreServerApi.class,
                     DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
@@ -89,13 +89,14 @@ public class QbicDataDownloader {
      * @return 0 if successful, 1 else
      */
     public int login() {
-        try{
+        try {
             this.sessionToken = this.applicationServer.login(this.user, this.password);
             this.applicationServer.getSessionInformation(this.sessionToken);
         } catch (AssertionError | Exception err) {
             LOG.debug(err);
             return 1;
         }
+
         return 0;
     }
 
