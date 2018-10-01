@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class Argparser {
+public class CommandLineParser {
 
-  private final static Logger LOG = LogManager.getLogger(Argparser.class);
+  private final static Logger LOG = LogManager.getLogger(CommandLineParser.class);
 
     /**
    * Retrieve the password from input stream

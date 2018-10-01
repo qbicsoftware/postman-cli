@@ -2,7 +2,7 @@
 
 # postman
 
-**Current stable version: 0.2.0 (16. July 2018)**
+**Current stable version: 0.3.0 (01. October 2018)**
 
 A client software written in Java for dataset downloads from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
 

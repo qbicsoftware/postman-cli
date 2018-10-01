@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.util.List;
 
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
-import life.qbic.io.commandline.Argparser;
+import life.qbic.dataLoading.QbicDataFinder;
+import life.qbic.dataLoading.QbicDataLoader;
+import life.qbic.io.commandline.CommandLineParser;
+import life.qbic.io.commandline.CommandLineVerification;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
-import picocli.CommandLine;
 
 
 /**
@@ -23,36 +25,28 @@ public class App {
     private final static Logger LOG = LogManager.getLogger(App.class);
 
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) {
-            CommandLine.usage(new PostmanCommandLineOptions(), System.out);
-            System.exit(0);
-        }
-
-        PostmanCommandLineOptions commandLineParameters = new PostmanCommandLineOptions();
-        new CommandLine(commandLineParameters).parse(args);
-
-        if (commandLineParameters.helpRequested) {
-            CommandLine.usage(new PostmanCommandLineOptions(), System.out);
-            System.exit(0);
-        }
-
-        if ((commandLineParameters.ids == null || commandLineParameters.ids.isEmpty()) && commandLineParameters.filePath == null) {
-            System.out.println("You have to provide one ID as command line argument or a file containing IDs.");
-            System.exit(1);
-        } else if ((commandLineParameters.ids != null) && (commandLineParameters.filePath != null)) {
-            System.out.println("Arguments --identifier and --file are mutually exclusive, please provide only one.");
-            System.exit(1);
-        } else if (commandLineParameters.filePath != null) {
-            commandLineParameters.ids = Argparser.readProvidedIdentifiers(commandLineParameters.filePath.toFile());
-        }
+        PostmanCommandLineOptions commandLineParameters = CommandLineVerification.verifyCommandLineParameters(args);
 
         // Set the server URLS specified by a config file/CLI argument -> use default if none is provided
         AS_URL = commandLineParameters.as_url;
         DSS_URL = commandLineParameters.dss_url;
 
+        QbicDataLoader qbicDataLoader = loginToOpenBIS(commandLineParameters);
+
+        downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataLoader);
+    }
+
+    /**
+     * Logs into OpenBIS
+     * asks for and verifies password
+     *
+     * @param commandLineParameters
+     * @return
+     */
+    private static QbicDataLoader loginToOpenBIS(PostmanCommandLineOptions commandLineParameters) {
         System.out.format("Please provide password for user \'%s\':\n", commandLineParameters.user);
 
-        String password = Argparser.readPasswordFromInputStream();
+        String password = CommandLineParser.readPasswordFromInputStream();
 
         if (password.isEmpty()) {
             System.out.println("You need to provide a password.");
@@ -68,6 +62,22 @@ public class App {
             System.exit(1);
         }
         LOG.info("Connection to openBIS was successful.");
+        return qbicDataLoader;
+    }
+
+    /**
+     * Downloads the files that the user requested
+     * checks whether any filtering option (suffix or regex) has been passed and applies filtering if needed
+     *
+     * @param commandLineParameters
+     * @param qbicDataLoader
+     * @throws IOException
+     */
+    private static void downloadRequestedFilesOfDatasets(PostmanCommandLineOptions commandLineParameters, QbicDataLoader qbicDataLoader) throws IOException {
+        QbicDataFinder qbicDataFinder = new QbicDataFinder(qbicDataLoader.getApplicationServer(),
+                                                           qbicDataLoader.getDataStoreServer(),
+                                                           qbicDataLoader.getSessionToken(),
+                                                           qbicDataLoader.getFilterType());
 
         LOG.info(String.format("%s provided openBIS identifiers have been found: %s",
                 commandLineParameters.ids.size(), commandLineParameters.ids.toString()));
@@ -76,7 +86,7 @@ public class App {
         if (!commandLineParameters.suffixes.isEmpty()) {
             for (String ident : commandLineParameters.ids) {
                 LOG.info(String.format("Downloading files for provided identifier %s", ident));
-                List<IDataSetFileId> foundSuffixFilteredIDs = qbicDataLoader.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
+                List<IDataSetFileId> foundSuffixFilteredIDs = qbicDataFinder.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
 
                 LOG.info(String.format("Number of files found: %s", foundSuffixFilteredIDs.size()));
 
@@ -86,7 +96,7 @@ public class App {
         } else if (!commandLineParameters.regexPatterns.isEmpty()) {
             for (String ident : commandLineParameters.ids) {
                 LOG.info(String.format("Downloading files for provided identifier %s", ident));
-                List<IDataSetFileId> foundRegexFilteredIDs = qbicDataLoader.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
+                List<IDataSetFileId> foundRegexFilteredIDs = qbicDataFinder.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
 
                 LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
 
@@ -96,7 +106,7 @@ public class App {
             // no suffix or regex was supplied -> download all datasets
             for (String ident : commandLineParameters.ids) {
                 LOG.info(String.format("Downloading files for provided identifier %s", ident));
-                List<DataSet> foundDataSets = qbicDataLoader.findAllDatasetsRecursive(ident);
+                List<DataSet> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
 
                 LOG.info(String.format("Number of data sets found: %s", foundDataSets.size()));
 
@@ -122,6 +132,7 @@ public class App {
             }
         }
     }
+
 
     /**
      * downloads all IDs which were previously filtered by either suffixes or regexes
