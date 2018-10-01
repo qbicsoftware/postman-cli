@@ -40,7 +40,7 @@ public class QbicDataFinder {
     }
 
     /**
-     * finds all datasets of a given sampleID, even those of its children - recursively
+     * Finds all datasets of a given sampleID, even those of its children - recursively
      *
      * @param sampleId
      * @return all found datasets for a given sampleID
@@ -82,7 +82,7 @@ public class QbicDataFinder {
     }
 
     /**
-     * fetches all datasets, even those of children - recursively
+     * Fetches all datasets, even those of children - recursively
      *
      * @param sample
      * @return all recursively found datasets
@@ -102,7 +102,7 @@ public class QbicDataFinder {
 
     /**
      * Calls groovy code
-     * filters all IDs by provided regex patterns
+     * Filters all IDs by provided regex patterns
      *
      * @param ident
      * @param regexPatterns
