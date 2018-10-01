@@ -1,57 +1,44 @@
 package life.qbic.io.commandline;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import life.qbic.io.parser.IdentifierParser;
+import picocli.CommandLine;
 
-import java.io.Console;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
 public class CommandLineParser {
 
-  private final static Logger LOG = LogManager.getLogger(CommandLineParser.class);
-
     /**
-   * Retrieve the password from input stream
-   * 
-   * @return The password
+     * parses all passed CLI parameters
+     * Prints help menu if no commandline parameters were passed
+     * verifies whether all mandatory commandline parameters have been passed (IDs and username)
+     *
+     * @param args
+     * @return
+     * @throws IOException
      */
-  public static String readPasswordFromInputStream() {
-    char[] password;
-    Console console = System.console();
-    if (console == null) {
-      LOG.error("Could not get console instance!" +
-              " Please make sure that you're running this from a normal console, a console supplied by an IDE will not suffice!");
-      return "";
+    public static PostmanCommandLineOptions parseAndVerifyCommandLineParameters(String[] args) throws IOException {
+        if (args.length == 0) {
+            CommandLine.usage(new PostmanCommandLineOptions(), System.out);
+            System.exit(0);
+        }
+
+        PostmanCommandLineOptions commandLineParameters = new PostmanCommandLineOptions();
+        new CommandLine(commandLineParameters).parse(args);
+
+        if (commandLineParameters.helpRequested) {
+            CommandLine.usage(new PostmanCommandLineOptions(), System.out);
+            System.exit(0);
+        }
+
+        if ((commandLineParameters.ids == null || commandLineParameters.ids.isEmpty()) && commandLineParameters.filePath == null) {
+            System.out.println("You have to provide one ID as command line argument or a file containing IDs.");
+            System.exit(1);
+        } else if ((commandLineParameters.ids != null) && (commandLineParameters.filePath != null)) {
+            System.out.println("Arguments --identifier and --file are mutually exclusive, please provide only one.");
+            System.exit(1);
+        } else if (commandLineParameters.filePath != null) {
+            commandLineParameters.ids = IdentifierParser.readProvidedIdentifiers(commandLineParameters.filePath.toFile());
+        }
+        return commandLineParameters;
     }
-    password = console.readPassword();
-    return new String(password);
-  }
-
-  /**
-   * Retrieve the identifiers from provided file
-   * 
-   * @return Identifiers for which datasets will be retrieved
-   * @throws IOException
-   */
-  public static List<String> readProvidedIdentifiers(File file) throws IOException {
-    List<String> identifiers = new ArrayList<>();
-    Scanner scanner = new Scanner(file);
-    while (scanner.hasNext()) {
-      identifiers.add(scanner.nextLine());
-    }
-    return identifiers;
-  }
-
-  /**
-   * Definition of some useful enum types for the cmd attributes
-   */
-  public enum Attribute {
-    HELP, USERNAME, ID, FILE, BUFFER_SIZE
-  }
-
 }
-

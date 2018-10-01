@@ -1,4 +1,4 @@
-package life.qbic.dataLoading;
+package life.qbic.model.dataLoading;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
