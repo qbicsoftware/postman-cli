@@ -4,9 +4,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+
+@Command(name = "Postman",
+        footer = "Optional: specify a config file by running postman with '@/path/to/config.txt'. Details can be found in the README.",
+        description = "A client software for dataset downloads from QBiC's data management system openBIS.")
 public class PostmanCommandLineOptions {
 
     @Option(names = {"-u", "--user"}, required = true, description = "openBIS user name")
@@ -31,6 +36,12 @@ public class PostmanCommandLineOptions {
 
     @Option(names = {"-t", "--type"}, description = "filter for a given openBIS dataset type")
     public String datasetType = "";
+
+    @Option(names = {"-dss", "--dss_url"}, description = "DataStoreServer URL")
+    public String dss_url = "https://qbis.qbic.uni-tuebingen.de:444/datastore_server";
+
+    @Option(names = {"-as", "-as_url"}, description = "ApplicationServer URL")
+    public String as_url = "https://qbis.qbic.uni-tuebingen.de/openbis/openbis";
 
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help message")
     public boolean helpRequested = false;

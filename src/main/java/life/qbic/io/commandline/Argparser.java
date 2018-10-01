@@ -37,7 +37,7 @@ public class Argparser {
    * @return Identifiers for which datasets will be retrieved
    * @throws IOException
    */
-  public static List<String> readProvidedIndentifiers(File file) throws IOException {
+  public static List<String> readProvidedIdentifiers(File file) throws IOException {
     List<String> identifiers = new ArrayList<>();
     Scanner scanner = new Scanner(file);
     while (scanner.hasNext()) {

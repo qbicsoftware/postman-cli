@@ -18,13 +18,11 @@ import picocli.CommandLine;
  */
 public class App {
 
-    final static String AS_URL = "https://qbis.qbic.uni-tuebingen.de/openbis/openbis";
-    final static String DSS_URL = "https://qbis.qbic.uni-tuebingen.de:444/datastore_server";
+    static String AS_URL;
+    static String DSS_URL;
     private final static Logger LOG = LogManager.getLogger(App.class);
 
-
     public static void main(String[] args) throws IOException {
-
         if (args.length == 0) {
             CommandLine.usage(new PostmanCommandLineOptions(), System.out);
             System.exit(0);
@@ -45,8 +43,12 @@ public class App {
             System.out.println("Arguments --identifier and --file are mutually exclusive, please provide only one.");
             System.exit(1);
         } else if (commandLineParameters.filePath != null) {
-            commandLineParameters.ids = Argparser.readProvidedIndentifiers(commandLineParameters.filePath.toFile());
+            commandLineParameters.ids = Argparser.readProvidedIdentifiers(commandLineParameters.filePath.toFile());
         }
+
+        // Set the server URLS specified by a config file/CLI argument -> use default if none is provided
+        AS_URL = commandLineParameters.as_url;
+        DSS_URL = commandLineParameters.dss_url;
 
         System.out.format("Please provide password for user \'%s\':\n", commandLineParameters.user);
 
@@ -100,12 +102,19 @@ public class App {
 
                 if (foundDataSets.size() > 0) {
                     LOG.info("Initialize download ...");
-                    int datasetDownloadReturnCode = qbicDataLoader.downloadDataset(foundDataSets);
-                    if (datasetDownloadReturnCode != 0) {
-                        LOG.error("Error while downloading dataset: " + ident);
+                    int datasetDownloadReturnCode = -1;
+                    try {
+                        datasetDownloadReturnCode = qbicDataLoader.downloadDataset(foundDataSets);
+                    } catch (NullPointerException e) {
+                        LOG.error("Datasets were found by the application server, but could not be found on the datastore server for "
+                                + ident + "." + " Try to supply the correct datastore server using a config file!");
                     }
 
-                    LOG.info("Download successfully finished.");
+                    if (datasetDownloadReturnCode != 0) {
+                        LOG.error("Error while downloading dataset: " + ident);
+                    } else {
+                        LOG.info("Download successfully finished.");
+                    }
 
                 } else {
                     LOG.info("Nothing to download.");
@@ -125,12 +134,19 @@ public class App {
     private static void downloadFilteredIDs(QbicDataLoader qbicDataLoader, String ident, List<IDataSetFileId> foundFilteredIDs) throws IOException {
         if (foundFilteredIDs.size() > 0) {
             LOG.info("Initialize download ...");
-            int filesDownloadReturnCode = qbicDataLoader.downloadFilesByID(foundFilteredIDs);
+            int filesDownloadReturnCode = -1;
+            try {
+                filesDownloadReturnCode = qbicDataLoader.downloadFilesByID(foundFilteredIDs);
+            } catch (NullPointerException e) {
+                LOG.error("Datasets were found by the application server, but could not be found on the datastore server for "
+                        + ident + "." + " Try to supply the correct datastore server using a config file!");
+            }
             if (filesDownloadReturnCode != 0) {
                 LOG.error("Error while downloading dataset: " + ident);
+            } else {
+                LOG.info("Download successfully finished");
             }
 
-            LOG.info("Download successfully finished");
         } else {
             LOG.info("Nothing to download.");
         }
