@@ -1,25 +1,17 @@
-package life.qbic;
+package life.qbic.model.dataLoading;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
-import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
-import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.fetchoptions.DataSetFetchOptions;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
-import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
-import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.fetchoptions.SampleFetchOptions;
-import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.search.SampleSearchCriteria;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownload;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadReader;
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
-import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,7 +19,7 @@ import java.io.*;
 import java.util.*;
 
 
-public class QbicDataLoader {
+public class QbicDataDownloader {
 
     private String user;
 
@@ -37,7 +29,7 @@ public class QbicDataLoader {
 
     private IDataStoreServerApi dataStoreServer;
 
-    private final static Logger LOG = LogManager.getLogger(QbicDataLoader.class);
+    private final static Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
 
     private String sessionToken;
 
@@ -54,20 +46,20 @@ public class QbicDataLoader {
      * @param password The openBis password
      * @param bufferSize The buffer size for the InputStream reader
      */
-    public QbicDataLoader(String AppServerUri, String DataServerUri,
-                                         String user, String password,
-                                         int bufferSize, String filterType){
+    public QbicDataDownloader(String AppServerUri, String DataServerUri,
+                              String user, String password,
+                              int bufferSize, String filterType) {
         this.defaultBufferSize = bufferSize;
         this.filterType = filterType;
 
-        if (!AppServerUri.isEmpty()){
+        if (!AppServerUri.isEmpty()) {
             this.applicationServer = HttpInvokerUtils.createServiceStub(
                     IApplicationServerApi.class,
                     AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
         } else {
             this.applicationServer = null;
         }
-        if (!DataServerUri.isEmpty()){
+        if (!DataServerUri.isEmpty()) {
             this.dataStoreServer = HttpInvokerUtils.createStreamSupportingServiceStub(
                     IDataStoreServerApi.class,
                     DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
@@ -85,7 +77,7 @@ public class QbicDataLoader {
      * @param password The openBIS user's password
      * @return QBiCDataLoader instance
      */
-    public QbicDataLoader setCredentials(String user, String password) {
+    public QbicDataDownloader setCredentials(String user, String password) {
         this.user = user;
         this.password = password;
         return this;
@@ -97,125 +89,15 @@ public class QbicDataLoader {
      * @return 0 if successful, 1 else
      */
     public int login() {
-        try{
+        try {
             this.sessionToken = this.applicationServer.login(this.user, this.password);
             this.applicationServer.getSessionInformation(this.sessionToken);
         } catch (AssertionError | Exception err) {
             LOG.debug(err);
             return 1;
         }
+
         return 0;
-    }
-
-    /**
-     * finds all datasets of a given sampleID, even those of its children - recursively
-     *
-     * @param sampleId
-     * @return all found datasets for a given sampleID
-     */
-    public List<DataSet> findAllDatasetsRecursive(String sampleId) {
-        SampleSearchCriteria criteria = new SampleSearchCriteria();
-        criteria.withCode().thatEquals(sampleId);
-
-        // tell the API to fetch all descendants for each returned sample
-        SampleFetchOptions fetchOptions = new SampleFetchOptions();
-        DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
-        dsFetchOptions.withType();
-        fetchOptions.withChildrenUsing(fetchOptions);
-        fetchOptions.withDataSetsUsing(dsFetchOptions);
-        SearchResult<Sample> result = applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-
-        List<DataSet> foundDatasets = new ArrayList<>();
-
-        for (Sample sample : result.getObjects()) {
-            // add the datasets of the sample itself
-            foundDatasets.addAll(sample.getDataSets());
-
-            // fetch all datasets of the children
-            foundDatasets.addAll(fetchDesecendantDatasets(sample));
-        }
-
-        if (filterType.isEmpty())
-            return foundDatasets;
-
-        List<DataSet> filteredDatasets = new ArrayList<>();
-        for (DataSet ds : foundDatasets){
-            LOG.info(ds.getType().getCode() + " found.");
-            if (this.filterType.equals(ds.getType().getCode())){
-                filteredDatasets.add(ds);
-            }
-        }
-
-        return filteredDatasets;
-    }
-
-    /**
-     * fetches all datasets, even those of children - recursively
-     *
-     * @param sample
-     * @return all recursively found datasets
-     */
-    private static List<DataSet> fetchDesecendantDatasets(Sample sample) {
-        List<DataSet> foundSets = new ArrayList<>();
-
-        // fetch all datasets of the children
-        for (Sample child : sample.getChildren()) {
-            List<DataSet> foundChildrenDatasets = child.getDataSets();
-            foundSets.addAll(foundChildrenDatasets);
-            foundSets.addAll(fetchDesecendantDatasets(child));
-        }
-
-        return foundSets;
-    }
-
-    /**
-     * Calls groovy code
-     * filters all IDs by provided regex patterns
-     *
-     * @param ident
-     * @param regexPatterns
-     * @return
-     */
-    public List<IDataSetFileId> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
-        List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
-
-        return QbicDataLoaderRegexUtil.findAllRegexFilteredIDsGroovy(regexPatterns, allDatasets, dataStoreServer, sessionToken);
-    }
-
-    /**
-     * Finds all IDs of files filtered by a suffix
-     *
-     * @param ident
-     * @param suffixes
-     * @return
-     */
-    public List<IDataSetFileId> findAllSuffixFilteredIDs(String ident, List<String> suffixes) {
-        List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
-        List<IDataSetFileId> allFileIDs = new ArrayList<>();
-
-        for (DataSet ds : allDatasets) {
-            // we cannot access the files directly of the datasets -> we need to query for the files first using the datasetID
-            DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
-            criteria.withDataSet().withCode().thatEquals(ds.getCode());
-            SearchResult<DataSetFile> result = dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
-            List<DataSetFile> files = result.getObjects();
-
-            List<IDataSetFileId> fileIds = new ArrayList<>();
-
-            // remove everything that doesn't match the suffix -> only add if suffix matches
-            for (DataSetFile file : files)
-            {
-                for (String suffix : suffixes) {
-                    if (StringUtil.endsWithIgnoreCase(file.getPermId().toString(), suffix)) {
-                        fileIds.add(file.getPermId());
-                    }
-                }
-            }
-
-            allFileIDs.addAll(fileIds);
-        }
-
-        return allFileIDs;
     }
 
     /**
@@ -266,10 +148,11 @@ public class QbicDataLoader {
 
     /**
      * Download a given list of data sets
+     *
      * @param dataSetList A list of data sets
      * @return 0 if successful, 1 else
      */
-    int downloadDataset(List<DataSet> dataSetList) throws IOException{
+    public int downloadDataset(List<DataSet> dataSetList) throws IOException{
         for (DataSet dataset : dataSetList) {
             DataSetPermId permID = dataset.getPermId();
             DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
@@ -306,52 +189,106 @@ public class QbicDataLoader {
 
             }
         }
+
         return 0;
     }
 
     /**
-     * Search method for a given openBIS identifier.
+     * Downloads the files that the user requested
+     * checks whether any filtering option (suffix or regex) has been passed and applies filtering if needed
      *
-     * LIKELY NOT USEFUL ANYMORE - RECURSIVE METHOD SHOULD WORK JUST AS WELL -> use findAllDatasetsRecursive
-     *
-     * @param sampleId An openBIS sample ID
-     * @return A list of all data sets attached to the sample ID
+     * @param commandLineParameters
+     * @param qbicDataDownloader
+     * @throws IOException
      */
-    @Deprecated
-    public List<DataSet> findAllDatasets(String sampleId) {
-        SampleSearchCriteria criteria = new SampleSearchCriteria();
-        criteria.withCode().thatEquals(sampleId);
+    public void downloadRequestedFilesOfDatasets(PostmanCommandLineOptions commandLineParameters, QbicDataDownloader qbicDataDownloader) throws IOException {
+        QbicDataFinder qbicDataFinder = new QbicDataFinder(applicationServer,
+                                                           dataStoreServer,
+                                                           sessionToken,
+                                                           filterType);
 
-        // tell the API to fetch all descendents for each returned sample
-        SampleFetchOptions fetchOptions = new SampleFetchOptions();
-        DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
-        dsFetchOptions.withType();
-        fetchOptions.withChildrenUsing(fetchOptions);
-        fetchOptions.withDataSetsUsing(dsFetchOptions);
-        SearchResult<Sample> result = applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
+        LOG.info(String.format("%s provided openBIS identifiers have been found: %s",
+                commandLineParameters.ids.size(), commandLineParameters.ids.toString()));
 
-        // get all datasets of sample with provided sample code and all descendants
-        List<DataSet> foundDatasets = new ArrayList<>();
-        for (Sample sample : result.getObjects()) {
-            foundDatasets.addAll(sample.getDataSets());
-            for (Sample desc : sample.getChildren()) {
-                foundDatasets.addAll(desc.getDataSets());
+        // a suffix was provided -> only download files which contain the suffix string
+        if (!commandLineParameters.suffixes.isEmpty()) {
+            for (String ident : commandLineParameters.ids) {
+                LOG.info(String.format("Downloading files for provided identifier %s", ident));
+                List<IDataSetFileId> foundSuffixFilteredIDs = qbicDataFinder.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
+
+                LOG.info(String.format("Number of files found: %s", foundSuffixFilteredIDs.size()));
+
+                downloadFilteredIDs(qbicDataDownloader, ident, foundSuffixFilteredIDs);
+            }
+            // a regex pattern was provided -> only download files which contain the regex pattern
+        } else if (!commandLineParameters.regexPatterns.isEmpty()) {
+            for (String ident : commandLineParameters.ids) {
+                LOG.info(String.format("Downloading files for provided identifier %s", ident));
+                List<IDataSetFileId> foundRegexFilteredIDs = qbicDataFinder.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
+
+                LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
+
+                downloadFilteredIDs(qbicDataDownloader, ident, foundRegexFilteredIDs);
+            }
+        } else {
+            // no suffix or regex was supplied -> download all datasets
+            for (String ident : commandLineParameters.ids) {
+                LOG.info(String.format("Downloading files for provided identifier %s", ident));
+                List<DataSet> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+
+                LOG.info(String.format("Number of data sets found: %s", foundDataSets.size()));
+
+                if (foundDataSets.size() > 0) {
+                    LOG.info("Initialize download ...");
+                    int datasetDownloadReturnCode = -1;
+                    try {
+                        datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(foundDataSets);
+                    } catch (NullPointerException e) {
+                        LOG.error("Datasets were found by the application server, but could not be found on the datastore server for "
+                                + ident + "." + " Try to supply the correct datastore server using a config file!");
+                    }
+
+                    if (datasetDownloadReturnCode != 0) {
+                        LOG.error("Error while downloading dataset: " + ident);
+                    } else {
+                        LOG.info("Download successfully finished.");
+                    }
+
+                } else {
+                    LOG.info("Nothing to download.");
+                }
             }
         }
+    }
 
-        if (filterType.isEmpty())
-            return foundDatasets;
 
-        List<DataSet> filteredDatasets = new ArrayList<>();
-        for (DataSet ds : foundDatasets){
-            LOG.info(ds.getType().getCode() + " found.");
-            if (this.filterType.equals(ds.getType().getCode())){
-
-                filteredDatasets.add(ds);
+    /**
+     * downloads all IDs which were previously filtered by either suffixes or regexes
+     *
+     * @param qbicDataDownloader
+     * @param ident
+     * @param foundFilteredIDs
+     * @throws IOException
+     */
+    private static void downloadFilteredIDs(QbicDataDownloader qbicDataDownloader, String ident, List<IDataSetFileId> foundFilteredIDs) throws IOException {
+        if (foundFilteredIDs.size() > 0) {
+            LOG.info("Initialize download ...");
+            int filesDownloadReturnCode = -1;
+            try {
+                filesDownloadReturnCode = qbicDataDownloader.downloadFilesByID(foundFilteredIDs);
+            } catch (NullPointerException e) {
+                LOG.error("Datasets were found by the application server, but could not be found on the datastore server for "
+                        + ident + "." + " Try to supply the correct datastore server using a config file!");
             }
-        }
+            if (filesDownloadReturnCode != 0) {
+                LOG.error("Error while downloading dataset: " + ident);
+            } else {
+                LOG.info("Download successfully finished");
+            }
 
-        return filteredDatasets;
+        } else {
+            LOG.info("Nothing to download.");
+        }
     }
 
 }

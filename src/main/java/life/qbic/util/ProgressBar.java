@@ -61,7 +61,7 @@ public class ProgressBar {
         StringBuilder progressBar = new StringBuilder("[");
         int numberProgressStrings = Math.min((int) (this.downloadedSize / this.stepSize), BARSIZE);
 
-        for (int i = 0; i<numberProgressStrings; i++){
+        for (int i = 0; i < numberProgressStrings; i++){
             progressBar.append("#");
         }
         for (int i = numberProgressStrings; i<BARSIZE; i++){
