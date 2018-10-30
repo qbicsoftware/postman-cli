@@ -168,7 +168,7 @@ Example:
 ```bash
 java -jar postman.jar -u <user> <sample> @path/to/config.txt 
 ```
-The structure of the configuration file is:       <code>[-cliOption] [value] </code>   
+The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
 For example: To set the ApplicationServerURL to another URL we have to use:    
 <code>-as [URL] </code>    
 Therefore to use our openbis URL we write the following line in the config file (Anything beginning with '#' is a comment):    
@@ -180,7 +180,11 @@ AS_URL (ApplicationServerURL)
 DSS_URL (DataStoreServerURL)     
 -dss [URL]       
 
-A default file is provided on this repository as 'config.txt'. If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.   
+A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.   
+
+If no config file or commandline option is provided, Postman will resort to the defaults set here: [Defaults](https://github.com/qbicsoftware/postman-cli/blob/development/src/main/java/life/qbic/io/commandline/PostmanCommandLineOptions.java).    
+Hence, the default AS is set to: <code>https://qbis.qbic.uni-tuebingen.de/openbis/openbis</code>    
+and the DSS defaults to: <code>https://qbis.qbic.uni-tuebingen.de:444/datastore_server</code>    
 
 ### Performance issues
 We discovered, that a default buffer size of 1024 bytes seems not always to get all out of the performance that is possible for the dataset download. Therefore, we allow you to enter a multipler Integer value that increases the buffer size. For example a multipler of 2 will result in 2x1024 = 2048 bytes and so on.
