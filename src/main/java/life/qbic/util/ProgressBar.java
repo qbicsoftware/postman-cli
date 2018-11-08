@@ -14,6 +14,7 @@ public class ProgressBar {
     private final int BARSIZE = jline.TerminalFactory.get().getWidth()/3;
     private final int MAXFILENAMESIZE = jline.TerminalFactory.get().getWidth()/3;
     private UnitDisplay unitDisplay;
+    private long start;
 
     public ProgressBar(){}
 
@@ -24,6 +25,7 @@ public class ProgressBar {
         this.stepSize = totalFileSize / BARSIZE;
         this.nextProgressJump = this.stepSize;
         this.unitDisplay = UnitConverterFactory.determineBestUnitType(totalFileSize);
+        this.start = System.currentTimeMillis();
     }
 
     public void updateProgress(int addDownloadedSize){
@@ -61,6 +63,11 @@ public class ProgressBar {
         StringBuilder progressBar = new StringBuilder("[");
         int numberProgressStrings = Math.min((int) (this.downloadedSize / this.stepSize), BARSIZE);
 
+        double elapsedTimeSeconds = (System.currentTimeMillis() - this.start) / 1000.0;
+
+        // Download Speed in Mbyte/s
+        double downloadSpeed = this.downloadedSize / ( 1000000.0 * elapsedTimeSeconds );
+
         for (int i = 0; i < numberProgressStrings; i++){
             progressBar.append("#");
         }
@@ -69,8 +76,8 @@ public class ProgressBar {
         }
 
         progressBar.append("]\t");
-        progressBar.append(String.format("%6.02f/%-7.02f%s", unitDisplay.convertBytesToUnit(this.downloadedSize),
-                unitDisplay.convertBytesToUnit(this.totalFileSize), unitDisplay.getUnitType()));
+        progressBar.append(String.format("%6.02f/%-7.02f%s (%.02f Mb/s)", unitDisplay.convertBytesToUnit(this.downloadedSize),
+                unitDisplay.convertBytesToUnit(this.totalFileSize), unitDisplay.getUnitType(), downloadSpeed));
 
         return progressBar.toString();
     }
