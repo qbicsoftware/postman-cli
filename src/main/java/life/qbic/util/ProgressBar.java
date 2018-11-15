@@ -4,6 +4,11 @@ package life.qbic.util;
 import life.qbic.model.UnitConverter.UnitConverterFactory;
 import life.qbic.model.UnitConverter.UnitDisplay;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 public class ProgressBar {
 
     private float nextProgressJump;
@@ -15,6 +20,7 @@ public class ProgressBar {
     private final int MAXFILENAMESIZE = jline.TerminalFactory.get().getWidth()/3;
     private UnitDisplay unitDisplay;
     private long start;
+    private long remainingTime;
 
     public ProgressBar(){}
 
@@ -26,6 +32,7 @@ public class ProgressBar {
         this.nextProgressJump = this.stepSize;
         this.unitDisplay = UnitConverterFactory.determineBestUnitType(totalFileSize);
         this.start = System.currentTimeMillis();
+        this.remainingTime = 0L;
     }
 
     public void updateProgress(int addDownloadedSize){
@@ -68,6 +75,12 @@ public class ProgressBar {
         // Download Speed in Mbyte/s
         double downloadSpeed = this.downloadedSize / ( 1000000.0 * elapsedTimeSeconds );
 
+        // Estimate remaining download time
+        long remainingDownloadTime = estimateRemainingTime(downloadSpeed * 1000000.0 / 1000.0);
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String remainingTime = dateFormat.format(new Date(remainingDownloadTime));
+
         for (int i = 0; i < numberProgressStrings; i++){
             progressBar.append("#");
         }
@@ -76,10 +89,25 @@ public class ProgressBar {
         }
 
         progressBar.append("]\t");
-        progressBar.append(String.format("%6.02f/%-7.02f%s (%.02f Mb/s)", unitDisplay.convertBytesToUnit(this.downloadedSize),
-                unitDisplay.convertBytesToUnit(this.totalFileSize), unitDisplay.getUnitType(), downloadSpeed));
+        progressBar.append(String.format("%6.02f/%-7.02f%s [%s] (%.02f Mb/s)",
+                unitDisplay.convertBytesToUnit(this.downloadedSize),
+                unitDisplay.convertBytesToUnit(this.totalFileSize),
+                unitDisplay.getUnitType(),
+                remainingTime,
+                downloadSpeed));
 
         return progressBar.toString();
+    }
+
+    /**
+     * Estimates the remaining download time in milliseconds.
+     *
+     * @param downloadSpeed The current download speed in bytes per second
+     * @return The estimated remaining download time in milliseconds
+     */
+    private long estimateRemainingTime(double downloadSpeed){
+        long remainingFileSize = this.totalFileSize - this.downloadedSize;
+        return (long) (remainingFileSize / downloadSpeed);
     }
 
 
