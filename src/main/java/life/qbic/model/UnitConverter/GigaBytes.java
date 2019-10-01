@@ -5,7 +5,7 @@ class GigaBytes implements UnitDisplay{
 
     private String unit = "Gb";
 
-    private double divisor = Math.pow(10, 9);
+    private double divisor = Math.pow(1024, 3);
 
 
     @Override
