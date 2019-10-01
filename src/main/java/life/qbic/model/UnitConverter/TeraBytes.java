@@ -5,7 +5,7 @@ class TeraBytes implements UnitDisplay{
 
     private String unit = "Tb";
 
-    private double divisor = Math.pow(10, 12);
+    private double divisor = Math.pow(1024, 4);
 
 
     @Override

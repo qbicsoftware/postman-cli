@@ -5,7 +5,7 @@ class KiloBytes implements UnitDisplay{
 
     private String unit = "kb";
 
-    private double divisor = Math.pow(10, 3);
+    private double divisor = Math.pow(1024, 1);
 
 
     @Override
