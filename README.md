@@ -56,6 +56,14 @@ Provide password for user 'bbbfs01':
 QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###                                                            ]    0.38/7.94   Gb       
 ```
 
+### Download all data of a project
+
+If you want to download all datasets for a given project id, you can use the wildcard symbol `*`:
+
+```bash
+~$ java -jar postman.jar -u <your_qbic_username> <QBiC Project ID>*
+```
+
 ### Filter for dataset type
 
 You can filter for dataset types, using the `-t` option and one of the following openBIS dataset types we are currently using:
