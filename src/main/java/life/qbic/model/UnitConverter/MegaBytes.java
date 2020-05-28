@@ -5,7 +5,7 @@ class MegaBytes implements UnitDisplay{
 
     private String unit = "Mb";
 
-    private double divisor = Math.pow(10, 6);
+    private double divisor = Math.pow(1024, 2);
 
 
     @Override
