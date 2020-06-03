@@ -18,6 +18,8 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermI
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import life.qbic.util.ProgressBar;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
@@ -45,6 +47,8 @@ public class QbicDataLoader {
 
     private final int defaultBufferSize;
 
+    private final boolean conservePaths;
+
 
     /**
      * Constructor for a QBiCDataLoaderInstance
@@ -55,8 +59,10 @@ public class QbicDataLoader {
      * @param bufferSize The buffer size for the InputStream reader
      */
     public QbicDataLoader(String AppServerUri, String DataServerUri,
-                                         String user, String password,
-                                         int bufferSize, String filterType){
+                            String user, String password,
+                            int bufferSize, String filterType,
+                            boolean conservePaths){
+        this.conservePaths = conservePaths;
         this.defaultBufferSize = bufferSize;
         this.filterType = filterType;
 
@@ -237,10 +243,11 @@ public class QbicDataLoader {
                 InputStream initialStream = file.getInputStream();
 
                 if (file.getDataSetFile().getFileLength() > 0) {
-                    String[] splitted = file.getDataSetFile().getPath().split("/");
-                    String lastOne = splitted[splitted.length - 1];
-                    OutputStream os = new FileOutputStream(System.getProperty("user.dir") + File.separator + lastOne);
-                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
+                    final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
+                    File newFile = new File(System.getProperty("user.dir") + File.separator + filePath.toString());
+                    newFile.getParentFile().mkdirs();
+                    OutputStream os = new FileOutputStream(newFile);
+                    ProgressBar progressBar = new ProgressBar(filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
                     int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
                     byte[] buffer = new byte[bufferSize];
                     int bytesRead;
@@ -264,6 +271,27 @@ public class QbicDataLoader {
         return 0;
     }
 
+    private static Path getTopDirectory(Path path) {
+        Path newPath = Paths.get(path.toString());
+        while (newPath.getParent() != null) {
+            newPath = newPath.getParent();
+        }
+        return newPath;
+    }
+
+    private Path determineFinalPathFromDataset(DataSetFile file) {
+        Path finalPath;
+        if (conservePaths) {
+            finalPath = Paths.get(file.getPath());
+            // drop top parent directory name of openBIS
+            Path topDirectory = getTopDirectory(finalPath);
+            finalPath = topDirectory.relativize(finalPath);
+        } else {
+            finalPath = Paths.get(file.getPath()).getFileName();
+        }
+        return finalPath;
+    }
+
     /**
      * Download a given list of data sets
      * @param dataSetList A list of data sets
@@ -283,10 +311,11 @@ public class QbicDataLoader {
                 InputStream initialStream = file.getInputStream();
 
                 if (file.getDataSetFile().getFileLength() > 0) {
-                    String[] splitted = file.getDataSetFile().getPath().split("/");
-                    String lastOne = splitted[splitted.length - 1];
-                    OutputStream os = new FileOutputStream(System.getProperty("user.dir") + File.separator + lastOne);
-                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
+                    final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
+                    File newFile = new File(System.getProperty("user.dir") + File.separator + filePath.toString());
+                    newFile.getParentFile().mkdirs();
+                    OutputStream os = new FileOutputStream(newFile);
+                    ProgressBar progressBar = new ProgressBar(filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
                     int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
                     byte[] buffer = new byte[bufferSize];
                     int bytesRead;

@@ -60,7 +60,8 @@ public class App {
         }
 
         QbicDataLoader qbicDataLoader = new QbicDataLoader(AS_URL, DSS_URL, commandLineParameters.user, password,
-                commandLineParameters.bufferMultiplier * 1024, commandLineParameters.datasetType);
+                commandLineParameters.bufferMultiplier * 1024, commandLineParameters.datasetType,
+            commandLineParameters.conservePath);
         int returnCode = qbicDataLoader.login();
         LOG.info(String.format("OpenBis login returned with %s", returnCode));
         if (returnCode != 0) {
@@ -108,6 +109,7 @@ public class App {
                     } catch (NullPointerException e) {
                         LOG.error("Datasets were found by the application server, but could not be found on the datastore server for "
                                 + ident + "." + " Try to supply the correct datastore server using a config file!");
+                        e.printStackTrace();
                     }
 
                     if (datasetDownloadReturnCode != 0) {

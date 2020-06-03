@@ -24,6 +24,9 @@ public class PostmanCommandLineOptions {
     @Option(names = {"-f", "--file"}, description = "a file with line-separated list of QBiC sample ids")
     public Path filePath;
 
+    @Option(names = {"-c", "--conserve"}, description = "Conserve the file path structure during download")
+    public boolean conservePath;
+
     @Option(names = {"-b", "--buffer-size"}, description = "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
             + " Only change this if you know what you are doing.")
     public int bufferMultiplier = 1;
