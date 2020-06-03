@@ -289,7 +289,6 @@ public class QbicDataLoader {
         } else {
             finalPath = Paths.get(file.getPath()).getFileName();
         }
-        System.out.println(finalPath);
         return finalPath;
     }
 
