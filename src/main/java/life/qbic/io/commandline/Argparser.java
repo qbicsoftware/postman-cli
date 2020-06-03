@@ -50,7 +50,7 @@ public class Argparser {
    * Definition of some useful enum types for the cmd attributes
    */
   public enum Attribute {
-    HELP, USERNAME, ID, FILE, BUFFER_SIZE
+    HELP, USERNAME, ID, FILE, BUFFER_SIZE, CONSERVE_PATH
   }
 
 }
