@@ -1,15 +1,24 @@
 package life.qbic.model.dataLoading;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
+import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownload;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadReader;
+import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
+import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import life.qbic.DownloadException;
+import life.qbic.DownloadRequest;
+import life.qbic.WriterHelper;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
@@ -37,6 +46,8 @@ public class QbicDataDownloader {
 
     private final int defaultBufferSize;
 
+    private final boolean conservePaths;
+
 
     /**
      * Constructor for a QBiCDataLoaderInstance
@@ -48,9 +59,11 @@ public class QbicDataDownloader {
      */
     public QbicDataDownloader(String AppServerUri, String DataServerUri,
                               String user, String password,
-                              int bufferSize, String filterType) {
+                              int bufferSize, String filterType,
+                                boolean conservePaths) {
         this.defaultBufferSize = bufferSize;
         this.filterType = filterType;
+        this.conservePaths = conservePaths;
 
         if (!AppServerUri.isEmpty()) {
             this.applicationServer = HttpInvokerUtils.createServiceStub(
@@ -68,6 +81,7 @@ public class QbicDataDownloader {
         }
 
         this.setCredentials(user, password);
+
     }
 
     /**
@@ -242,52 +256,109 @@ public class QbicDataDownloader {
     }
 
     /**
-     * Download a given list of datasets
-     * There was no filtering applied here!
-     *
-     * @param dataSetList A list of datasets
+     * Download a given list of data sets
+     * @param dataSetList A list of data sets
      * @return 0 if successful, 1 else
      */
-    public int downloadDataset(List<DataSet> dataSetList) throws IOException{
+    int downloadDataset(List<DataSet> dataSetList) throws IOException {
         for (DataSet dataset : dataSetList) {
             DataSetPermId permID = dataset.getPermId();
-            DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
-            IDataSetFileId fileId = new DataSetFilePermId(new DataSetPermId(permID.toString()));
-            options.setRecursive(true);
-            InputStream stream = this.dataStoreServer.downloadFiles(sessionToken, Arrays.asList(fileId), options);
-            DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
-            DataSetFileDownload file;
-
-            while ((file = reader.read()) != null) {
-                InputStream initialStream = file.getInputStream();
-
-                if (file.getDataSetFile().getFileLength() > 0) {
-                    String[] splitted = file.getDataSetFile().getPath().split("/");
-                    String lastOne = splitted[splitted.length - 1];
-                    OutputStream os = new FileOutputStream(System.getProperty("user.dir") + File.separator + lastOne);
-                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
-                    int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
-                    byte[] buffer = new byte[bufferSize];
-                    int bytesRead;
-                    //read from is to buffer
-                    while ((bytesRead = initialStream.read(buffer)) != -1) {
-                        progressBar.updateProgress(bufferSize);
-                        os.write(buffer, 0, bytesRead);
-                        os.flush();
-
-                    }
-                    System.out.print("\n");
-                    initialStream.close();
-                    //flush OutputStream to write any buffered data to file
-                    os.flush();
-                    os.close();
-                }
-
-            }
+            DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
+            criteria.withDataSet().withCode().thatEquals(permID.getPermId());
+            SearchResult<DataSetFile> result = this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
+            List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
+            final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles);
+            downloadFiles(downloadRequest);
         }
-
         return 0;
     }
+
+
+    private List<DataSetFile> removeDirectories(List<DataSetFile> dataSetFiles) {
+        List<DataSetFile> filteredList = new ArrayList<>();
+        dataSetFiles.forEach(item -> {
+            if (!item.isDirectory()) {
+                filteredList.add(item);
+            }
+        });
+        return filteredList;
+    }
+
+    private void downloadFile(DataSetFile dataSetFile) throws IOException {
+        DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
+        options.setRecursive(false);
+        IDataSetFileId fileId = dataSetFile.getPermId();
+        InputStream stream = this.dataStoreServer.downloadFiles(sessionToken, Collections.singletonList(fileId), options);
+        DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
+        DataSetFileDownload file;
+
+        while ((file = reader.read()) != null) {
+            InputStream initialStream = file.getInputStream();
+            if (file.getDataSetFile().getFileLength() > 0) {
+                final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
+                File newFile = new File(System.getProperty("user.dir") + File.separator + filePath.toString());
+                newFile.getParentFile().mkdirs();
+                OutputStream os = new FileOutputStream(newFile);
+                ProgressBar progressBar = new ProgressBar(filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
+                int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
+                byte[] buffer = new byte[bufferSize];
+                int bytesRead;
+                //read from is to buffer
+                while ((bytesRead = initialStream.read(buffer)) != -1) {
+                    progressBar.updateProgress(bufferSize);
+                    os.write(buffer, 0, bytesRead);
+                    os.flush();
+
+                }
+                System.out.print("\n");
+                initialStream.close();
+                //flush OutputStream to write any buffered data to file
+                os.flush();
+                os.close();
+            }
+        }
+    }
+
+    private static Path getTopDirectory(Path path) {
+        Path newPath = Paths.get(path.toString());
+        while (newPath.getParent() != null) {
+            newPath = newPath.getParent();
+        }
+        return newPath;
+    }
+
+    private Path determineFinalPathFromDataset(DataSetFile file) {
+        Path finalPath;
+        if (conservePaths) {
+            finalPath = Paths.get(file.getPath());
+            // drop top parent directory name in the openBIS DSS (usually "/origin")
+            Path topDirectory = getTopDirectory(finalPath);
+            finalPath = topDirectory.relativize(finalPath);
+        } else {
+            finalPath = Paths.get(file.getPath()).getFileName();
+        }
+        return finalPath;
+    }
+
+    private void downloadFiles(DownloadRequest request) throws DownloadException {
+        request.getDataSets().forEach( dataSetFile -> {
+            try {
+                downloadFile(dataSetFile);
+            } catch (IOException e) {
+                String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
+                LOG.error(e);
+                throw new DownloadException("Dataset " + fileName + " could not have been downloaded.");
+            }
+            writeCRC32Checksum(dataSetFile);
+        });
+    }
+
+    void writeCRC32Checksum(DataSetFile dataSetFile) {
+        Path path = determineFinalPathFromDataset(dataSetFile);
+        String content = Integer.toHexString(dataSetFile.getChecksumCRC32()) + "\t" + path.getFileName();
+        WriterHelper.writeToFileSystem(Paths.get(path.toString() + ".crc32"), content);
+    }
+
 
 }
     

@@ -1,39 +1,76 @@
-sudo: false
-dist: trusty
+# Build script for Travis CI
+#
+
+# use xenial distro
+dist: xenial
+
+# no need to check for oracle's java
 language: java
 jdk: openjdk8
+
+# speed up builds by caching maven local repository
 cache:
   directories:
-  - $HOME/.m2/repository
+    - "$HOME/.m2/repository"
+    - "$HOME/.cache/pip"
+    - "$HOME/miniconda3"
+
+# as agreed in our SOP
 branches:
   only:
-  - master
-  - development
+    - master
+    - development
+    - /release.*/
+    - /^[vV]?\d+\.\d+\.\d+$/ # matches e.g., v1.2.3, 1.2.3, V1.2.3
+
+# added to make logs look cleaner, crisper, certified fresh
 before_install: unset _JAVA_OPTIONS
-install: true
-before_script: if [ "$VAADIN_CHARTS_LICENSE_CODE" != "" ]; then echo "$VAADIN_CHARTS_LICENSE_CODE"
-  > ~/.vaadin.charts.developer.license; fi;
-script: mvn --activate-profiles !development-build,!release-build --settings
-  .travis.settings.xml clean cobertura:cobertura install
+
+# dependencies for report generation (use cache to speed up builds)
+install:
+  - $HOME/miniconda3/bin/conda --version || ./.install-reports-dependencies.sh
+# check if we need to add a license file for Vaadin charts
+before_script: if [ "$VAADIN_CHARTS_LICENSE_CODE" != "" ]; then
+  echo "$VAADIN_CHARTS_LICENSE_CODE" > ~/.vaadin.charts.developer.license;
+  fi;
+
+# as agreed in our SOP, build everything (don't deploy, just try to 'mvn install' locally, which covers all phases)
+script: mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.incrementalVersion}-SNAPSHOT versions:update-child-modules && mvn versions:commit &&
+  mvn --quiet --activate-profiles !development-build,!release-build --settings .travis.settings.xml clean install
+# upload code coverage report, generate maven site (javadocs, documentation, static code analysis, etc.)
 after_success:
-- bash <(curl -s https://codecov.io/bash)
-- mvn --activate-profiles !development-build,!release-build --settings .travis.settings.xml
-  site
+  - bash <(curl -s https://codecov.io/bash)
+
+# upload to maven
 deploy:
-- skip_cleanup: true
-  provider: script
-  script: mvn --quiet --activate-profiles development-build,!release-build --settings
-    .travis.settings.xml deploy
-  on:
-    branch: development
-    condition: '"$TRAVIS_EVENT_TYPE" = "push"'
-- skip_cleanup: true
-  provider: script
-  script: mvn --quiet --activate-profiles !development-build,release-build --settings
-    .travis.settings.xml deploy
-  on:
-    branch: master
-    condition: '"$TRAVIS_EVENT_TYPE" = "push"'
+  # as agreed in our SOP, builds on development branch will deploy to our maven repository after validating
+  # the artifact has a proper SNAPSHOT version
+  # artifact will be installed in our testing instance if it is a .war file
+  - skip_cleanup: true
+    provider: script
+    script: mvn --quiet --activate-profiles development-build,!release-build --settings .travis.settings.xml deploy
+    on:
+      branch: development
+      condition: '"$TRAVIS_EVENT_TYPE" = "push"'
+    # as agreed in our SOP, tagging a commit on the master branch will upload to our maven repository
+    # after validating the artifact has a proper release version
+    # artifact will be installed in our testing instance if it is a .war file
+  - skip_cleanup: true
+    provider: script
+    script: mvn build-helper:parse-version versions:set -DnewVersion=$TRAVIS_TAG -DprocessAllModules && mvn versions:commit &&
+      mvn --quiet --activate-profiles !development-build,release-build --settings .travis.settings.xml deploy
+    on:
+      condition: '"$TRAVIS_EVENT_TYPE" = "push"'
+      tags: true
+
+# activate our conda environment, generate maven site and upload reports to gh-pages branch
+after_deploy:
+  - echo ". $HOME/miniconda3/etc/profile.d/conda.sh" >> ~/.bashrc && source ~/.bashrc && conda activate qbic-docs-build
+  - mvn --quiet --activate-profiles !development-build,!release-build --settings .travis.settings.xml site
+  - ./.generate-reports.py $TRAVIS_BRANCH $TRAVIS_REPO_SLUG "[skip travis] Updated gh-pages" "This commit was performed from travis-ci.com using a personal access key" "Build ID $TRAVIS_BUILD_ID" "Job ID TRAVIS_JOB_ID" "Branch $TRAVIS_BRANCH" "Log of this build found at $TRAVIS_JOB_WEB_URL"
+
+# change according to your needs, but we recommend to deactivate email notifications
+# for now, we configured Travis to send a notification to the #travis-ci channel 
 notifications:
   email:
     on_success: never
@@ -41,9 +78,6 @@ notifications:
   slack:
     on_success: never
     on_failure: always
+    # edit the following section if you want to get slack notifications
     rooms:
-    - secure: '***'
-env:
-  global:
-  - secure: WxQP7vKSfoX38BrHtxXPMWc8057YAehnnPFSkuzrF0I/DuvRv7YLD8oOYqDjEAbPmxS0ybrsoCGWv0NW0ieInWXky75VmALpBgHB2cl2gfkP+i3DhzoH7wmHaeaz81EvXGmiTc5yb42Bve0KM9GBxBLDKqItMdotbAAyLmpy7XedYBT1jWe/9l+psHlItlCsGMGgVJrHy4VxuvT4ytGCLGW6v08XULolyy4I0jRoG4xE+HIcNhg4FRkXSJdwpBQV1No6vXtV9kL7tjaB24vBws09jIxefJX8paRfXak+B6lS14JuowHQsKOMg/JFDsLVah/atKQjpDKcnoOy0njZW1erqYrGfnP/hfpTIKnhju8T3Tg8MMc2NLcd6GLtDNrvqaj8z331dUsUKNq+YpGCGTi2cgz1O8SxO91qkOj+BHiH9RM8VuuuImZ3ukor9C8Ytm9YBT86x9Ie4ia4lkbcQ9jqO/io23tJB3EeDbsFy7UpDyGOUP0svdzIvUUVvZS0actyEQgqXYSCcHtSEzuQDkrX4xY44M/s80MyboMAj5o9K1y1gST3BJWi9cvtexy013u7iPY2E+KSlntojHiZCtOMx1cVe/QXkroXo+jQDqCHwDXThoyBD77QGZUXRVX7geRsMNMkELeShBCglIJ9GoP4oJnHiBq/5iTG67ctQ4I=
-  - secure: MzH1SZyvHFzDeEyDqs2nUPsprMcfO56QLIBnUSaRs352m3zVtO1hwwhEejPEfBoQExYxGMH//m/wvF27QuMyJpbbvyp2e1s/2HYD1UsymE2mJgF32X20YlKI0xoor/FvEtShCQWxnm+8dPZftpUOaMUfpYAF3VupMy7RhGz0UNIUyP+zWqoZIBbvc0Rprnx63BJQMDPOOU3b24LKnhcXfzYOzbp+pbyE+IEKv4KWMzLO58BYpsTHQ066vF30yNL7D5VsulIqFf4svdFXdnD7Gc/P1DjCqdycxNO/2LNfs6mGP13mfOGyRko8BbHZsTjnBDokPc3d1RZqSflT4RxWL7eejZ9FrE9mK5b0nuThzqjPSrQlcYBZvSQMptP39Cvfw5RLg4Unpah+O8vRs4Cbxs9147q3Q52ApOt9PQdGpNdus0fvG/bzuc3O2P5PKUY+I9i++UfYC6xWRsV0LwxNnUpjVRJwCT/9EZCMu2/zyAX7a5yAIbp1wASr+d2zwohfVyimAGP7xd+K75G5UF0p8HRKX9O+mdSbBnmLaOYIomB7HoIhOQaVWM17LMPXBGlP1uDLpvG3QKBcGJoBJmrgpEB/I9kGxuPLxv4tP/MKgDUhLz9k7i063ovKojMjVHlsDgbgbyzjjamdFdRHV9pnVJ1YivkaKc+eHqe+3rRAD2U=
+      - secure: "***"

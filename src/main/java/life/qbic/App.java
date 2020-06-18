@@ -1,5 +1,6 @@
 package life.qbic;
 
+import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import java.io.IOException;
 
 import life.qbic.model.dataLoading.QbicDataDownloader;
@@ -50,7 +51,8 @@ public class App {
                                                                        commandLineParameters.user,
                                                                        password,
                                                               commandLineParameters.bufferMultiplier * 1024,
-                                                                       commandLineParameters.datasetType);
+                                                                       commandLineParameters.datasetType,
+                                                                        commandLineParameters.conservePath);
         int returnCode = qbicDataDownloader.login();
         LOG.info(String.format("OpenBis login returned with %s", returnCode));
         if (returnCode != 0) {
