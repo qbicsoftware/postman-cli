@@ -80,8 +80,8 @@
 
         <dependency>
             <groupId>life.qbic.openbis</groupId>
-            <artifactId>openbis_api</artifactId>
-            <version>3-S253.0</version>
+            <artifactId>openbis-api-with-deps</artifactId>
+            <version>18.06.5</version>
         </dependency>
     </dependencies>
 
