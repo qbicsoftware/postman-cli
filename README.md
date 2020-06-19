@@ -211,7 +211,5 @@ They contain the computed and expected checksum as hex string plus the file path
 <expected checksum> <computed checksum> <file path>
 ```
 
-
-
-In addition, Postman writes all
+In addition, Postman writes the CRC32 checksum in an additional file `<file-name-of-checked-file>.crc32` and stores it in the working directory.
 

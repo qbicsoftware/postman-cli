@@ -276,7 +276,6 @@ public class QbicDataDownloader {
                     progressBar.updateProgress(bufferSize);
                     os.write(buffer, 0, bytesRead);
                     os.flush();
-
                 }
                 System.out.print("\n");
                 validateChecksum(Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile, checksumWriter);
