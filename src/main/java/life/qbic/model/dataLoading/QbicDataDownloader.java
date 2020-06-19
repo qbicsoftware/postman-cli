@@ -280,7 +280,6 @@ public class QbicDataDownloader {
                 }
                 System.out.print("\n");
                 validateChecksum(Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile, checksumWriter);
-                System.out.println(Long.toHexString(checkedInputStream.getChecksum().getValue()));
                 initialStream.close();
                 //flush OutputStream to write any buffered data to file
                 os.flush();
