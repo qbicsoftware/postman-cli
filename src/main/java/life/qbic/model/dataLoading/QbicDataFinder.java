@@ -108,7 +108,7 @@ public class QbicDataFinder {
      * @param regexPatterns
      * @return
      */
-    public List<IDataSetFileId> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
+    public List<DataSetFile> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
         List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
 
         return QbicDataLoaderRegexUtil.findAllRegexFilteredIDsGroovy(regexPatterns, allDatasets, dataStoreServer, sessionToken);
@@ -121,9 +121,9 @@ public class QbicDataFinder {
      * @param suffixes
      * @return
      */
-    public List<IDataSetFileId> findAllSuffixFilteredIDs(String ident, List<String> suffixes) {
+    public List<DataSetFile> findAllSuffixFilteredIDs(String ident, List<String> suffixes) {
         List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
-        List<IDataSetFileId> allFileIDs = new ArrayList<>();
+        List<DataSetFile> allFileIDs = new ArrayList<>();
 
         for (DataSet ds : allDatasets) {
             // we cannot access the files directly of the datasets -> we need to query for the files first using the datasetID
@@ -132,19 +132,19 @@ public class QbicDataFinder {
             SearchResult<DataSetFile> result = dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
             List<DataSetFile> files = result.getObjects();
 
-            List<IDataSetFileId> fileIds = new ArrayList<>();
+            List<DataSetFile> filesFiltered = new ArrayList<>();
 
             // remove everything that doesn't match the suffix -> only add if suffix matches
             for (DataSetFile file : files)
             {
                 for (String suffix : suffixes) {
                     if (StringUtil.endsWithIgnoreCase(file.getPermId().toString(), suffix)) {
-                        fileIds.add(file.getPermId());
+                        filesFiltered.add(file);
                     }
                 }
             }
 
-            allFileIDs.addAll(fileIds);
+            allFileIDs.addAll(filesFiltered);
         }
 
         return allFileIDs;

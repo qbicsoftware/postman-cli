@@ -14,10 +14,15 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermI
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.zip.CRC32;
+import java.util.zip.CheckedInputStream;
+import life.qbic.ChecksumWriter;
 import life.qbic.DownloadException;
 import life.qbic.DownloadRequest;
+import life.qbic.FileSystemWriter;
 import life.qbic.WriterHelper;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
@@ -133,7 +138,7 @@ public class QbicDataDownloader {
         if (!commandLineParameters.suffixes.isEmpty()) {
             for (String ident : commandLineParameters.ids) {
                 LOG.info(String.format("Downloading files for provided identifier %s", ident));
-                List<IDataSetFileId> foundSuffixFilteredIDs = qbicDataFinder.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
+                List<DataSetFile> foundSuffixFilteredIDs = qbicDataFinder.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
 
                 LOG.info(String.format("Number of files found: %s", foundSuffixFilteredIDs.size()));
 
@@ -143,7 +148,7 @@ public class QbicDataDownloader {
         } else if (!commandLineParameters.regexPatterns.isEmpty()) {
             for (String ident : commandLineParameters.ids) {
                 LOG.info(String.format("Downloading files for provided identifier %s", ident));
-                List<IDataSetFileId> foundRegexFilteredIDs = qbicDataFinder.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
+                List<DataSetFile> foundRegexFilteredIDs = qbicDataFinder.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
 
                 LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
 
@@ -185,15 +190,17 @@ public class QbicDataDownloader {
      * Downloads all IDs which were previously filtered by either suffixes or regexes
      *
      * @param ident
-     * @param foundFilteredIDs
+     * @param foundFilteredDatasets
      * @throws IOException
      */
-    private void downloadFilesFilteredByIDs(String ident, List<IDataSetFileId> foundFilteredIDs) throws IOException {
-        if (foundFilteredIDs.size() > 0) {
+    private void downloadFilesFilteredByIDs(String ident, List<DataSetFile> foundFilteredDatasets) throws IOException {
+        if (foundFilteredDatasets.size() > 0) {
             LOG.info("Initialize download ...");
             int filesDownloadReturnCode = -1;
             try {
-                filesDownloadReturnCode = downloadFilesByID(foundFilteredIDs);
+                List<DataSetFile> filteredDataSetFiles = removeDirectories(foundFilteredDatasets);
+                final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles);
+                downloadFiles(downloadRequest);
             } catch (NullPointerException e) {
                 LOG.error("Datasets were found by the application server, but could not be found on the datastore server for "
                         + ident + "." + " Try to supply the correct datastore server using a config file!");
@@ -209,58 +216,13 @@ public class QbicDataDownloader {
         }
     }
 
-    /**
-     * Downloads files that have been found after filtering for suffixes/regexes by a list of supplied IDs
-     *
-     * @param filteredIDs
-     * @return exitcode
-     * @throws IOException
-     */
-    public int downloadFilesByID(List<IDataSetFileId> filteredIDs) throws IOException{
-        for (IDataSetFileId id : filteredIDs) {
-            DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
-            options.setRecursive(true);
-            InputStream stream = this.dataStoreServer.downloadFiles(sessionToken, Collections.singletonList(id), options);
-            DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
-            DataSetFileDownload file;
-
-            while ((file = reader.read()) != null) {
-                InputStream initialStream = file.getInputStream();
-
-                if (file.getDataSetFile().getFileLength() > 0) {
-                    String[] splitted = file.getDataSetFile().getPath().split("/");
-                    String lastOne = splitted[splitted.length - 1];
-                    OutputStream os = new FileOutputStream(System.getProperty("user.dir") + File.separator + lastOne);
-                    ProgressBar progressBar = new ProgressBar(lastOne, file.getDataSetFile().getFileLength());
-                    int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
-                    byte[] buffer = new byte[bufferSize];
-                    int bytesRead;
-                    //read from is to buffer
-                    while ((bytesRead = initialStream.read(buffer)) != -1) {
-                        progressBar.updateProgress(bufferSize);
-                        os.write(buffer, 0, bytesRead);
-                        os.flush();
-
-                    }
-                    System.out.print("\n");
-                    initialStream.close();
-                    //flush OutputStream to write any buffered data to file
-                    os.flush();
-                    os.close();
-                }
-
-            }
-        }
-
-        return 0;
-    }
 
     /**
      * Download a given list of data sets
      * @param dataSetList A list of data sets
      * @return 0 if successful, 1 else
      */
-    int downloadDataset(List<DataSet> dataSetList) throws IOException {
+    private int downloadDataset(List<DataSet> dataSetList) {
         for (DataSet dataset : dataSetList) {
             DataSetPermId permID = dataset.getPermId();
             DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
@@ -292,8 +254,13 @@ public class QbicDataDownloader {
         DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
         DataSetFileDownload file;
 
+        ChecksumWriter checksumWriter = new FileSystemWriter(Paths.get(System.getProperty("user.dir") + File.separator + "summary_validated.txt"),
+            Paths.get(System.getProperty("user.dir") + File.separator + "summary_failed.txt"));
+
+
         while ((file = reader.read()) != null) {
             InputStream initialStream = file.getInputStream();
+            CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
             if (file.getDataSetFile().getFileLength() > 0) {
                 final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
                 File newFile = new File(System.getProperty("user.dir") + File.separator + filePath.toString());
@@ -303,19 +270,39 @@ public class QbicDataDownloader {
                 int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
                 byte[] buffer = new byte[bufferSize];
                 int bytesRead;
+                CRC32 crcSum = new CRC32();
                 //read from is to buffer
-                while ((bytesRead = initialStream.read(buffer)) != -1) {
+                while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
                     progressBar.updateProgress(bufferSize);
                     os.write(buffer, 0, bytesRead);
                     os.flush();
 
                 }
                 System.out.print("\n");
+                validateChecksum(Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile, checksumWriter);
+                System.out.println(Long.toHexString(checkedInputStream.getChecksum().getValue()));
                 initialStream.close();
                 //flush OutputStream to write any buffered data to file
                 os.flush();
                 os.close();
             }
+        }
+    }
+
+    private void validateChecksum(String computedChecksumHex, DataSetFile dataSetFile, ChecksumWriter writer) {
+        String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
+        try {
+            if (computedChecksumHex.equals(expectedChecksum)) {
+                writer.writeMatchingChecksum(expectedChecksum,
+                    computedChecksumHex,
+                    Paths.get(dataSetFile.getPath()).toUri().toURL());
+            } else {
+                writer.writeFailedChecksum(expectedChecksum,
+                    computedChecksumHex,
+                    Paths.get(dataSetFile.getPath()).toUri().toURL());
+            }
+        } catch (MalformedURLException e) {
+            LOG.error(e);
         }
     }
 

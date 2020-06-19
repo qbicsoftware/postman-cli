@@ -19,11 +19,11 @@ class QbicDataLoaderRegexUtil {
      * @param sessionToken
      * @return all fileIDs which are forwarded to download
      */
-    static List<IDataSetFileId> findAllRegexFilteredIDsGroovy(List<String> regexPatterns,
+    static List<DataSetFile> findAllRegexFilteredIDsGroovy(List<String> regexPatterns,
                                                               List<DataSet> allDatasets,
                                                               IDataStoreServerApi dataStoreServer,
                                                               String sessionToken) {
-        def allFileIDs = new ArrayList<>()
+        List<DataSetFile> allFileIDs = new ArrayList<>()
 
         for (DataSet ds : allDatasets) {
             // we cannot access the files directly of the datasets -> we need to query for the files first using the datasetID
@@ -32,7 +32,7 @@ class QbicDataLoaderRegexUtil {
             SearchResult<DataSetFile> result = dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions())
             List<DataSetFile> files = result.getObjects()
 
-            def fileIds = new ArrayList<>()
+            List<DataSetFile> filesFiltered = new ArrayList<>()
 
             // remove everything that doesn't match the regex -> only add if regex matches
             for (DataSetFile file : files)
@@ -42,12 +42,12 @@ class QbicDataLoaderRegexUtil {
                     def matched = file.getPermId().toString() =~ fullRegex
 
                     if (matched) {
-                        fileIds.add(file.getPermId())
+                        filesFiltered.add(file)
                     }
                 }
             }
 
-            allFileIDs.addAll(fileIds)
+            allFileIDs.addAll(filesFiltered)
         }
 
         return allFileIDs
