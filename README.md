@@ -197,4 +197,21 @@ We discovered, that a default buffer size of 1024 bytes seems not always to get 
 
 Just use the `-b` option for that. The default buffer size remains 1024 bytes, if you don't specify this value.
 
+### File integrity check
+Postman computes the CRC32 checksum for all input streams using the native Java utility class [CRC32](https://docs.oracle.com/javase/8/docs/api/java/util/zip/CRC32.html). Postman favors [`CheckedInputStream`](https://docs.oracle.com/javase/7/docs/api/java/util/zip/CheckedInputStream.html)
+over the traditional InputStream, and promotes the CRC checksum computation.
+
+The expected CRC32 checksums are derived via the openBIS API and compared with the computed ones after the download.
+
+Postman writes two additional summary files for that: `summary_valid_files.txt` and `summary_invalid_files.txt`.  
+They contain the computed and expected checksum as hex string plus the file path of the recorded file:
+
+```
+// values are tab separated
+<expected checksum> <computed checksum> <file path>
+```
+
+
+
+In addition, Postman writes all
 

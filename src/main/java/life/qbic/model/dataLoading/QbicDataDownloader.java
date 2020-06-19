@@ -254,8 +254,8 @@ public class QbicDataDownloader {
         DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
         DataSetFileDownload file;
 
-        ChecksumWriter checksumWriter = new FileSystemWriter(Paths.get(System.getProperty("user.dir") + File.separator + "summary_validated.txt"),
-            Paths.get(System.getProperty("user.dir") + File.separator + "summary_failed.txt"));
+        ChecksumWriter checksumWriter = new FileSystemWriter(Paths.get(System.getProperty("user.dir") + File.separator + "summary_valid_files.txt"),
+            Paths.get(System.getProperty("user.dir") + File.separator + "summary_invalid_files.txt"));
 
 
         while ((file = reader.read()) != null) {
