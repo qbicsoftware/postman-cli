@@ -44,11 +44,14 @@ public class App {
       System.exit(1);
     }
 
+    // Ensure 'logs' folder is created
+    new File(System.getProperty("user.dir") + File.separator + "logs").mkdirs();
+
     ChecksumWriter checksumWriter =
         new FileSystemWriter(
-            Paths.get(System.getProperty("user.dir") + File.separator + "summary_valid_files.txt"),
+            Paths.get(System.getProperty("user.dir") + File.separator + "logs/summary_valid_files.txt"),
             Paths.get(
-                System.getProperty("user.dir") + File.separator + "summary_invalid_files.txt"));
+                System.getProperty("user.dir") + File.separator + "logs/summary_invalid_files.txt"));
 
     QbicDataDownloader qbicDataDownloader =
         new QbicDataDownloader(

@@ -203,7 +203,7 @@ over the traditional InputStream, and promotes the CRC checksum computation.
 
 The expected CRC32 checksums are derived via the openBIS API and compared with the computed ones after the download.
 
-Postman writes two additional summary files for that: `summary_valid_files.txt` and `summary_invalid_files.txt`.  
+Postman writes two additional summary files for that in the `logs` folder of the current working directory: `summary_valid_files.txt` and `summary_invalid_files.txt`.  
 They contain the computed and expected checksum as hex string plus the file path of the recorded file:
 
 ```
