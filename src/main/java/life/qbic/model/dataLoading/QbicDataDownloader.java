@@ -10,10 +10,10 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFil
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadReader;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import com.sun.tools.javac.comp.Check;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +34,8 @@ import java.util.*;
 
 
 public class QbicDataDownloader {
+
+    private final ChecksumWriter checksumWriter;
 
     private String user;
 
@@ -65,7 +67,8 @@ public class QbicDataDownloader {
     public QbicDataDownloader(String AppServerUri, String DataServerUri,
                               String user, String password,
                               int bufferSize, String filterType,
-                                boolean conservePaths) {
+                                boolean conservePaths, ChecksumWriter checksumWriter) {
+        this.checksumWriter = checksumWriter;
         this.defaultBufferSize = bufferSize;
         this.filterType = filterType;
         this.conservePaths = conservePaths;
@@ -158,7 +161,7 @@ public class QbicDataDownloader {
             // no suffix or regex was supplied -> download all datasets
             for (String ident : commandLineParameters.ids) {
                 LOG.info(String.format("Downloading files for provided identifier %s", ident));
-                List<DataSet> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+                Set<DataSet> foundDataSets = new HashSet<>(qbicDataFinder.findAllDatasetsRecursive(ident));
 
                 LOG.info(String.format("Number of datasets found: %s", foundDataSets.size()));
 
@@ -166,7 +169,7 @@ public class QbicDataDownloader {
                     LOG.info("Initialize download ...");
                     int datasetDownloadReturnCode = -1;
                     try {
-                        datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(foundDataSets);
+                        datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(new LinkedList<>(foundDataSets));
                     } catch (NullPointerException e) {
                         LOG.error("Datasets were found by the application server, but could not be found on the datastore server for "
                                 + ident + "." + " Try to supply the correct datastore server using a config file!");
@@ -254,10 +257,6 @@ public class QbicDataDownloader {
         DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
         DataSetFileDownload file;
 
-        ChecksumWriter checksumWriter = new FileSystemWriter(Paths.get(System.getProperty("user.dir") + File.separator + "summary_valid_files.txt"),
-            Paths.get(System.getProperty("user.dir") + File.separator + "summary_invalid_files.txt"));
-
-
         while ((file = reader.read()) != null) {
             InputStream initialStream = file.getInputStream();
             CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
@@ -270,7 +269,6 @@ public class QbicDataDownloader {
                 int bufferSize = (file.getDataSetFile().getFileLength() < defaultBufferSize) ? (int) file.getDataSetFile().getFileLength() : defaultBufferSize;
                 byte[] buffer = new byte[bufferSize];
                 int bytesRead;
-                CRC32 crcSum = new CRC32();
                 //read from is to buffer
                 while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
                     progressBar.updateProgress(bufferSize);
@@ -278,7 +276,7 @@ public class QbicDataDownloader {
                     os.flush();
                 }
                 System.out.print("\n");
-                validateChecksum(Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile, checksumWriter);
+                validateChecksum(Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
                 initialStream.close();
                 //flush OutputStream to write any buffered data to file
                 os.flush();
@@ -287,15 +285,15 @@ public class QbicDataDownloader {
         }
     }
 
-    private void validateChecksum(String computedChecksumHex, DataSetFile dataSetFile, ChecksumWriter writer) {
+    private void validateChecksum(String computedChecksumHex, DataSetFile dataSetFile) {
         String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
         try {
             if (computedChecksumHex.equals(expectedChecksum)) {
-                writer.writeMatchingChecksum(expectedChecksum,
+                checksumWriter.writeMatchingChecksum(expectedChecksum,
                     computedChecksumHex,
                     Paths.get(dataSetFile.getPath()).toUri().toURL());
             } else {
-                writer.writeFailedChecksum(expectedChecksum,
+                checksumWriter.writeFailedChecksum(expectedChecksum,
                     computedChecksumHex,
                     Paths.get(dataSetFile.getPath()).toUri().toURL());
             }

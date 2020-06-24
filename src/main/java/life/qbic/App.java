@@ -1,8 +1,9 @@
 package life.qbic;
 
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
+import java.io.File;
 import java.io.IOException;
 
+import java.nio.file.Paths;
 import life.qbic.model.dataLoading.QbicDataDownloader;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.CommandLineParser;
@@ -46,13 +47,19 @@ public class App {
             System.exit(1);
         }
 
+        ChecksumWriter checksumWriter = new FileSystemWriter(
+            Paths.get(System.getProperty("user.dir") + File.separator + "summary_valid_files.txt"),
+            Paths.get(System.getProperty("user.dir") + File.separator + "summary_invalid_files.txt"));
+
+
         QbicDataDownloader qbicDataDownloader = new QbicDataDownloader(commandLineParameters.as_url,
                                                                        commandLineParameters.dss_url,
                                                                        commandLineParameters.user,
                                                                        password,
-                                                              commandLineParameters.bufferMultiplier * 1024,
+                                                             commandLineParameters.bufferMultiplier * 1024,
                                                                        commandLineParameters.datasetType,
-                                                                        commandLineParameters.conservePath);
+                                                                       commandLineParameters.conservePath,
+                                                                       checksumWriter);
         int returnCode = qbicDataDownloader.login();
         LOG.info(String.format("OpenBis login returned with %s", returnCode));
         if (returnCode != 0) {
