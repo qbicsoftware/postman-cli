@@ -8,18 +8,18 @@ import java.util.Scanner;
 
 public class IdentifierParser {
 
-    /**
-     * Retrieve the identifiers from provided file
-     *
-     * @return Identifiers for which datasets will be retrieved
-     * @throws IOException
-     */
-    public static List<String> readProvidedIdentifiers(File file) throws IOException {
-        List<String> identifiers = new ArrayList<>();
-        Scanner scanner = new Scanner(file);
-        while (scanner.hasNext()) {
-            identifiers.add(scanner.nextLine());
-        }
-        return identifiers;
+  /**
+   * Retrieve the identifiers from provided file
+   *
+   * @return Identifiers for which datasets will be retrieved
+   * @throws IOException
+   */
+  public static List<String> readProvidedIdentifiers(File file) throws IOException {
+    List<String> identifiers = new ArrayList<>();
+    Scanner scanner = new Scanner(file);
+    while (scanner.hasNext()) {
+      identifiers.add(scanner.nextLine());
     }
+    return identifiers;
+  }
 }

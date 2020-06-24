@@ -1,20 +1,18 @@
 package life.qbic.model.UnitConverter;
 
+class GigaBytes implements UnitDisplay {
 
-class GigaBytes implements UnitDisplay{
+  private String unit = "Gb";
 
-    private String unit = "Gb";
+  private double divisor = Math.pow(1024, 3);
 
-    private double divisor = Math.pow(1024, 3);
+  @Override
+  public double convertBytesToUnit(long bytes) {
+    return (double) bytes / divisor;
+  }
 
-
-    @Override
-    public double convertBytesToUnit(long bytes) {
-        return (double) bytes/divisor;
-    }
-
-    @Override
-    public String getUnitType() {
-        return this.unit;
-    }
+  @Override
+  public String getUnitType() {
+    return this.unit;
+  }
 }

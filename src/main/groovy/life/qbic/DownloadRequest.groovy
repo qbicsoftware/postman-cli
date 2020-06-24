@@ -32,10 +32,10 @@ class DownloadRequest {
     }
 
     int getCRC32sum(String permId) {
-        if (! dataSetByPermId[permId].checksumCRC32) {
+        if (!dataSetByPermId[permId].checksumCRC32) {
             new IllegalArgumentException("")
         }
-       return dataSetByPermId[permId].checksumCRC32
+        return dataSetByPermId[permId].checksumCRC32
     }
 
     List<DataSetFile> getDataSets() {
