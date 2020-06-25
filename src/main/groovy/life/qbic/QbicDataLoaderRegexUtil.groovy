@@ -5,7 +5,6 @@ import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria
 
 class QbicDataLoaderRegexUtil {
@@ -19,11 +18,11 @@ class QbicDataLoaderRegexUtil {
      * @param sessionToken
      * @return all fileIDs which are forwarded to download
      */
-    static List<IDataSetFileId> findAllRegexFilteredIDsGroovy(List<String> regexPatterns,
-                                                              List<DataSet> allDatasets,
-                                                              IDataStoreServerApi dataStoreServer,
-                                                              String sessionToken) {
-        def allFileIDs = new ArrayList<>()
+    static List<DataSetFile> findAllRegexFilteredIDsGroovy(List<String> regexPatterns,
+                                                           List<DataSet> allDatasets,
+                                                           IDataStoreServerApi dataStoreServer,
+                                                           String sessionToken) {
+        List<DataSetFile> allFileIDs = new ArrayList<>()
 
         for (DataSet ds : allDatasets) {
             // we cannot access the files directly of the datasets -> we need to query for the files first using the datasetID
@@ -32,22 +31,21 @@ class QbicDataLoaderRegexUtil {
             SearchResult<DataSetFile> result = dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions())
             List<DataSetFile> files = result.getObjects()
 
-            def fileIds = new ArrayList<>()
+            List<DataSetFile> filesFiltered = new ArrayList<>()
 
             // remove everything that doesn't match the regex -> only add if regex matches
-            for (DataSetFile file : files)
-            {
+            for (DataSetFile file : files) {
                 for (String regex : regexPatterns) {
                     def fullRegex = $/$regex/$
                     def matched = file.getPermId().toString() =~ fullRegex
 
                     if (matched) {
-                        fileIds.add(file.getPermId())
+                        filesFiltered.add(file)
                     }
                 }
             }
 
-            allFileIDs.addAll(fileIds)
+            allFileIDs.addAll(filesFiltered)
         }
 
         return allFileIDs

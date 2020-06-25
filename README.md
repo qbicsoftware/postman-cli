@@ -177,7 +177,7 @@ Example:
 ```bash
 java -jar postman.jar -u <user> <sample> @path/to/config.txt 
 ```
-The structure of the configuration file is:       <code>[-cliOption] [value] </code>   
+The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
 For example: To set the ApplicationServerURL to another URL we have to use:    
 <code>-as [URL] </code>    
 Therefore to use our openbis URL we write the following line in the config file (Anything beginning with '#' is a comment):    
@@ -189,11 +189,30 @@ AS_URL (ApplicationServerURL)
 DSS_URL (DataStoreServerURL)     
 -dss [URL]       
 
-A default file is provided on this repository as 'config.txt'. If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.   
+A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.   
+
+If no config file or commandline option is provided, Postman will resort to the defaults set here: [Defaults](https://github.com/qbicsoftware/postman-cli/blob/development/src/main/java/life/qbic/io/commandline/PostmanCommandLineOptions.java).    
+Hence, the default AS is set to: <code>https://qbis.qbic.uni-tuebingen.de/openbis/openbis</code>    
+and the DSS defaults to: <code>https://qbis.qbic.uni-tuebingen.de:444/datastore_server</code>    
 
 ### Performance issues
 We discovered, that a default buffer size of 1024 bytes seems not always to get all out of the performance that is possible for the dataset download. Therefore, we allow you to enter a multipler Integer value that increases the buffer size. For example a multipler of 2 will result in 2x1024 = 2048 bytes and so on.
 
 Just use the `-b` option for that. The default buffer size remains 1024 bytes, if you don't specify this value.
 
+### File integrity check
+Postman computes the CRC32 checksum for all input streams using the native Java utility class [CRC32](https://docs.oracle.com/javase/8/docs/api/java/util/zip/CRC32.html). Postman favors [`CheckedInputStream`](https://docs.oracle.com/javase/7/docs/api/java/util/zip/CheckedInputStream.html)
+over the traditional InputStream, and promotes the CRC checksum computation.
+
+The expected CRC32 checksums are derived via the openBIS API and compared with the computed ones after the download.
+
+Postman writes two additional summary files for that in the `logs` folder of the current working directory: `summary_valid_files.txt` and `summary_invalid_files.txt`.  
+They contain the computed and expected checksum as hex string plus the file path of the recorded file:
+
+```
+// values are tab separated
+<expected checksum> <computed checksum> <absolute file path>
+```
+
+In addition, Postman writes the CRC32 checksum in an additional file `<file-name-of-checked-file>.crc32` and stores it in the working directory.
 
