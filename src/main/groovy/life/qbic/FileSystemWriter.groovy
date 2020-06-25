@@ -38,7 +38,7 @@ class FileSystemWriter implements ChecksumWriter {
      * {@inheritDoc}
      */
     @Override
-    void writeMatchingChecksum(String expectedChecksum, String computedChecksum, URL fileLocation) {
+    void reportValidChecksum(String expectedChecksum, String computedChecksum, URL fileLocation) {
         def content = "$expectedChecksum\t$computedChecksum\t${Paths.get(fileLocation.toURI())}\n"
         this.matchingSummaryFile.append(content, "UTF-8")
     }
@@ -47,7 +47,7 @@ class FileSystemWriter implements ChecksumWriter {
      * {@inheritDoc}
      */
     @Override
-    void writeInvalidChecksum(String expectedChecksum, String computedChecksum, URL fileLocation) {
+    void reportMismatchingChecksum(String expectedChecksum, String computedChecksum, URL fileLocation) {
         def content = "$expectedChecksum\t$computedChecksum\t${Paths.get(fileLocation.toURI())}\n"
         this.failureSummaryFile.append(content, "UTF-8")
     }

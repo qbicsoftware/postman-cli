@@ -320,12 +320,12 @@ public class QbicDataDownloader {
     String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
     try {
       if (computedChecksumHex.equals(expectedChecksum)) {
-        checksumWriter.writeMatchingChecksum(
+        checksumWriter.reportValidChecksum(
             expectedChecksum,
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
       } else {
-        checksumWriter.writeInvalidChecksum(
+        checksumWriter.reportMismatchingChecksum(
             expectedChecksum,
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
