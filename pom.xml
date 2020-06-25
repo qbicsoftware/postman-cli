@@ -9,7 +9,6 @@
         <version>2.2.0</version>
     </parent>
     <artifactId>postman-cli</artifactId>
-
     <version>0.4.0-SNAPSHOT</version>
     <name>Postman cli</name>
     <url>http://github.com/qbicsoftware/postman-cli</url>

@@ -11,21 +11,19 @@ public class OpenBISPasswordParser {
   /**
    * Retrieve the password from input stream
    *
-   * @return The password
+   * @return the password read from the input stream
    */
-  public static String readPasswordFromInputStream() {
-    char[] password;
-    Console console = System.console();
-    if (console == null) {
-      LOG.error(
-          "Could not get console instance!"
-              + " Please make sure that you're running this from a normal console, a console supplied by an IDE will not suffice!");
-
-      return "";
+  public static String readPasswordFromInputStream(InputStream inputStream) {
+    BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream));
+    String password;
+    try {
+      password = inputReader.readLine();
+    } catch (Exception e) {
+      throw e;
+    } finally {
+      inputReader.close();
     }
-    password = console.readPassword();
-
-    return new String(password);
+    return password;
   }
 
   /** Definition of some useful enum types for the cmd attributes */
