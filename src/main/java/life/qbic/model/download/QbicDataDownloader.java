@@ -93,11 +93,13 @@ public class QbicDataDownloader {
   }
 
   private static Path getTopDirectory(Path path) {
-    Path newPath = Paths.get(path.toString());
-    while (newPath.getParent() != null) {
-      newPath = newPath.getParent();
+    Path currentPath = Paths.get(path.toString());
+    Path parentPath;
+    while (currentPath.getParent() != null) {
+      parentPath = currentPath.getParent();
+      currentPath = parentPath;
     }
-    return newPath;
+    return currentPath;
   }
 
   /**
