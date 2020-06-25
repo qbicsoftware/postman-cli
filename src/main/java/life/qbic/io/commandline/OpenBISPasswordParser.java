@@ -20,7 +20,6 @@ public class OpenBISPasswordParser {
       LOG.error(
           "Could not get console instance!"
               + " Please make sure that you're running this from a normal console, a console supplied by an IDE will not suffice!");
-
       return "";
     }
     password = console.readPassword();
