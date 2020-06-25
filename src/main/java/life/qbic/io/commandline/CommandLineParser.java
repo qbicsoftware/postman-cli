@@ -7,10 +7,9 @@ import picocli.CommandLine;
 public class CommandLineParser {
 
   /**
-   * parses all passed CLI parameters Prints help menu if no commandline parameters were passed
+   * Parses all passed CLI parameters Prints help menu if no commandline parameters were passed
    * verifies whether all mandatory commandline parameters have been passed (IDs and username)
    *
-   * <p>also reads the provided identifiers if they were passed as a file
    *
    * @param args
    * @return
