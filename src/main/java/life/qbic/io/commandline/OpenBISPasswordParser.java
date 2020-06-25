@@ -11,7 +11,7 @@ public class OpenBISPasswordParser {
   /**
    * Retrieve the password from input stream
    *
-   * @return The password
+   * @return the password read from the input stream
    */
   public static String readPasswordFromInputStream() {
     char[] password;
