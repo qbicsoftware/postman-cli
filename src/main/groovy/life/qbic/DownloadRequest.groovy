@@ -54,7 +54,7 @@ class DownloadRequest {
      */
     int getCRC32sum(String permId) {
         if (!dataSetByPermId[permId].checksumCRC32) {
-            new IllegalArgumentException("")
+            new IllegalArgumentException("The provided argument does not represent a known ID.")
         }
         return dataSetByPermId[permId].checksumCRC32
     }
