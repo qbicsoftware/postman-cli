@@ -3,7 +3,8 @@ package life.qbic
 import java.nio.file.Path
 
 /**
- * <add class description here>
+ * A small helper class that simplifies to write files out of Java source code
+ * with the JDK enhancements of Groovy.
  *
  * @author: Sven Fillinger
  */

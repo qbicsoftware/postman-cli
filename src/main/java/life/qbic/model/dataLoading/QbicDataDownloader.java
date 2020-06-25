@@ -325,7 +325,7 @@ public class QbicDataDownloader {
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
       } else {
-        checksumWriter.writeFailedChecksum(
+        checksumWriter.writeInvalidChecksum(
             expectedChecksum,
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
