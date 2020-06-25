@@ -40,7 +40,7 @@ public class App {
     String password = OpenBISPasswordParser.readPasswordFromConsole();
 
     if (password.isEmpty()) {
-      System.out.println("You need to provide a password.");
+    LOG.error("You need to provide a password.");
       System.exit(1);
     }
 
