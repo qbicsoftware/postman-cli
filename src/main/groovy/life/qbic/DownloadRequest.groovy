@@ -6,8 +6,8 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile
  * Contains information about a download request for openBIS
  * data set files.
  *
- * Allows to add and access data set files to to request
- * and allows for quicks access of CRC32 checksums of data set files.
+ * Allows to add and access data set files to and from a request
+ * Allows for quicks access of CRC32 checksums of corresponding data set files.
  *
  * @author Sven Fillinger
  * @since 0.4.0
