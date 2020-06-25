@@ -30,7 +30,7 @@ class FileSystemWriter implements ChecksumWriter {
      * @param failureSummaryFile The path where to write the failed checksum summary
      */
     FileSystemWriter(Path matchingSummaryFile, Path failureSummaryFile) {
-        this.matchingSummaryFile = new File(matchingSummarFile.toString())
+        this.matchingSummaryFile = new File(matchingSummaryFile.toString())
         this.failureSummaryFile = new File(failureSummaryFile.toString())
     }
 
