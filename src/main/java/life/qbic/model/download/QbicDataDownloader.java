@@ -368,6 +368,6 @@ public class QbicDataDownloader {
 
   void writeCRC32Checksum(DataSetFile dataSetFile) {
     Path path = determineFinalPathFromDataset(dataSetFile);
-    checksumReporter.reportChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
+    checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 }

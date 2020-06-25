@@ -57,7 +57,7 @@ class FileSystemWriter implements ChecksumReporter {
      * {@inheritDoc}
      */
     @Override
-    void reportChecksum(Path filePath, String checksum) {
+    void storeChecksum(Path filePath, String checksum) {
         def newFile = new File(filePath.toString() + ".crc32")
         newFile.withWriter {
             it.write(checksum + "\t" + filePath.getFileName())
