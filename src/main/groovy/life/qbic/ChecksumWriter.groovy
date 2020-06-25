@@ -17,7 +17,7 @@ interface ChecksumWriter {
      * @param computedChecksum The checksum that was calculated from the file.
      * @param fileLocation The file location for which the checksum was compared.
      */
-    void writeMatchingChecksum(String expectedChecksum, String computedChecksum, URL fileLocation)
+    void reportValidChecksum(String expectedChecksum, String computedChecksum, URL fileLocation)
 
     /**
      * Writes a invalid checksum into a summary report for invalid checksums.
