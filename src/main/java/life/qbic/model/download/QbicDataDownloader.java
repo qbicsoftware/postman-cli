@@ -29,10 +29,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
-import life.qbic.ChecksumWriter;
+import life.qbic.ChecksumReporter;
 import life.qbic.DownloadException;
 import life.qbic.DownloadRequest;
-import life.qbic.WriterHelper;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
@@ -41,7 +40,7 @@ import org.apache.logging.log4j.Logger;
 public class QbicDataDownloader {
 
   private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
-  private final ChecksumWriter checksumWriter;
+  private final ChecksumReporter checksumReporter;
   private final int defaultBufferSize;
   private final boolean conservePaths;
   private String user;
@@ -68,8 +67,8 @@ public class QbicDataDownloader {
       int bufferSize,
       String filterType,
       boolean conservePaths,
-      ChecksumWriter checksumWriter) {
-    this.checksumWriter = checksumWriter;
+      ChecksumReporter checksumReporter) {
+    this.checksumReporter = checksumReporter;
     this.defaultBufferSize = bufferSize;
     this.filterType = filterType;
     this.conservePaths = conservePaths;
@@ -322,12 +321,12 @@ public class QbicDataDownloader {
     String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
     try {
       if (computedChecksumHex.equals(expectedChecksum)) {
-        checksumWriter.reportValidChecksum(
+        checksumReporter.reportValidChecksum(
             expectedChecksum,
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
       } else {
-        checksumWriter.reportMismatchingChecksum(
+        checksumReporter.reportMismatchingChecksum(
             expectedChecksum,
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
@@ -369,8 +368,6 @@ public class QbicDataDownloader {
 
   void writeCRC32Checksum(DataSetFile dataSetFile) {
     Path path = determineFinalPathFromDataset(dataSetFile);
-    String content =
-        Integer.toHexString(dataSetFile.getChecksumCRC32()) + "\t" + path.getFileName();
-    WriterHelper.writeToFileSystem(Paths.get(path.toString() + ".crc32"), content);
+    checksumReporter.reportChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 }

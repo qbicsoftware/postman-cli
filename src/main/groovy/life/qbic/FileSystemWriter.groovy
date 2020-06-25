@@ -11,7 +11,7 @@ import java.nio.file.Paths
  *
  * @author: Sven Fillinger
  */
-class FileSystemWriter implements ChecksumWriter {
+class FileSystemWriter implements ChecksumReporter {
 
     /**
      * File that stores the summary report content for valid checksums.
@@ -22,6 +22,7 @@ class FileSystemWriter implements ChecksumWriter {
      * File that stores the summary report content for invalid checksums.
      */
     final private File failureSummaryFile
+
 
     /**
      * FileSystemWriter constructor with the paths for the summary files.     *
@@ -50,5 +51,16 @@ class FileSystemWriter implements ChecksumWriter {
     void reportMismatchingChecksum(String expectedChecksum, String computedChecksum, URL fileLocation) {
         def content = "$expectedChecksum\t$computedChecksum\t${Paths.get(fileLocation.toURI())}\n"
         this.failureSummaryFile.append(content, "UTF-8")
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    void reportChecksum(Path filePath, String checksum) {
+        def newFile = new File(filePath.toString() + ".crc32")
+        newFile.withWriter {
+            it.write(checksum + "\t" + filePath.getFileName())
+        }
     }
 }
