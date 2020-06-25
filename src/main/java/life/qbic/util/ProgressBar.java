@@ -4,8 +4,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import life.qbic.model.UnitConverter.UnitConverterFactory;
-import life.qbic.model.UnitConverter.UnitDisplay;
+import life.qbic.model.units.UnitConverterFactory;
+import life.qbic.model.units.UnitDisplay;
 
 public class ProgressBar {
 

@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import life.qbic.io.commandline.CommandLineParser;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
-import life.qbic.model.dataLoading.QbicDataDownloader;
+import life.qbic.model.download.QbicDataDownloader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,7 +37,7 @@ public class App {
       PostmanCommandLineOptions commandLineParameters) {
     System.out.format("Please provide password for user '%s':\n", commandLineParameters.user);
 
-    String password = OpenBISPasswordParser.readPasswordFromInputStream();
+    String password = OpenBISPasswordParser.readPasswordFromConsole();
 
     if (password.isEmpty()) {
       System.out.println("You need to provide a password.");

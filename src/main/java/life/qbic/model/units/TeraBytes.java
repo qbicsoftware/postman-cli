@@ -1,10 +1,10 @@
-package life.qbic.model.UnitConverter;
+package life.qbic.model.units;
 
-class MegaBytes implements UnitDisplay {
+class TeraBytes implements UnitDisplay {
 
-  private String unit = "Mb";
+  private String unit = "Tb";
 
-  private double divisor = Math.pow(1024, 2);
+  private double divisor = Math.pow(1024, 4);
 
   @Override
   public double convertBytesToUnit(long bytes) {
