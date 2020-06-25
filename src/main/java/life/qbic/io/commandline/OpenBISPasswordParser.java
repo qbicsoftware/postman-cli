@@ -1,6 +1,10 @@
 package life.qbic.io.commandline;
 
+import java.io.BufferedReader;
 import java.io.Console;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,14 +18,11 @@ public class OpenBISPasswordParser {
    * @return the password read from the input stream
    */
   public static String readPasswordFromInputStream(InputStream inputStream) {
-    BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream));
-    String password;
-    try {
+    String password = "";
+    try(BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream))){
       password = inputReader.readLine();
-    } catch (Exception e) {
-      throw e;
-    } finally {
-      inputReader.close();
+    } catch (IOException e){
+      LOG.error(e);
     }
     return password;
   }
