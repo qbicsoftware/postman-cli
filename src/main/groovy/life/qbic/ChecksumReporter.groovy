@@ -4,7 +4,7 @@ import java.nio.file.Path
 
 /**
  * This interface can be used if you want to provide
- * functionality to report valid, mismatching checksums as well as storing a
+ * functionality to report matching, mismatching checksums as well as storing a
  * checksum for downloaded files.
  *
  * @author Sven Fillinger
@@ -19,10 +19,10 @@ interface ChecksumReporter {
      * @param computedChecksum The checksum that was calculated from the file.
      * @param fileLocation The file location for which the checksum was compared.
      */
-    void reportValidChecksum(String expectedChecksum, String computedChecksum, URL fileLocation)
+    void reportMatchingChecksum(String expectedChecksum, String computedChecksum, URL fileLocation)
 
     /**
-     * Writes a invalid checksum into a summary report for invalid checksums.
+     * Writes a mismatching checksum into a summary report for mismatching checksums.
      * @param expectedChecksum The checksum that was expected from the file.
      * @param computedChecksum The checksum that was calculated from the file.
      * @param fileLocation The file location for which the checksum was compared.

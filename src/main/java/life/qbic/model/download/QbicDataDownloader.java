@@ -321,7 +321,7 @@ public class QbicDataDownloader {
     String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
     try {
       if (computedChecksumHex.equals(expectedChecksum)) {
-        checksumReporter.reportValidChecksum(
+        checksumReporter.reportMatchingChecksum(
             expectedChecksum,
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
@@ -366,7 +366,7 @@ public class QbicDataDownloader {
             });
   }
 
-  void writeCRC32Checksum(DataSetFile dataSetFile) {
+  private void writeCRC32Checksum(DataSetFile dataSetFile) {
     Path path = determineFinalPathFromDataset(dataSetFile);
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }

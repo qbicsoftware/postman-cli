@@ -39,7 +39,7 @@ class FileSystemWriter implements ChecksumReporter {
      * {@inheritDoc}
      */
     @Override
-    void reportValidChecksum(String expectedChecksum, String computedChecksum, URL fileLocation) {
+    void reportMatchingChecksum(String expectedChecksum, String computedChecksum, URL fileLocation) {
         def content = "$expectedChecksum\t$computedChecksum\t${Paths.get(fileLocation.toURI())}\n"
         this.matchingSummaryFile.append(content, "UTF-8")
     }
