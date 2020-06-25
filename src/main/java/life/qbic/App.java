@@ -47,7 +47,7 @@ public class App {
     // Ensure 'logs' folder is created
     new File(System.getProperty("user.dir") + File.separator + "logs").mkdirs();
 
-    ChecksumWriter checksumWriter =
+    ChecksumReporter checksumWriter =
         new FileSystemWriter(
             Paths.get(System.getProperty("user.dir") + File.separator + "logs/summary_valid_files.txt"),
             Paths.get(
