@@ -35,7 +35,7 @@ public class App {
    */
   private static QbicDataDownloader loginToOpenBIS(
       PostmanCommandLineOptions commandLineParameters) {
-    LOG.info(String.format("Please provide password for user '%s':\n", commandLineParameters.user));
+    LOG.info(String.format("Please provide password for user '%s':", commandLineParameters.user));
 
     String password = OpenBISPasswordParser.readPasswordFromConsole();
 
