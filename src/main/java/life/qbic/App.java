@@ -28,10 +28,10 @@ public class App {
   }
 
   /**
-   * logs into OpenBIS asks for and verifies password
+   * Logs into OpenBIS asks for and verifies password.
    *
-   * @param commandLineParameters
-   * @return
+   * @param commandLineParameters The command line parameters.
+   * @return An instance of a QbicDataDownloader.
    */
   private static QbicDataDownloader loginToOpenBIS(
       PostmanCommandLineOptions commandLineParameters) {
