@@ -1,7 +1,6 @@
 # qPostman - A download tool for QBiC datasets.
 
-[![Build Status](https://travis-ci.com/qbicsoftware/postman-cli.svg?branch=development)](https://travis-ci.com/qbicsoftware/postman-cli)
-[![Code Coverage](https://codecov.io/gh/qbicsoftware/postman-cli/branch/development/graph/badge.svg)](https://codecov.io/gh/qbicsoftware/postman-cli)
+[![Build Status](https://travis-ci.com/qbicsoftware/postman-cli.svg?branch=master)](https://travis-ci.com/qbicsoftware/postman-cli)
 [![Latest Release ](https://img.shields.io/github/v/release/qbicsoftware/postman-cli.svg)](https://github.com/qbicsoftware/postman-cli/releases)
 ![Java Language](https://img.shields.io/badge/language-java-blue.svg)
 ![Groovy Language](https://img.shields.io/badge/language-groovy-blue.svg)
