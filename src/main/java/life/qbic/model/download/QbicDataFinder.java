@@ -125,6 +125,7 @@ public class QbicDataFinder {
    */
   public List<DataSetFile> findAllSuffixFilteredIDs(String ident, List<String> suffixes) {
     List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
+
     List<DataSetFile> allFileIDs = new ArrayList<>();
 
     for (DataSet ds : allDatasets) {
@@ -141,7 +142,7 @@ public class QbicDataFinder {
       // remove everything that doesn't match the suffix -> only add if suffix matches
       for (DataSetFile file : files) {
         for (String suffix : suffixes) {
-          if (StringUtil.endsWithIgnoreCase(file.getPermId().toString(), suffix)) {
+          if (StringUtil.endsWithIgnoreCase(file.getPath(), suffix)) {
             filesFiltered.add(file);
           }
         }
