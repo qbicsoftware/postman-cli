@@ -153,7 +153,7 @@ public class QbicDataDownloader {
     // a suffix was provided -> only download files which contain the suffix string
     if (!commandLineParameters.suffixes.isEmpty()) {
       for (String ident : commandLineParameters.ids) {
-        LOG.info(String.format("Downloading files for provided identifier %s", ident));
+        LOG.info(String.format("Downloading filtered files for provided identifier %s", ident));
         List<DataSetFile> foundSuffixFilteredIDs =
             qbicDataFinder.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
 
@@ -222,7 +222,7 @@ public class QbicDataDownloader {
       try {
         List<DataSetFile> filteredDataSetFiles = removeDirectories(foundFilteredDatasets);
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles);
-        downloadFiles(downloadRequest);
+        filesDownloadReturnCode = downloadFiles(downloadRequest);
       } catch (NullPointerException e) {
         LOG.error(
             "Datasets were found by the application server, but could not be found on the datastore server for "
@@ -349,7 +349,7 @@ public class QbicDataDownloader {
     return finalPath;
   }
 
-  private void downloadFiles(DownloadRequest request) throws DownloadException {
+  private int downloadFiles(DownloadRequest request) throws DownloadException {
     request
         .getDataSets()
         .forEach(
@@ -364,6 +364,7 @@ public class QbicDataDownloader {
               }
               writeCRC32Checksum(dataSetFile);
             });
+    return 0;
   }
 
   private void writeCRC32Checksum(DataSetFile dataSetFile) {

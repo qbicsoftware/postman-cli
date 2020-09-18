@@ -142,7 +142,8 @@ public class QbicDataFinder {
       // remove everything that doesn't match the suffix -> only add if suffix matches
       for (DataSetFile file : files) {
         for (String suffix : suffixes) {
-          if (StringUtil.endsWithIgnoreCase(file.getPath(), suffix)) {
+          // We omit directories and check files for suffix pattern
+          if ((!file.isDirectory()) && StringUtil.endsWithIgnoreCase(file.getPath(), suffix)) {
             filesFiltered.add(file);
           }
         }
