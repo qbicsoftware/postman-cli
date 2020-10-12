@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
@@ -176,14 +177,18 @@ public class QbicDataDownloader {
       // no suffix or regex was supplied -> download all datasets
       for (String ident : commandLineParameters.ids) {
         LOG.info(String.format("Downloading files for provided identifier %s", ident));
-        Set<DataSet> foundDataSets = new HashSet<>(qbicDataFinder.findAllDatasetsRecursive(ident));
+        List<Map<String, List<DataSet>>> foundDataSets =
+            qbicDataFinder.findAllDatasetsRecursive(ident);
 
+        //Todo: implement method that determines the number of found datasets
         LOG.info(String.format("Number of datasets found: %s", foundDataSets.size()));
 
         if (foundDataSets.size() > 0) {
           LOG.info("Initialize download ...");
           int datasetDownloadReturnCode = -1;
           try {
+            // Todo: Adjust downloadDataset method such that it creates folders
+            // for the sample code and aggregates datasets per sample code
             datasetDownloadReturnCode =
                 qbicDataDownloader.downloadDataset(new LinkedList<>(foundDataSets));
           } catch (NullPointerException e) {

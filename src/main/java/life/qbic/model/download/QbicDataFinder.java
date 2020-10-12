@@ -12,7 +12,11 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
@@ -47,17 +51,18 @@ public class QbicDataFinder {
    * @param sample
    * @return all recursively found datasets
    */
-  private static List<DataSet> fetchDesecendantDatasets(Sample sample) {
-    List<DataSet> foundSets = new ArrayList<>();
-
+  private static List<Map<String, List<DataSet>>> fetchDesecendantDatasets(Sample sample) {
+    Map<String, List<DataSet>> foundSets = new HashMap<>();
+    List<Map<String, List<DataSet>>> result = new ArrayList<>();
     // fetch all datasets of the children
     for (Sample child : sample.getChildren()) {
       List<DataSet> foundChildrenDatasets = child.getDataSets();
-      foundSets.addAll(foundChildrenDatasets);
-      foundSets.addAll(fetchDesecendantDatasets(child));
+      foundSets.put(sample.getCode(), foundChildrenDatasets);
+      result.add(foundSets);
+      result.addAll(fetchDesecendantDatasets(child));
     }
 
-    return foundSets;
+    return result;
   }
 
   /**
@@ -66,7 +71,7 @@ public class QbicDataFinder {
    * @param sampleId
    * @return all found datasets for a given sampleID
    */
-  public List<DataSet> findAllDatasetsRecursive(String sampleId) {
+  public List<Map<String, List<DataSet>>> findAllDatasetsRecursive(String sampleId) {
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
@@ -79,19 +84,27 @@ public class QbicDataFinder {
     SearchResult<Sample> result =
         applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
 
-    List<DataSet> foundDatasets = new ArrayList<>();
+    Map<String, List<DataSet>> foundSets = new HashMap<>();
+    List<Map<String, List<DataSet>>> dataSetsBySampleId = new ArrayList<>();
 
     for (Sample sample : result.getObjects()) {
+      System.out.println(sample.getCode());
       // add the datasets of the sample itself
-      foundDatasets.addAll(sample.getDataSets());
+      foundSets.put(sample.getCode(), sample.getDataSets());
+      dataSetsBySampleId.add(foundSets);
 
       // fetch all datasets of the children
-      foundDatasets.addAll(fetchDesecendantDatasets(sample));
+      dataSetsBySampleId.addAll(fetchDesecendantDatasets(sample));
     }
 
-    if (filterType.isEmpty()) return foundDatasets;
+    return dataSetsBySampleId;
 
-    List<DataSet> filteredDatasets = new ArrayList<>();
+    // Currently omitting the type filter with 0.4.3
+    // as we quickly need the sample id for output writing.
+    /*
+    if (filterType.isEmpty()) return dataSetsBySampleId;
+
+    List<Map<String, List<DataSet>>> filteredDatasets = new ArrayList<>();
     for (DataSet ds : foundDatasets) {
       LOG.info(ds.getType().getCode() + " found.");
       if (filterType.equals(ds.getType().getCode())) {
@@ -99,7 +112,7 @@ public class QbicDataFinder {
       }
     }
 
-    return filteredDatasets;
+    return filteredDatasets;*/
   }
 
   /**
