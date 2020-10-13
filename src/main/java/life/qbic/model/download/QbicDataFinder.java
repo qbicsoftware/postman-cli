@@ -12,7 +12,11 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
@@ -47,17 +51,23 @@ public class QbicDataFinder {
    * @param sample
    * @return all recursively found datasets
    */
-  private static List<DataSet> fetchDesecendantDatasets(Sample sample) {
-    List<DataSet> foundSets = new ArrayList<>();
-
+  private static List<Map<String, List<DataSet>>> fetchDesecendantDatasets(Sample sample) {
+    Map<String, List<DataSet>> foundSets = new HashMap<>();
+    List<Map<String, List<DataSet>>> result = new ArrayList<>();
     // fetch all datasets of the children
     for (Sample child : sample.getChildren()) {
       List<DataSet> foundChildrenDatasets = child.getDataSets();
-      foundSets.addAll(foundChildrenDatasets);
-      foundSets.addAll(fetchDesecendantDatasets(child));
+      if (!foundChildrenDatasets.isEmpty()) {
+        foundSets.put(child.getCode(), foundChildrenDatasets);
+      }
+      if (!fetchDesecendantDatasets(child).isEmpty()) {
+        result.addAll(fetchDesecendantDatasets(child));
+      }
     }
-
-    return foundSets;
+    if (!foundSets.isEmpty()){
+      result.add(foundSets);
+    }
+    return result;
   }
 
   /**
@@ -66,7 +76,7 @@ public class QbicDataFinder {
    * @param sampleId
    * @return all found datasets for a given sampleID
    */
-  public List<DataSet> findAllDatasetsRecursive(String sampleId) {
+  public List<Map<String, List<DataSet>>> findAllDatasetsRecursive(String sampleId) {
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
@@ -79,19 +89,26 @@ public class QbicDataFinder {
     SearchResult<Sample> result =
         applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
 
-    List<DataSet> foundDatasets = new ArrayList<>();
+    Map<String, List<DataSet>> foundSets = new HashMap<>();
+    List<Map<String, List<DataSet>>> dataSetsBySampleId = new ArrayList<>();
 
     for (Sample sample : result.getObjects()) {
       // add the datasets of the sample itself
-      foundDatasets.addAll(sample.getDataSets());
-
+      if (!sample.getDataSets().isEmpty()) {
+        foundSets.put(sample.getCode(), sample.getDataSets());
+        dataSetsBySampleId.add(foundSets);
+      }
       // fetch all datasets of the children
-      foundDatasets.addAll(fetchDesecendantDatasets(sample));
+      dataSetsBySampleId.addAll(fetchDesecendantDatasets(sample));
     }
+    return dataSetsBySampleId;
 
-    if (filterType.isEmpty()) return foundDatasets;
+    // Currently omitting the type filter with 0.4.3
+    // as we quickly need the sample id for output writing.
+    /*
+    if (filterType.isEmpty()) return dataSetsBySampleId;
 
-    List<DataSet> filteredDatasets = new ArrayList<>();
+    List<Map<String, List<DataSet>>> filteredDatasets = new ArrayList<>();
     for (DataSet ds : foundDatasets) {
       LOG.info(ds.getType().getCode() + " found.");
       if (filterType.equals(ds.getType().getCode())) {
@@ -99,7 +116,7 @@ public class QbicDataFinder {
       }
     }
 
-    return filteredDatasets;
+    return filteredDatasets;*/
   }
 
   /**
@@ -110,10 +127,12 @@ public class QbicDataFinder {
    * @return
    */
   public List<DataSetFile> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
-    List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
+    // TODO adjust for datasets per sample
+    //List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
 
+    // TODO replace empty list
     return QbicDataLoaderRegexUtil.findAllRegexFilteredIDsGroovy(
-        regexPatterns, allDatasets, dataStoreServer, sessionToken);
+        regexPatterns, new ArrayList<>(), dataStoreServer, sessionToken);
   }
 
   /**
@@ -123,12 +142,28 @@ public class QbicDataFinder {
    * @param suffixes
    * @return
    */
-  public List<DataSetFile> findAllSuffixFilteredIDs(String ident, List<String> suffixes) {
-    List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
+  public List<Map<String, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
+      List<String> suffixes) {
+    // TODO adjust type
+    List<Map<String, List<DataSet>>> allDatasets = findAllDatasetsRecursive(ident);
+    List<Map<String, List<DataSetFile>>> filteredDatasets = new ArrayList<>();
 
-    List<DataSetFile> allFileIDs = new ArrayList<>();
+    for (Map<String, List<DataSet>> datasetsPerSample : allDatasets) {
+      for (String sampleCode : datasetsPerSample.keySet()){
+        Map<String, List<DataSetFile>> result = new HashMap<>();
+        List<DataSetFile> filteredFiles =
+            filterDataSetBySuffix(datasetsPerSample.get(sampleCode), suffixes);
+        result.put(sampleCode, filteredFiles);
+        filteredDatasets.add(result);
+      }
+    }
 
-    for (DataSet ds : allDatasets) {
+    return filteredDatasets;
+  }
+
+  private List<DataSetFile> filterDataSetBySuffix(List<DataSet> datasets, List<String> suffixes){
+    List<DataSetFile> filteredFiles = new ArrayList<>();
+    for (DataSet ds : datasets) {
       // we cannot access the files directly of the datasets -> we need to query for the files first
       // using the datasetID
       DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
@@ -137,22 +172,23 @@ public class QbicDataFinder {
           dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
       List<DataSetFile> files = result.getObjects();
 
-      List<DataSetFile> filesFiltered = new ArrayList<>();
+      filteredFiles.addAll(filterDataSetFilesBySuffix(files, suffixes));
+    }
+    return filteredFiles;
+  }
 
-      // remove everything that doesn't match the suffix -> only add if suffix matches
-      for (DataSetFile file : files) {
-        for (String suffix : suffixes) {
-          // We omit directories and check files for suffix pattern
-          if ((!file.isDirectory()) && StringUtil.endsWithIgnoreCase(file.getPath(), suffix)) {
-            filesFiltered.add(file);
-          }
+  private List<DataSetFile> filterDataSetFilesBySuffix(List<DataSetFile> files, List<String> suffixes){
+    List<DataSetFile> filesFiltered = new ArrayList<>();
+    // remove everything that doesn't match the suffix -> only add if suffix matches
+    for (DataSetFile file : files) {
+      for (String suffix : suffixes) {
+        // We omit directories and check files for suffix pattern
+        if ((!file.isDirectory()) && StringUtil.endsWithIgnoreCase(file.getPath(), suffix)) {
+          filesFiltered.add(file);
         }
       }
-
-      allFileIDs.addAll(filesFiltered);
     }
-
-    return allFileIDs;
+    return filesFiltered;
   }
 
   /**

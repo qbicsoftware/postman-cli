@@ -1,5 +1,9 @@
 # Changelog
 
+## Hotfix 0.4.3
+
+* Fix #65 and #47
+
 ## Hotfix 0.4.2
 
 * Fix wrong display of found files for download
