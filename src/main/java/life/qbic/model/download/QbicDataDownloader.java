@@ -181,7 +181,7 @@ public class QbicDataDownloader {
             qbicDataFinder.findAllDatasetsRecursive(ident);
 
         //Todo: implement method that determines the number of found datasets
-        LOG.info(String.format("Number of datasets found: %s", foundDataSets.size()));
+        LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
 
         if (foundDataSets.size() > 0) {
           LOG.info("Initialize download ...");
@@ -189,8 +189,8 @@ public class QbicDataDownloader {
           try {
             // Todo: Adjust downloadDataset method such that it creates folders
             // for the sample code and aggregates datasets per sample code
-            datasetDownloadReturnCode =
-                qbicDataDownloader.downloadDataset(new LinkedList<>(foundDataSets));
+            //datasetDownloadReturnCode =
+            //    qbicDataDownloader.downloadDataset(foundDataSets);
           } catch (NullPointerException e) {
             LOG.error(
                 "Datasets were found by the application server, but could not be found on the datastore server for "
@@ -210,6 +210,17 @@ public class QbicDataDownloader {
         }
       }
     }
+  }
+
+  private Integer countDatasets(List<Map<String, List<DataSet>>> datasetsPerSampleCode) {
+    int sum = 0;
+    for (Map<String, List<DataSet>> entry : datasetsPerSampleCode){
+      for (String sampleCode : entry.keySet()) {
+        System.out.println(sampleCode);
+        sum += entry.get(sampleCode).size();
+      }
+    }
+    return sum;
   }
 
   /**

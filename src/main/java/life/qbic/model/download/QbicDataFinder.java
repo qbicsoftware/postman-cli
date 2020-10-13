@@ -57,11 +57,16 @@ public class QbicDataFinder {
     // fetch all datasets of the children
     for (Sample child : sample.getChildren()) {
       List<DataSet> foundChildrenDatasets = child.getDataSets();
-      foundSets.put(sample.getCode(), foundChildrenDatasets);
-      result.add(foundSets);
-      result.addAll(fetchDesecendantDatasets(child));
+      if (!foundChildrenDatasets.isEmpty()) {
+        foundSets.put(child.getCode(), foundChildrenDatasets);
+      }
+      if (!fetchDesecendantDatasets(child).isEmpty()) {
+        result.addAll(fetchDesecendantDatasets(child));
+      }
     }
-
+    if (!foundSets.isEmpty()){
+      result.add(foundSets);
+    }
     return result;
   }
 
@@ -88,15 +93,14 @@ public class QbicDataFinder {
     List<Map<String, List<DataSet>>> dataSetsBySampleId = new ArrayList<>();
 
     for (Sample sample : result.getObjects()) {
-      System.out.println(sample.getCode());
       // add the datasets of the sample itself
-      foundSets.put(sample.getCode(), sample.getDataSets());
-      dataSetsBySampleId.add(foundSets);
-
+      if (!sample.getDataSets().isEmpty()) {
+        foundSets.put(sample.getCode(), sample.getDataSets());
+        dataSetsBySampleId.add(foundSets);
+      }
       // fetch all datasets of the children
       dataSetsBySampleId.addAll(fetchDesecendantDatasets(sample));
     }
-
     return dataSetsBySampleId;
 
     // Currently omitting the type filter with 0.4.3
@@ -123,10 +127,12 @@ public class QbicDataFinder {
    * @return
    */
   public List<DataSetFile> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
-    List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
+    // TODO adjust for datasets per sample
+    //List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
 
+    // TODO replace empty list
     return QbicDataLoaderRegexUtil.findAllRegexFilteredIDsGroovy(
-        regexPatterns, allDatasets, dataStoreServer, sessionToken);
+        regexPatterns, new ArrayList<>(), dataStoreServer, sessionToken);
   }
 
   /**
@@ -137,8 +143,9 @@ public class QbicDataFinder {
    * @return
    */
   public List<DataSetFile> findAllSuffixFilteredIDs(String ident, List<String> suffixes) {
-    List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
-
+    // TODO adjust type
+    //List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
+    List<DataSet> allDatasets = new ArrayList<>();
     List<DataSetFile> allFileIDs = new ArrayList<>();
 
     for (DataSet ds : allDatasets) {
