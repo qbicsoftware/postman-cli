@@ -16,8 +16,11 @@ class DownloadRequest {
 
     final private Map<String, DataSetFile> dataSetByPermId
 
+    private String sampleCode
+
     DownloadRequest() {
         this.dataSetByPermId = new HashMap<>()
+        this.sampleCode = ""
     }
 
     /**
@@ -25,8 +28,9 @@ class DownloadRequest {
      *
      * @param dataSetFiles
      */
-    DownloadRequest(List<DataSetFile> dataSetFiles) {
+    DownloadRequest(List<DataSetFile> dataSetFiles, String sampleCode) {
         this()
+        this.sampleCode = sampleCode
         dataSetFiles.each { dsFile ->
             addDataSet(dsFile.getPermId().toString(), dsFile)
         }
@@ -65,6 +69,10 @@ class DownloadRequest {
      */
     List<DataSetFile> getDataSets() {
         dataSetByPermId.values().collect()
+    }
+
+    String getSampleCode() {
+        sampleCode
     }
 
 }

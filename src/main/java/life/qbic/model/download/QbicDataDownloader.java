@@ -155,10 +155,10 @@ public class QbicDataDownloader {
     if (!commandLineParameters.suffixes.isEmpty()) {
       for (String ident : commandLineParameters.ids) {
         LOG.info(String.format("Downloading filtered files for provided identifier %s", ident));
-        List<DataSetFile> foundSuffixFilteredIDs =
+        List<Map<String, List<DataSetFile>>> foundSuffixFilteredIDs =
             qbicDataFinder.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
 
-        LOG.info(String.format("Number of files found: %s", foundSuffixFilteredIDs.size()));
+        LOG.info(String.format("Number of files found: %s", countDatasets(foundSuffixFilteredIDs)));
 
         downloadFilesFilteredByIDs(ident, foundSuffixFilteredIDs);
       }
@@ -171,7 +171,7 @@ public class QbicDataDownloader {
 
         LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
 
-        downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
+        //downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
       }
     } else {
       // no suffix or regex was supplied -> download all datasets
@@ -180,17 +180,15 @@ public class QbicDataDownloader {
         List<Map<String, List<DataSet>>> foundDataSets =
             qbicDataFinder.findAllDatasetsRecursive(ident);
 
-        //Todo: implement method that determines the number of found datasets
         LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
 
         if (foundDataSets.size() > 0) {
           LOG.info("Initialize download ...");
           int datasetDownloadReturnCode = -1;
           try {
-            // Todo: Adjust downloadDataset method such that it creates folders
             // for the sample code and aggregates datasets per sample code
-            //datasetDownloadReturnCode =
-            //    qbicDataDownloader.downloadDataset(foundDataSets);
+            datasetDownloadReturnCode =
+                qbicDataDownloader.downloadDataset(foundDataSets);
           } catch (NullPointerException e) {
             LOG.error(
                 "Datasets were found by the application server, but could not be found on the datastore server for "
@@ -212,16 +210,16 @@ public class QbicDataDownloader {
     }
   }
 
-  private Integer countDatasets(List<Map<String, List<DataSet>>> datasetsPerSampleCode) {
+  private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
     int sum = 0;
-    for (Map<String, List<DataSet>> entry : datasetsPerSampleCode){
+    for (Map<String, List<T>> entry : datasetsPerSampleCode){
       for (String sampleCode : entry.keySet()) {
-        System.out.println(sampleCode);
         sum += entry.get(sampleCode).size();
       }
     }
     return sum;
   }
+
 
   /**
    * Downloads all IDs which were previously filtered by either suffixes or regexes
@@ -230,15 +228,20 @@ public class QbicDataDownloader {
    * @param foundFilteredDatasets
    * @throws IOException
    */
-  private void downloadFilesFilteredByIDs(String ident, List<DataSetFile> foundFilteredDatasets)
+  private void downloadFilesFilteredByIDs(String ident, List<Map<String, List<DataSetFile>>> foundFilteredDatasets)
       throws IOException {
     if (foundFilteredDatasets.size() > 0) {
       LOG.info("Initialize download ...");
       int filesDownloadReturnCode = -1;
       try {
-        List<DataSetFile> filteredDataSetFiles = removeDirectories(foundFilteredDatasets);
-        final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles);
-        filesDownloadReturnCode = downloadFiles(downloadRequest);
+        for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets){
+          for (String sampleCode : filesPerSample.keySet()) {
+            List<DataSetFile> filteredDataSetFiles = removeDirectories(filesPerSample.get(sampleCode));
+            final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
+                sampleCode);
+            filesDownloadReturnCode = downloadFiles(downloadRequest);
+          }
+        }
       } catch (NullPointerException e) {
         LOG.error(
             "Datasets were found by the application server, but could not be found on the datastore server for "
@@ -263,18 +266,26 @@ public class QbicDataDownloader {
    * @param dataSetList A list of data sets
    * @return 0 if successful, 1 else
    */
-  private int downloadDataset(List<DataSet> dataSetList) {
-    for (DataSet dataset : dataSetList) {
-      DataSetPermId permID = dataset.getPermId();
-      DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
-      criteria.withDataSet().withCode().thatEquals(permID.getPermId());
-      SearchResult<DataSetFile> result =
-          this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
-      List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
-      final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles);
-      downloadFiles(downloadRequest);
+  private int downloadDataset(List<Map<String, List<DataSet>>> dataSetList) {
+    for (Map<String, List<DataSet>> dataSetsPerSample : dataSetList) {
+      downloadDataset(dataSetsPerSample);
     }
     return 0;
+  }
+
+  private void downloadDataset(Map<String, List<DataSet>> dataSetsPerSample) {
+    for (String sampleCode : dataSetsPerSample.keySet()) {
+      for (DataSet dataset : dataSetsPerSample.get(sampleCode)) {
+        DataSetPermId permID = dataset.getPermId();
+        DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
+        criteria.withDataSet().withCode().thatEquals(permID.getPermId());
+        SearchResult<DataSetFile> result =
+            this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
+        List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
+        final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles, sampleCode);
+        downloadFiles(downloadRequest);
+      }
+    }
   }
 
   private List<DataSetFile> removeDirectories(List<DataSetFile> dataSetFiles) {
@@ -288,7 +299,7 @@ public class QbicDataDownloader {
     return filteredList;
   }
 
-  private void downloadFile(DataSetFile dataSetFile) throws IOException {
+  private void downloadFile(DataSetFile dataSetFile, Path prefix) throws IOException {
     DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
     options.setRecursive(false);
     IDataSetFileId fileId = dataSetFile.getPermId();
@@ -304,7 +315,10 @@ public class QbicDataDownloader {
       if (file.getDataSetFile().getFileLength() > 0) {
         final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
         File newFile =
-            new File(System.getProperty("user.dir") + File.separator + filePath.toString());
+            new File(System.getProperty("user.dir") +
+                  File.separator +
+                  prefix.toString() + File.separator +
+                  filePath.toString());
         newFile.getParentFile().mkdirs();
         OutputStream os = new FileOutputStream(newFile);
         ProgressBar progressBar =
@@ -366,25 +380,27 @@ public class QbicDataDownloader {
   }
 
   private int downloadFiles(DownloadRequest request) throws DownloadException {
+    Path pathPrefix = Paths.get(request.getSampleCode() + File.separator);
     request
         .getDataSets()
         .forEach(
             dataSetFile -> {
               try {
-                downloadFile(dataSetFile);
+                downloadFile(dataSetFile, pathPrefix);
               } catch (IOException e) {
                 String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
                 LOG.error(e);
                 throw new DownloadException(
                     "Dataset " + fileName + " could not have been downloaded.");
               }
-              writeCRC32Checksum(dataSetFile);
+              writeCRC32Checksum(dataSetFile, pathPrefix);
             });
     return 0;
   }
 
-  private void writeCRC32Checksum(DataSetFile dataSetFile) {
-    Path path = determineFinalPathFromDataset(dataSetFile);
+  private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
+    Path path = Paths.get(pathPrefix.toString(), File.separator,
+        determineFinalPathFromDataset(dataSetFile).toString());
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 }
