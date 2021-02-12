@@ -18,9 +18,12 @@ class DownloadRequest {
 
     private String sampleCode
 
+    private int retries
+
     DownloadRequest() {
         this.dataSetByPermId = new HashMap<>()
         this.sampleCode = ""
+        this.retries = 1
     }
 
     /**
@@ -34,6 +37,24 @@ class DownloadRequest {
         dataSetFiles.each { dsFile ->
             addDataSet(dsFile.getPermId().toString(), dsFile)
         }
+        this.retries = 1
+    }
+
+    /**
+     * Download request constructor with a provided list of data set files and a configured
+     * number of retries on failure.
+     *
+     * @param dataSetFiles
+     * @param sampleCode
+     * @param numberRetries The number of retries. Must be >=1, else it will be set to 1
+     */
+    DownloadRequest(List<DataSetFile> dataSetFiles, String sampleCode, int numberRetries) {
+        this()
+        this.sampleCode = sampleCode
+        dataSetFiles.each { dsFile ->
+            addDataSet(dsFile.getPermId().toString(), dsFile)
+        }
+        this.retries = numberRetries >= 1 ? numberRetries : 1
     }
 
     /**
@@ -61,6 +82,14 @@ class DownloadRequest {
             new IllegalArgumentException("The provided argument does not represent a known ID.")
         }
         return dataSetByPermId[permId].checksumCRC32
+    }
+
+    /**
+     * Returns the max number of attempts for the download request.
+     * @return The number of attempts to perform, if the download fails
+     */
+    int getMaxNumberOfAttempts() {
+        return retries
     }
 
     /**

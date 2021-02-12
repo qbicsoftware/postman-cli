@@ -50,6 +50,7 @@ public class QbicDataDownloader {
   private IDataStoreServerApi dataStoreServer;
   private String sessionToken;
   private String filterType;
+  private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
 
   /**
    * Constructor for a QBiCDataLoaderInstance
@@ -282,7 +283,8 @@ public class QbicDataDownloader {
         SearchResult<DataSetFile> result =
             this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
         List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
-        final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles, sampleCode);
+        final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
+            sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
       }
     }
@@ -386,7 +388,20 @@ public class QbicDataDownloader {
         .forEach(
             dataSetFile -> {
               try {
-                downloadFile(dataSetFile, pathPrefix);
+                int downloadAttempt = 1;
+                while(downloadAttempt <= request.getMaxNumberOfAttempts()) {
+                  try {
+                    downloadFile(dataSetFile, pathPrefix);
+                    return;
+                  } catch (Exception e) {
+                    LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
+                    LOG.error(String.format("Reason: %s", e.getMessage()));
+                    downloadAttempt++;
+                    if (downloadAttempt > request.getMaxNumberOfAttempts()) {
+                      throw new IOException("Maximum number of download attempts reached.");
+                    }
+                  }
+                }
               } catch (IOException e) {
                 String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
                 LOG.error(e);

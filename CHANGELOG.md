@@ -1,5 +1,11 @@
 # Changelog
 
+## Hotfix 0.4.4
+
+* Download attempts are now configured, to try two additional times to
+  download a dataset, if the attempt fails. This addresses random
+  time-out exception events that have been reported by a user.
+
 ## Hotfix 0.4.3
 
 * Fix #65 and #47
