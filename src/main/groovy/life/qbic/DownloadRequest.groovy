@@ -54,7 +54,7 @@ class DownloadRequest {
         dataSetFiles.each { dsFile ->
             addDataSet(dsFile.getPermId().toString(), dsFile)
         }
-        this.retries = numberRetries
+        this.retries = numberRetries >= 1 ? numberRetries : 1
     }
 
     /**
