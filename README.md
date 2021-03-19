@@ -67,7 +67,12 @@ If you want to download all datasets for a given project id, you can use the wil
 ~$ java -jar postman.jar -u <your_qbic_username> <QBiC Project ID>*
 ```
 
-### Filter for dataset type
+### Filter for file suffix
+
+You can filter for file suffixes, using the `-s` option:    
+Example: -s .pdf
+
+### Filter for openBIS dataset type (recommended for advanced users)
 
 You can filter for dataset types, using the `-t` option and one of the following openBIS dataset types we are currently using:
 
@@ -152,11 +157,6 @@ TAR
 UNKNOWN
 VCF
 ```
-
-### Filter for file suffix
-
-You can filter for file suffixes, using the `-s` option:    
-Example: -s .pdf
 
 ### Filter for file regex
 
