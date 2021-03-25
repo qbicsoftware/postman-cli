@@ -1,5 +1,11 @@
 # Changelog
 
+## Hotfix 0.4.5 (2021-03-25)
+
+* Default dss route is now using port 443 and not 444 anymore. Port 444
+  is a system reserved port that is blocked on many systems. With a
+  proper proxy setup now, there is no need to go over port 444 anymore.
+
 ## Hotfix 0.4.4
 
 * Download attempts are now configured, to try two additional times to
