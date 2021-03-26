@@ -6,6 +6,8 @@ import java.nio.file.Paths;
 import life.qbic.io.commandline.CommandLineParser;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
+import life.qbic.model.download.AuthenticationException;
+import life.qbic.model.download.ConnectionException;
 import life.qbic.model.download.QbicDataDownloader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,14 +65,17 @@ public class App {
             commandLineParameters.datasetType,
             commandLineParameters.conservePath,
             checksumWriter);
-    int returnCode = qbicDataDownloader.login();
-    LOG.info(String.format("OpenBis login returned with %s", returnCode));
-    if (returnCode != 0) {
-      LOG.error("Connection to openBIS failed.");
+
+    try {
+      qbicDataDownloader.login();
+    } catch (ConnectionException e) {
+      LOG.error("Could not connect to QBiC's data source. Have you requested access to the "
+          + "server? If not please write to support@qbic.zendesk.com");
+      System.exit(1);
+    } catch (AuthenticationException e) {
+      LOG.error(e.getMessage());
       System.exit(1);
     }
-    LOG.info("Connection to openBIS was successful.");
-
     return qbicDataDownloader;
   }
 }

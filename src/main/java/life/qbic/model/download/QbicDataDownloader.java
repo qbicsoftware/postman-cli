@@ -23,11 +23,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import life.qbic.ChecksumReporter;
@@ -35,8 +32,11 @@ import life.qbic.DownloadException;
 import life.qbic.DownloadRequest;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
+import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.remoting.RemoteConnectFailureException;
 
 public class QbicDataDownloader {
 
@@ -121,16 +121,16 @@ public class QbicDataDownloader {
    *
    * @return 0 if successful, 1 else
    */
-  public int login() {
+  public void login() throws ConnectionException, AuthenticationException {
     try {
       this.sessionToken = this.applicationServer.login(this.user, this.password);
-      this.applicationServer.getSessionInformation(this.sessionToken);
-    } catch (AssertionError | Exception err) {
-      LOG.debug(err);
-      return 1;
+    } catch (RemoteConnectFailureException e) {
+      throw new ConnectionException("Connection to openBIS server failed.");
     }
-
-    return 0;
+    if (sessionToken == null || sessionToken.isEmpty()) {
+      throw new AuthenticationException("Authentication failed. Are you using the correct "
+          + "credentials for http://qbic.life?");
+    }
   }
 
   /**

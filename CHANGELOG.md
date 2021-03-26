@@ -1,5 +1,10 @@
 # Changelog
 
+## Hotfix 0.4.6 (2021-03-26)
+
+* qPostman now shows more user-friendly error messages when the
+  authentication or server connection fails.
+
 ## Hotfix 0.4.5 (2021-03-25)
 
 * Default dss route is now using port 443 and not 444 anymore. Port 444
