@@ -1,5 +1,10 @@
 # Changelog
 
+## Hotfix 0.4.7 (2021-04-12)
+
+* Write CRC32 files again next to the downloaded data-sets
+
+
 ## Hotfix 0.4.6 (2021-03-26)
 
 * qPostman now shows more user-friendly error messages when the

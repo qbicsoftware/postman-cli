@@ -392,6 +392,7 @@ public class QbicDataDownloader {
                 while(downloadAttempt <= request.getMaxNumberOfAttempts()) {
                   try {
                     downloadFile(dataSetFile, pathPrefix);
+                    writeCRC32Checksum(dataSetFile, pathPrefix);
                     return;
                   } catch (Exception e) {
                     LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
@@ -408,7 +409,6 @@ public class QbicDataDownloader {
                 throw new DownloadException(
                     "Dataset " + fileName + " could not have been downloaded.");
               }
-              writeCRC32Checksum(dataSetFile, pathPrefix);
             });
     return 0;
   }
