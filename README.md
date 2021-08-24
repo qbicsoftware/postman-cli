@@ -1,5 +1,7 @@
 # qPostman - A download tool for QBiC datasets.
 
+[![Maven Package](https://github.com/qbicsoftware/postman-cli/workflows/Build%20Maven%20Package/badge.svg)](https://github.com/qbicsoftware/postman-cli/workflows/Build%20Maven%20Package/badge.svg)
+[![Run Maven Tests](https://github.com/qbicsoftware/postman-cli/workflows/Run%20Maven%20Tests/badge.svg)](https://github.com/qbicsoftware/postman-cli/workflows/Run%20Maven%20Tests/badge.svg)
 [![Latest Release ](https://img.shields.io/github/v/release/qbicsoftware/postman-cli.svg)](https://github.com/qbicsoftware/postman-cli/releases)
 ![Java Language](https://img.shields.io/badge/language-java-blue.svg)
 ![Groovy Language](https://img.shields.io/badge/language-groovy-blue.svg)
