@@ -170,7 +170,7 @@ Please note that depending on your favorite shell, you may need quote your regex
 
 ### Provide a manifest file with several QBiC IDs
 In order to download datasets from several samples at once, you can provide a manifest file consisting of multiple, line-separated, QBiC IDs.
-Hand it to postman with the `-f` option, a simple text file suffices here.
+Hand it to postman with the `-f` option.
 
 For example:
 
