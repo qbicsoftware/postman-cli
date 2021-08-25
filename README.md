@@ -170,7 +170,8 @@ Example: -r .jobscript.FastQC.*
 Please note that depending on your favorite shell, you may need quote your regex. 
 
 ### Provide a file with several QBiC IDs
-In order to download datasets from several samples at once, you can provide a simple text file with multiple, line-separated, QBiC IDs and hand it to postman with the `-f` option.
+In order to download datasets from several samples at once, you can provide a manifest file consisting of multiple, line-separated, QBiC IDs.
+Hand it to postman with the `-f` option.
 
 For example:
 
