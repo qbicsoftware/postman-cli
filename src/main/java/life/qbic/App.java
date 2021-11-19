@@ -6,7 +6,10 @@ import java.nio.file.Paths;
 import life.qbic.io.commandline.CommandLineParser;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
+import life.qbic.model.download.AuthenticationException;
+import life.qbic.model.download.ConnectionException;
 import life.qbic.model.download.QbicDataDownloader;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,12 +38,34 @@ public class App {
    */
   private static QbicDataDownloader loginToOpenBIS(
       PostmanCommandLineOptions commandLineParameters) {
-    LOG.info(String.format("Please provide password for user '%s':", commandLineParameters.user));
 
-    String password = OpenBISPasswordParser.readPasswordFromConsole();
+    String password = "";
+
+    //Password read in from environment Variable
+    if ((!(commandLineParameters.environmentVariableName.isEmpty()))) {
+
+      if (System.getenv(commandLineParameters.environmentVariableName) == null) {
+
+        LOG.info(String.format("Unfortunately, the given environment variable does not exist. " +
+                "Please provide password for user '%s':", commandLineParameters.user));
+
+        password = OpenBISPasswordParser.readPasswordFromConsole();
+      }
+      else {
+        password = System.getenv(commandLineParameters.environmentVariableName);
+      }
+    }
+    
+    //Password read in from Console
+    else {
+
+      LOG.info(String.format("Please provide password for user '%s':", commandLineParameters.user));
+
+      password = OpenBISPasswordParser.readPasswordFromConsole();
+    }
 
     if (password.isEmpty()) {
-    LOG.error("You need to provide a password.");
+      LOG.error("You need to provide a password.");
       System.exit(1);
     }
 
@@ -63,14 +88,17 @@ public class App {
             commandLineParameters.datasetType,
             commandLineParameters.conservePath,
             checksumWriter);
-    int returnCode = qbicDataDownloader.login();
-    LOG.info(String.format("OpenBis login returned with %s", returnCode));
-    if (returnCode != 0) {
-      LOG.error("Connection to openBIS failed.");
+
+    try {
+      qbicDataDownloader.login();
+    } catch (ConnectionException e) {
+      LOG.error("Could not connect to QBiC's data source. Have you requested access to the "
+          + "server? If not please write to support@qbic.zendesk.com");
+      System.exit(1);
+    } catch (AuthenticationException e) {
+      LOG.error(e.getMessage());
       System.exit(1);
     }
-    LOG.info("Connection to openBIS was successful.");
-
     return qbicDataDownloader;
   }
 }

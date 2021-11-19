@@ -21,6 +21,11 @@ public class PostmanCommandLineOptions {
       description = "openBIS user name")
   public String user;
 
+  @Option(
+          names = {"-p", "--password:env"},
+          description = "provide name of environment Variable to read in password")
+  public String environmentVariableName;
+
   // this consumes all parameters that are not labeled!
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids")
   public List<String> ids;
@@ -60,7 +65,7 @@ public class PostmanCommandLineOptions {
   @Option(
       names = {"-dss", "--dss_url"},
       description = "DataStoreServer URL")
-  public String dss_url = "https://qbis.qbic.uni-tuebingen.de:444/datastore_server";
+  public String dss_url = "https://qbis.qbic.uni-tuebingen.de/datastore_server";
 
   @Option(
       names = {"-as", "-as_url"},
