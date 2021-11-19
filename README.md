@@ -67,7 +67,15 @@ If you want to download all datasets for a given project id, you can use the wil
 ~$ java -jar postman.jar -u <your_qbic_username> <QBiC Project ID>*
 ```
 
-### Filter for dataset type
+### Filter for file suffix
+
+For example filter for fastq files only:
+
+```
+java -jar postman.jar -s fastq.gz -u <userid> QMFKD003AG  
+```
+
+### Filter for openBIS dataset type (recommended for advanced users)
 
 You can filter for dataset types, using the `-t` option and one of the following openBIS dataset types we are currently using:
 
@@ -153,11 +161,6 @@ UNKNOWN
 VCF
 ```
 
-### Filter for file suffix
-
-You can filter for file suffixes, using the `-s` option:    
-Example: -s .pdf
-
 ### Filter for file regex
 
 You can filter for files by a provided regex, using the `-r` option:    
@@ -167,6 +170,20 @@ Please note that depending on your favorite shell, you may need quote your regex
 
 ### Provide a file with several QBiC IDs
 In order to download datasets from several samples at once, you can provide a simple text file with multiple, line-separated, QBiC IDs and hand it to postman with the `-f` option.
+
+For example:
+
+```bash
+java -jar postman.jar -s fastq.gz -f myids.txt -u <userid>  
+```
+
+with `myids.txt` like:
+
+```
+QTEST001AE
+QTEST002BD
+...
+```
 
 postman will automatically iterate over the IDs and try to download them.
 
