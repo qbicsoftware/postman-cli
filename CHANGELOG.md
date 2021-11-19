@@ -1,5 +1,21 @@
 # Changelog
 
+## Hotfix 0.4.7 (2021-04-12)
+
+* Write CRC32 files again next to the downloaded data-sets
+
+
+## Hotfix 0.4.6 (2021-03-26)
+
+* qPostman now shows more user-friendly error messages when the
+  authentication or server connection fails.
+
+## Hotfix 0.4.5 (2021-03-25)
+
+* Default dss route is now using port 443 and not 444 anymore. Port 444
+  is a system reserved port that is blocked on many systems. With a
+  proper proxy setup now, there is no need to go over port 444 anymore.
+
 ## Hotfix 0.4.4
 
 * Download attempts are now configured, to try two additional times to
