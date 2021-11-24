@@ -1,17 +1,17 @@
 package life.qbic;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
 import life.qbic.io.commandline.CommandLineParser;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.model.download.AuthenticationException;
 import life.qbic.model.download.ConnectionException;
 import life.qbic.model.download.QbicDataDownloader;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 
 /** postman for staging data from openBIS */
 public class App {
@@ -39,29 +39,18 @@ public class App {
   private static QbicDataDownloader loginToOpenBIS(
       PostmanCommandLineOptions commandLineParameters) {
 
-    String password = "";
+    String password;
+    if (!commandLineParameters.passwordEnvVariable.isEmpty()) {
 
-    //Password read in from environment Variable
-    if ((!(commandLineParameters.environmentVariableName.isEmpty()))) {
+      password = OpenBISPasswordParser.readPasswordFromEnvVariable(commandLineParameters.passwordEnvVariable, commandLineParameters.user);
 
-      if (System.getenv(commandLineParameters.environmentVariableName) == null) {
-
-        LOG.info(String.format("Unfortunately, the given environment variable does not exist. " +
-                "Please provide password for user '%s':", commandLineParameters.user));
-
-        password = OpenBISPasswordParser.readPasswordFromConsole();
-      }
-      else {
-        password = System.getenv(commandLineParameters.environmentVariableName);
-      }
     }
-    
-    //Password read in from Console
     else {
 
       LOG.info(String.format("Please provide password for user '%s':", commandLineParameters.user));
 
       password = OpenBISPasswordParser.readPasswordFromConsole();
+
     }
 
     if (password.isEmpty()) {

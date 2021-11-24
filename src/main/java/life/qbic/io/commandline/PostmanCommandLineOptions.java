@@ -23,8 +23,8 @@ public class PostmanCommandLineOptions {
 
   @Option(
           names = {"-p", "--password:env"},
-          description = "provide name of environment Variable to read in password")
-  public String environmentVariableName;
+          description = "provide the name of an environment variable to read in the password from")
+  public String passwordEnvVariable;
 
   // this consumes all parameters that are not labeled!
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids")
