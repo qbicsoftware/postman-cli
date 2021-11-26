@@ -1,14 +1,9 @@
 package life.qbic.io.commandline;
 
-import life.qbic.App;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.Console;
+import java.util.Optional;
 
 public class OpenBISPasswordParser {
-
-  private static final Logger LOG = LogManager.getLogger(App.class);
 
 
   /**
@@ -24,20 +19,28 @@ public class OpenBISPasswordParser {
 
   /**
    *
+   * @param variableName commandline variable that might be null or empty
+   * @return
+   */
+  public static Boolean isNotNullOrEmpty(String variableName) {
+    Boolean NotNullOrEmpty = false;
+    if (variableName != null && !variableName.isEmpty()) {
+      NotNullOrEmpty = true;
+    }
+    return NotNullOrEmpty;
+  }
+
+  /**
+   *
    * @param variableName Name of given environment variable
-   * @param user
    *
    * @return the password read from the environment variable
    */
-  public static String readPasswordFromEnvVariable(String variableName, String user){
+  public static Optional<String> readPasswordFromEnvVariable(String variableName){
 
-    String password = System.getenv(variableName);
-    if (password == null) {
-      LOG.info(String.format("Unfortunately, the given environment variable does not exist. " +
-              "Please provide password for user '%s':", user));
-      password = readPasswordFromConsole();
-    }
+    Optional<String> password = Optional.ofNullable(System.getenv(variableName));
     return password;
+
   }
 
 }

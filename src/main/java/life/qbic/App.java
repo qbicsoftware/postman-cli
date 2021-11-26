@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 /** postman for staging data from openBIS */
 public class App {
@@ -40,17 +41,23 @@ public class App {
       PostmanCommandLineOptions commandLineParameters) {
 
     String password;
-    if (!commandLineParameters.passwordEnvVariable.isEmpty()) {
+    if (OpenBISPasswordParser.isNotNullOrEmpty(commandLineParameters.passwordEnvVariable)) {
 
-      password = OpenBISPasswordParser.readPasswordFromEnvVariable(commandLineParameters.passwordEnvVariable, commandLineParameters.user);
+      Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(commandLineParameters.passwordEnvVariable);
+      if (envPassword.isPresent()){
+        password = envPassword.get();
+      }
+      else{
+        System.out.println("No environment Variable named " + commandLineParameters.passwordEnvVariable + " was found");
+        LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
+        password = OpenBISPasswordParser.readPasswordFromConsole();
 
+     }
     }
     else {
-
-      LOG.info(String.format("Please provide password for user '%s':", commandLineParameters.user));
+      LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
 
       password = OpenBISPasswordParser.readPasswordFromConsole();
-
     }
 
     if (password.isEmpty()) {
