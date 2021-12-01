@@ -42,21 +42,16 @@ public class App {
 
     String password;
     if (OpenBISPasswordParser.isNotNullOrEmpty(commandLineParameters.passwordEnvVariable)) {
-
       Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(commandLineParameters.passwordEnvVariable);
-      if (envPassword.isPresent()){
-        password = envPassword.get();
-      }
-      else{
+
+      if (!envPassword.isPresent()) {
         System.out.println("No environment Variable named " + commandLineParameters.passwordEnvVariable + " was found");
         LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
-        password = OpenBISPasswordParser.readPasswordFromConsole();
-
-     }
+      }
+      password = envPassword.orElseGet(OpenBISPasswordParser::readPasswordFromConsole);
     }
     else {
       LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
-
       password = OpenBISPasswordParser.readPasswordFromConsole();
     }
 

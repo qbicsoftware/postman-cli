@@ -22,7 +22,7 @@ public class PostmanCommandLineOptions {
   public String user;
 
   @Option(
-          names = {"-p", "--password:env"},
+          names = {"-p", "--env-password"},
           description = "provide the name of an environment variable to read in the password from")
   public String passwordEnvVariable;
 

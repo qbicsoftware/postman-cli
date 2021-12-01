@@ -28,11 +28,14 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
   @/path/to/config.txt        config file which specifies the AS and DSS url
   -as, --as_url=<url>         AS URL 
   -dss,--dss_url=<url>        DSS URL 
-  -u,  --user=<user>          openBIS user name   
+  -u,  --user=<user>          openBIS user name 
   -f,  --file=<filePath>      a file with line-separated list of QBiC sample ids
   -t,  --type=<datasetType>   filter for a given openBIS dataset type
   -s,  --type=<suffix>        filter for a given openBIS file suffix
-  -r,  --type=<regex>         filter for a given openBIS file regex     
+  -r,  --type=<regex>         filter for a given openBIS file regex    
+  -p,  --env-password=<passwordEnvVariable> 
+                              provide the name of an environment variable to read in
+                               the password from
   -b,  --buffer-size=<bufferMultiplier>
                               a integer muliple of 1024 bytes (default). Only
                                 change this if you know what you are doing.
