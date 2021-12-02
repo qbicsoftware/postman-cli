@@ -32,6 +32,21 @@ public class App {
   }
 
   /**
+   * checks if the commandline parameter for reading out the password from the environment variable
+   * is correctly provided
+   *
+   * @param envVariableCommandLineParameter
+   * @return
+   */
+  private static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
+    Boolean NotNullOrEmpty = false;
+    if (envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty()) {
+      NotNullOrEmpty = true;
+    }
+    return NotNullOrEmpty;
+  }
+
+  /**
    * Logs into OpenBIS asks for and verifies password.
    *
    * @param commandLineParameters The command line parameters.
@@ -41,16 +56,15 @@ public class App {
       PostmanCommandLineOptions commandLineParameters) {
 
     String password;
-    if (OpenBISPasswordParser.isNotNullOrEmpty(commandLineParameters.passwordEnvVariable)) {
+    if (isNotNullOrEmpty(commandLineParameters.passwordEnvVariable)) {
       Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(commandLineParameters.passwordEnvVariable);
 
       if (!envPassword.isPresent()) {
-        System.out.println("No environment Variable named " + commandLineParameters.passwordEnvVariable + " was found");
+        System.out.println("No environment variable named " + commandLineParameters.passwordEnvVariable + " was found");
         LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
       }
       password = envPassword.orElseGet(OpenBISPasswordParser::readPasswordFromConsole);
-    }
-    else {
+    } else {
       LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
       password = OpenBISPasswordParser.readPasswordFromConsole();
     }

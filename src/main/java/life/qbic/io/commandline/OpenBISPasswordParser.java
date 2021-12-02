@@ -18,21 +18,6 @@ public class OpenBISPasswordParser {
   }
 
   /**
-   * checks if the commandline parameter for reading out the password from the environment variable
-   * is correctly provided
-   *
-   * @param envVariableCommandLineParameter
-   * @return
-   */
-  public static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
-    Boolean NotNullOrEmpty = false;
-    if (envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty()) {
-      NotNullOrEmpty = true;
-    }
-    return NotNullOrEmpty;
-  }
-
-  /**
    *
    * @param variableName Name of given environment variable
    *
