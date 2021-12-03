@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Stream;
 import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
@@ -49,36 +51,21 @@ public class QbicDataFinder {
    * @param sample
    * @return all recursively found datasets
    */
-  private static List<Map<String, List<DataSet>>> fetchDesecendantDatasets(Sample sample) {
+  private static Map<String, List<DataSet>> fetchDesecendantDatasets(Sample sample) {
     List<Sample> children = sample.getChildren();
     // recursion end
     if (children.size() < 1) {
-      return wrapInCrazyListOfMaps(sample.getCode(), sample.getDataSets());
+      HashMap<String, List<DataSet>> sampleDatasets = new HashMap<>();
+      sampleDatasets.put(sample.getCode(), sample.getDataSets());
+      return sampleDatasets;
     }
-    List<Map<String, List<DataSet>>> maps = wrapInCrazyListOfMaps(sample.getCode(), sample.getDataSets());
+    Map<String, List<DataSet>> sampleDatasets = new HashMap<>();
+    sampleDatasets.put(sample.getCode(), sample.getDataSets());
     for (Sample child : children) {
-      maps.addAll(fetchDesecendantDatasets(child));
+      Map<String, List<DataSet>> childDatasetMapping = fetchDesecendantDatasets(child);
+      sampleDatasets = joinMaps(sampleDatasets, childDatasetMapping);
     }
-    return maps;
-  }
-
-  /**
-   * This constructs a crazy data structure used in this application. It would probably be easier to
-   * just use a map with all the keys instead.
-   *
-   * @param sampleCode
-   * @param dataSets
-   * @return
-   */
-  private static List<Map<String, List<DataSet>>> wrapInCrazyListOfMaps(String sampleCode,
-      List<DataSet> dataSets) {
-    List<Map<String, List<DataSet>>> list = new ArrayList<>();
-    Map<String, List<DataSet>> dataSetMap = new HashMap<>();
-    if (!dataSets.isEmpty()) {
-      dataSetMap.put(sampleCode, dataSets);
-      list.add(dataSetMap);
-    }
-    return list;
+    return sampleDatasets;
   }
 
   /**
@@ -87,7 +74,7 @@ public class QbicDataFinder {
    * @param sampleId
    * @return all found datasets for a given sampleID
    */
-  public List<Map<String, List<DataSet>>> findAllDatasetsRecursive(String sampleId) {
+  public Map<String, List<DataSet>> findAllDatasetsRecursive(String sampleId) {
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
@@ -99,31 +86,29 @@ public class QbicDataFinder {
     fetchOptions.withDataSetsUsing(dsFetchOptions);
     SearchResult<Sample> result =
         applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-
-    Map<String, List<DataSet>> foundSets = new HashMap<>();
-    List<Map<String, List<DataSet>>> dataSetsBySampleId = new ArrayList<>();
+    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
 
     List<Sample> samples = result.getObjects();
     for (Sample sample : samples) {
-      // fetch all datasets of the children
-      dataSetsBySampleId.addAll(fetchDesecendantDatasets(sample));
+      Map<String, List<DataSet>> sampleDatasetMap = fetchDesecendantDatasets(sample);
+      dataSetsBySampleId = joinMaps(dataSetsBySampleId, sampleDatasetMap);
     }
     return dataSetsBySampleId;
+  }
 
-    // Currently omitting the type filter with 0.4.3
-    // as we quickly need the sample id for output writing.
-    /*
-    if (filterType.isEmpty()) return dataSetsBySampleId;
+  // FIXME this is needed to preserve functionality. For some reason collisions appear and we have to merge the lists
+  //  the collisions observed might be caused by the bug where every dataset is contained 3 times.
+  private static <T, V> Map<T, List<V>> joinMaps(Map<T, List<V>> map1, Map<T, List<V>> map2) {
+    Map<T,List<V>> joinedMap = new HashMap<>();
+    joinedMap.putAll(map1);
+    map2.forEach((key, value) -> joinedMap.merge(key, value, QbicDataFinder::joinLists));
+    return joinedMap;
+  }
 
-    List<Map<String, List<DataSet>>> filteredDatasets = new ArrayList<>();
-    for (DataSet ds : foundDatasets) {
-      LOG.info(ds.getType().getCode() + " found.");
-      if (filterType.equals(ds.getType().getCode())) {
-        filteredDatasets.add(ds);
-      }
-    }
-
-    return filteredDatasets;*/
+  private static <T> List<T> joinLists(List<T> list1, List<T> list2) {
+    List<T> joinedList = new ArrayList<>();
+    Stream.of(list1, list2).forEach(joinedList::addAll);
+    return joinedList;
   }
 
   /**
@@ -152,17 +137,18 @@ public class QbicDataFinder {
   public List<Map<String, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
       List<String> suffixes) {
     // TODO adjust type
-    List<Map<String, List<DataSet>>> allDatasets = findAllDatasetsRecursive(ident);
+    Map<String, List<DataSet>> allDatasets = findAllDatasetsRecursive(ident);
     List<Map<String, List<DataSetFile>>> filteredDatasets = new ArrayList<>();
 
-    for (Map<String, List<DataSet>> datasetsPerSample : allDatasets) {
-      for (String sampleCode : datasetsPerSample.keySet()){
-        Map<String, List<DataSetFile>> result = new HashMap<>();
-        List<DataSetFile> filteredFiles =
-            filterDataSetBySuffix(datasetsPerSample.get(sampleCode), suffixes);
-        result.put(sampleCode, filteredFiles);
-        filteredDatasets.add(result);
-      }
+    for (Entry<String, List<DataSet>> entry : allDatasets.entrySet()) {
+      String sampleCode = entry.getKey();
+      List<DataSet> sampleDataSets = entry.getValue();
+      List<DataSetFile> filteredFiles =
+          filterDataSetBySuffix(sampleDataSets, suffixes);
+
+      Map<String, List<DataSetFile>> result = new HashMap<>();
+      result.put(sampleCode, filteredFiles);
+      filteredDatasets.add(result);
     }
 
     return filteredDatasets;

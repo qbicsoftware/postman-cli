@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import life.qbic.ChecksumReporter;
@@ -32,8 +33,6 @@ import life.qbic.DownloadException;
 import life.qbic.DownloadRequest;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.remoting.RemoteConnectFailureException;
@@ -178,7 +177,7 @@ public class QbicDataDownloader {
       // no suffix or regex was supplied -> download all datasets
       for (String ident : commandLineParameters.ids) {
         LOG.info(String.format("Downloading files for provided identifier %s", ident));
-        List<Map<String, List<DataSet>>> foundDataSets =
+        Map<String, List<DataSet>> foundDataSets =
             qbicDataFinder.findAllDatasetsRecursive(ident);
 
         LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
@@ -188,8 +187,10 @@ public class QbicDataDownloader {
           int datasetDownloadReturnCode = -1;
           try {
             // for the sample code and aggregates datasets per sample code
+            List<Map<String, List<DataSet>>> crazyMapList = new ArrayList<>();
+            crazyMapList.add(foundDataSets);
             datasetDownloadReturnCode =
-                qbicDataDownloader.downloadDataset(foundDataSets);
+                qbicDataDownloader.downloadDataset(crazyMapList);
           } catch (NullPointerException e) {
             LOG.error(
                 "Datasets were found by the application server, but could not be found on the datastore server for "
@@ -219,6 +220,10 @@ public class QbicDataDownloader {
       }
     }
     return sum;
+  }
+
+  private <T> Integer countDatasets(Map<String, List<T>> datasetsPerSampleCode) {
+    return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
   }
 
 
@@ -275,6 +280,26 @@ public class QbicDataDownloader {
   }
 
   private void downloadDataset(Map<String, List<DataSet>> dataSetsPerSample) {
+
+    for (Entry<String, List<DataSet>> entry : dataSetsPerSample.entrySet()) {
+      String sampleCode = entry.getKey();
+      List<DataSet> sampleDatasets = entry.getValue();
+      for (DataSet sampleDataset : sampleDatasets) {
+        // old code
+        DataSetPermId permID = sampleDataset.getPermId();
+        DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
+        criteria.withDataSet().withCode().thatEquals(permID.getPermId());
+        SearchResult<DataSetFile> result =
+            this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
+        List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
+        final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
+            sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
+        downloadFiles(downloadRequest);
+        //
+      }
+    }
+
+    /* fixme remove old code
     for (String sampleCode : dataSetsPerSample.keySet()) {
       for (DataSet dataset : dataSetsPerSample.get(sampleCode)) {
         DataSetPermId permID = dataset.getPermId();
@@ -287,7 +312,7 @@ public class QbicDataDownloader {
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
       }
-    }
+    }*/
   }
 
   private List<DataSetFile> removeDirectories(List<DataSetFile> dataSetFiles) {
