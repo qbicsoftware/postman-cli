@@ -13,10 +13,8 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSe
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
@@ -52,22 +50,35 @@ public class QbicDataFinder {
    * @return all recursively found datasets
    */
   private static List<Map<String, List<DataSet>>> fetchDesecendantDatasets(Sample sample) {
-    Map<String, List<DataSet>> foundSets = new HashMap<>();
-    List<Map<String, List<DataSet>>> result = new ArrayList<>();
-    // fetch all datasets of the children
-    for (Sample child : sample.getChildren()) {
-      List<DataSet> foundChildrenDatasets = child.getDataSets();
-      if (!foundChildrenDatasets.isEmpty()) {
-        foundSets.put(child.getCode(), foundChildrenDatasets);
-      }
-      if (!fetchDesecendantDatasets(child).isEmpty()) {
-        result.addAll(fetchDesecendantDatasets(child));
-      }
+    List<Sample> children = sample.getChildren();
+    // recursion end
+    if (children.size() < 1) {
+      return wrapInCrazyListOfMaps(sample.getCode(), sample.getDataSets());
     }
-    if (!foundSets.isEmpty()){
-      result.add(foundSets);
+    List<Map<String, List<DataSet>>> maps = wrapInCrazyListOfMaps(sample.getCode(), sample.getDataSets());
+    for (Sample child : children) {
+      maps.addAll(fetchDesecendantDatasets(child));
     }
-    return result;
+    return maps;
+  }
+
+  /**
+   * This constructs a crazy data structure used in this application. It would probably be easier to
+   * just use a map with all the keys instead.
+   *
+   * @param sampleCode
+   * @param dataSets
+   * @return
+   */
+  private static List<Map<String, List<DataSet>>> wrapInCrazyListOfMaps(String sampleCode,
+      List<DataSet> dataSets) {
+    List<Map<String, List<DataSet>>> list = new ArrayList<>();
+    Map<String, List<DataSet>> dataSetMap = new HashMap<>();
+    if (!dataSets.isEmpty()) {
+      dataSetMap.put(sampleCode, dataSets);
+      list.add(dataSetMap);
+    }
+    return list;
   }
 
   /**
@@ -92,12 +103,8 @@ public class QbicDataFinder {
     Map<String, List<DataSet>> foundSets = new HashMap<>();
     List<Map<String, List<DataSet>>> dataSetsBySampleId = new ArrayList<>();
 
-    for (Sample sample : result.getObjects()) {
-      // add the datasets of the sample itself
-      if (!sample.getDataSets().isEmpty()) {
-        foundSets.put(sample.getCode(), sample.getDataSets());
-        dataSetsBySampleId.add(foundSets);
-      }
+    List<Sample> samples = result.getObjects();
+    for (Sample sample : samples) {
       // fetch all datasets of the children
       dataSetsBySampleId.addAll(fetchDesecendantDatasets(sample));
     }
