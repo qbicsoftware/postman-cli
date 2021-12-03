@@ -51,7 +51,7 @@ public class QbicDataFinder {
    * @param sample
    * @return all recursively found datasets
    */
-  private static Map<String, List<DataSet>> fetchDesecendantDatasets(Sample sample) {
+  private static Map<String, List<DataSet>> fetchDescendantDatasets(Sample sample) {
     List<Sample> children = sample.getChildren();
     // recursion end
     if (children.size() < 1) {
@@ -62,7 +62,7 @@ public class QbicDataFinder {
     Map<String, List<DataSet>> sampleDatasets = new HashMap<>();
     sampleDatasets.put(sample.getCode(), sample.getDataSets());
     for (Sample child : children) {
-      Map<String, List<DataSet>> childDatasetMapping = fetchDesecendantDatasets(child);
+      Map<String, List<DataSet>> childDatasetMapping = fetchDescendantDatasets(child);
       sampleDatasets = joinMaps(sampleDatasets, childDatasetMapping);
     }
     return sampleDatasets;
@@ -90,7 +90,7 @@ public class QbicDataFinder {
 
     List<Sample> samples = result.getObjects();
     for (Sample sample : samples) {
-      Map<String, List<DataSet>> sampleDatasetMap = fetchDesecendantDatasets(sample);
+      Map<String, List<DataSet>> sampleDatasetMap = fetchDescendantDatasets(sample);
       dataSetsBySampleId = joinMaps(dataSetsBySampleId, sampleDatasetMap);
     }
     return dataSetsBySampleId;
