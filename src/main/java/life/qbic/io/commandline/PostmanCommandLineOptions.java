@@ -21,6 +21,11 @@ public class PostmanCommandLineOptions {
       description = "openBIS user name")
   public String user;
 
+  @Option(
+          names = {"-p", "--env-password"},
+          description = "provide the name of an environment variable to read in the password from")
+  public String passwordEnvVariable;
+
   // this consumes all parameters that are not labeled!
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids")
   public List<String> ids;
