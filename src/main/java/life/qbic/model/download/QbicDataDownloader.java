@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import life.qbic.ChecksumReporter;
@@ -242,7 +244,7 @@ public class QbicDataDownloader {
       try {
         for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets){
           for (String sampleCode : filesPerSample.keySet()) {
-            List<DataSetFile> filteredDataSetFiles = removeDirectories(filesPerSample.get(sampleCode));
+            List<DataSetFile> filteredDataSetFiles = withoutDirectories(filesPerSample.get(sampleCode));
             final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
                 sampleCode);
             filesDownloadReturnCode = downloadFiles(downloadRequest);
@@ -291,7 +293,7 @@ public class QbicDataDownloader {
         criteria.withDataSet().withCode().thatEquals(permID.getPermId());
         SearchResult<DataSetFile> result =
             this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
-        List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
+        List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
@@ -315,15 +317,11 @@ public class QbicDataDownloader {
     }*/
   }
 
-  private List<DataSetFile> removeDirectories(List<DataSetFile> dataSetFiles) {
-    List<DataSetFile> filteredList = new ArrayList<>();
-    dataSetFiles.forEach(
-        item -> {
-          if (!item.isDirectory()) {
-            filteredList.add(item);
-          }
-        });
-    return filteredList;
+  private static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
+    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
+    return dataSetFiles.stream()
+        .filter(notADirectory)
+        .collect(Collectors.toList());
   }
 
   private void downloadFile(DataSetFile dataSetFile, Path prefix) throws IOException {
