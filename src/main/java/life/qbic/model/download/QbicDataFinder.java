@@ -79,6 +79,9 @@ public class QbicDataFinder {
    * @return all found datasets for a given sampleID
    */
   public Map<String, List<DataSet>> findAllDatasetsRecursive(String sampleId) {
+    List<String> searchedSamples = new ArrayList<>();
+    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
+
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
@@ -88,12 +91,11 @@ public class QbicDataFinder {
     dsFetchOptions.withType();
     fetchOptions.withChildrenUsing(fetchOptions);
     fetchOptions.withDataSetsUsing(dsFetchOptions);
+
     SearchResult<Sample> result =
         applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
-
     List<Sample> samples = result.getObjects();
-    List<String> searchedSamples = new ArrayList<>();
+
     for (Sample sample : samples) {
       if(searchedSamples.contains(sample.getCode())){
         continue;
@@ -118,7 +120,6 @@ public class QbicDataFinder {
   }
 
   private static <T> List<T> joinLists(List<T> list1, List<T> list2) {
-    //todo introduce old code here again
     List<T> joinedList = new ArrayList<>();
     Stream.of(list1, list2).forEach(joinedList::addAll);
     return joinedList;
