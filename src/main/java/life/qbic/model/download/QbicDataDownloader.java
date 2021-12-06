@@ -224,7 +224,7 @@ public class QbicDataDownloader {
     return sum;
   }
 
-  private <T> Integer countDatasets(Map<String, List<T>> datasetsPerSampleCode) {
+  private static <T> int countDatasets(Map<String, List<T>> datasetsPerSampleCode) {
     return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
   }
 
