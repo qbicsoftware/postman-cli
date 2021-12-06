@@ -106,8 +106,9 @@ public class QbicDataFinder {
   }
 
   private static <T> List<T> joinLists(List<T> list1, List<T> list2) {
-    List<T> joinedList = new ArrayList<>();
-    Stream.of(list1, list2).forEach(joinedList::addAll);
+    List<T> joinedList = new ArrayList<>(list1);
+    joinedList.removeAll(list2);
+    joinedList.addAll(list2);
     return joinedList;
   }
 
