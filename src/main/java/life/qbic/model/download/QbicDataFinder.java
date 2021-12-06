@@ -51,8 +51,12 @@ public class QbicDataFinder {
    * @param sample
    * @return all recursively found datasets
    */
-  private static Map<String, List<DataSet>> fetchDescendantDatasets(Sample sample) {
+  private static Map<String, List<DataSet>> fetchDescendantDatasets(Sample sample, List<String> visitedSamples) {
     List<Sample> children = sample.getChildren();
+    //avoid duplicates
+    if(visitedSamples.contains(sample.getCode())){
+      return new HashMap<>();
+    }
     // recursion end
     if (children.size() < 1) {
       HashMap<String, List<DataSet>> sampleDatasets = new HashMap<>();
@@ -62,7 +66,7 @@ public class QbicDataFinder {
     Map<String, List<DataSet>> sampleDatasets = new HashMap<>();
     sampleDatasets.put(sample.getCode(), sample.getDataSets());
     for (Sample child : children) {
-      Map<String, List<DataSet>> childDatasetMapping = fetchDescendantDatasets(child);
+      Map<String, List<DataSet>> childDatasetMapping = fetchDescendantDatasets(child,visitedSamples);
       sampleDatasets = joinMaps(sampleDatasets, childDatasetMapping);
     }
     return sampleDatasets;
@@ -89,9 +93,17 @@ public class QbicDataFinder {
     Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
 
     List<Sample> samples = result.getObjects();
+    List<String> searchedSamples = new ArrayList<>();
     for (Sample sample : samples) {
-      Map<String, List<DataSet>> sampleDatasetMap = fetchDescendantDatasets(sample);
+      if(searchedSamples.contains(sample.getCode())){
+        continue;
+      }
+      Map<String, List<DataSet>> sampleDatasetMap = fetchDescendantDatasets(sample,searchedSamples);
       dataSetsBySampleId = joinMaps(dataSetsBySampleId, sampleDatasetMap);
+      LOG.info("visited: "+searchedSamples.toString());
+      LOG.info("Found samples: "+sampleDatasetMap.keySet());
+      //remember what has been searched
+      searchedSamples.addAll(sampleDatasetMap.keySet());
     }
     return dataSetsBySampleId;
   }
@@ -106,9 +118,9 @@ public class QbicDataFinder {
   }
 
   private static <T> List<T> joinLists(List<T> list1, List<T> list2) {
-    List<T> joinedList = new ArrayList<>(list1);
-    joinedList.removeAll(list2);
-    joinedList.addAll(list2);
+    //todo introduce old code here again
+    List<T> joinedList = new ArrayList<>();
+    Stream.of(list1, list2).forEach(joinedList::addAll);
     return joinedList;
   }
 
