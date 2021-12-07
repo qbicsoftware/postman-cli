@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
@@ -48,24 +47,23 @@ public class QbicDataFinder {
   /**
    * Fetches all datasets, even those of children - recursively
    *
-   * @param sample
-   * @return all recursively found datasets
+   * @param sample the sample for which descending data sets should be added
+   * @param visitedSamples map with samples and datasets already visited.
    */
-  private static Map<String, List<DataSet>> fetchDescendantDatasets(Sample sample) {
+  private static void fillWithDescendentDatasets(Sample sample, Map<String, List<DataSet>> visitedSamples) {
+    if (visitedSamples.containsKey(sample.getCode())) {
+      return;
+    }
+
     List<Sample> children = sample.getChildren();
+    List<DataSet> foundDataSets = sample.getDataSets();
+    visitedSamples.put(sample.getCode(), foundDataSets);
     // recursion end
-    if (children.size() < 1) {
-      HashMap<String, List<DataSet>> sampleDatasets = new HashMap<>();
-      sampleDatasets.put(sample.getCode(), sample.getDataSets());
-      return sampleDatasets;
+    if (children.size() > 0) {
+      for (Sample child : children) {
+        fillWithDescendentDatasets(child, visitedSamples);
+      }
     }
-    Map<String, List<DataSet>> sampleDatasets = new HashMap<>();
-    sampleDatasets.put(sample.getCode(), sample.getDataSets());
-    for (Sample child : children) {
-      Map<String, List<DataSet>> childDatasetMapping = fetchDescendantDatasets(child);
-      sampleDatasets = joinMaps(sampleDatasets, childDatasetMapping);
-    }
-    return sampleDatasets;
   }
 
   /**
@@ -75,6 +73,8 @@ public class QbicDataFinder {
    * @return all found datasets for a given sampleID
    */
   public Map<String, List<DataSet>> findAllDatasetsRecursive(String sampleId) {
+    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
+
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
@@ -84,31 +84,15 @@ public class QbicDataFinder {
     dsFetchOptions.withType();
     fetchOptions.withChildrenUsing(fetchOptions);
     fetchOptions.withDataSetsUsing(dsFetchOptions);
+
     SearchResult<Sample> result =
         applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
-
     List<Sample> samples = result.getObjects();
+
     for (Sample sample : samples) {
-      Map<String, List<DataSet>> sampleDatasetMap = fetchDescendantDatasets(sample);
-      dataSetsBySampleId = joinMaps(dataSetsBySampleId, sampleDatasetMap);
+     fillWithDescendentDatasets(sample, dataSetsBySampleId);
     }
     return dataSetsBySampleId;
-  }
-
-  // FIXME this is needed to preserve functionality. For some reason collisions appear and we have to merge the lists
-  //  the collisions observed might be caused by the bug where every dataset is contained 3 times.
-  private static <T, V> Map<T, List<V>> joinMaps(Map<T, List<V>> map1, Map<T, List<V>> map2) {
-    Map<T,List<V>> joinedMap = new HashMap<>();
-    joinedMap.putAll(map1);
-    map2.forEach((key, value) -> joinedMap.merge(key, value, QbicDataFinder::joinLists));
-    return joinedMap;
-  }
-
-  private static <T> List<T> joinLists(List<T> list1, List<T> list2) {
-    List<T> joinedList = new ArrayList<>();
-    Stream.of(list1, list2).forEach(joinedList::addAll);
-    return joinedList;
   }
 
   /**
