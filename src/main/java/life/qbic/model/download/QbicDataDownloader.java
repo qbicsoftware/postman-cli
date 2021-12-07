@@ -300,21 +300,6 @@ public class QbicDataDownloader {
         //
       }
     }
-
-    /* fixme remove old code
-    for (String sampleCode : dataSetsPerSample.keySet()) {
-      for (DataSet dataset : dataSetsPerSample.get(sampleCode)) {
-        DataSetPermId permID = dataset.getPermId();
-        DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
-        criteria.withDataSet().withCode().thatEquals(permID.getPermId());
-        SearchResult<DataSetFile> result =
-            this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
-        List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
-        final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
-            sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
-        downloadFiles(downloadRequest);
-      }
-    }*/
   }
 
   private static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {

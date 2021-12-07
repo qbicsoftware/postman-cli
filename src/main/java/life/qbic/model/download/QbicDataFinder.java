@@ -120,7 +120,6 @@ public class QbicDataFinder {
    */
   public List<Map<String, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
       List<String> suffixes) {
-    // TODO adjust type
     Map<String, List<DataSet>> allDatasets = findAllDatasetsRecursive(ident);
     List<Map<String, List<DataSetFile>>> filteredDatasets = new ArrayList<>();
 
