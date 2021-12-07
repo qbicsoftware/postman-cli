@@ -189,10 +189,10 @@ public class QbicDataDownloader {
           int datasetDownloadReturnCode = -1;
           try {
             // for the sample code and aggregates datasets per sample code
-            List<Map<String, List<DataSet>>> crazyMapList = new ArrayList<>();
-            crazyMapList.add(foundDataSets);
+            List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
+            datasets.add(foundDataSets);
             datasetDownloadReturnCode =
-                qbicDataDownloader.downloadDataset(crazyMapList);
+                qbicDataDownloader.downloadDataset(datasets);
           } catch (NullPointerException e) {
             LOG.error(
                 "Datasets were found by the application server, but could not be found on the datastore server for "
