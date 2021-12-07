@@ -102,8 +102,6 @@ public class QbicDataFinder {
       }
       Map<String, List<DataSet>> sampleDatasetMap = fetchDescendantDatasets(sample,searchedSamples);
       dataSetsBySampleId = joinMaps(dataSetsBySampleId, sampleDatasetMap);
-      LOG.info("visited: "+searchedSamples.toString());
-      LOG.info("Found samples: "+sampleDatasetMap.keySet());
       //remember what has been searched
       searchedSamples.addAll(sampleDatasetMap.keySet());
     }
