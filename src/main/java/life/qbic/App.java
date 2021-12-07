@@ -1,8 +1,5 @@
 package life.qbic;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
 import life.qbic.io.commandline.CommandLineParser;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
@@ -11,6 +8,11 @@ import life.qbic.model.download.ConnectionException;
 import life.qbic.model.download.QbicDataDownloader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Optional;
 
 /** postman for staging data from openBIS */
 public class App {
@@ -30,6 +32,21 @@ public class App {
   }
 
   /**
+   * checks if the commandline parameter for reading out the password from the environment variable
+   * is correctly provided
+   *
+   * @param envVariableCommandLineParameter
+   * @return
+   */
+  private static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
+    Boolean NotNullOrEmpty = false;
+    if (envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty()) {
+      NotNullOrEmpty = true;
+    }
+    return NotNullOrEmpty;
+  }
+
+  /**
    * Logs into OpenBIS asks for and verifies password.
    *
    * @param commandLineParameters The command line parameters.
@@ -37,12 +54,23 @@ public class App {
    */
   private static QbicDataDownloader loginToOpenBIS(
       PostmanCommandLineOptions commandLineParameters) {
-    LOG.info(String.format("Please provide password for user '%s':", commandLineParameters.user));
 
-    String password = OpenBISPasswordParser.readPasswordFromConsole();
+    String password;
+    if (isNotNullOrEmpty(commandLineParameters.passwordEnvVariable)) {
+      Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(commandLineParameters.passwordEnvVariable);
+
+      if (!envPassword.isPresent()) {
+        System.out.println("No environment variable named " + commandLineParameters.passwordEnvVariable + " was found");
+        LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
+      }
+      password = envPassword.orElseGet(OpenBISPasswordParser::readPasswordFromConsole);
+    } else {
+      LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
+      password = OpenBISPasswordParser.readPasswordFromConsole();
+    }
 
     if (password.isEmpty()) {
-    LOG.error("You need to provide a password.");
+      LOG.error("You need to provide a password.");
       System.exit(1);
     }
 

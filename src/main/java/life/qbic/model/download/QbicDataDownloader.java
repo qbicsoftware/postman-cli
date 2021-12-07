@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import life.qbic.ChecksumReporter;
@@ -32,8 +35,6 @@ import life.qbic.DownloadException;
 import life.qbic.DownloadRequest;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.remoting.RemoteConnectFailureException;
@@ -178,7 +179,7 @@ public class QbicDataDownloader {
       // no suffix or regex was supplied -> download all datasets
       for (String ident : commandLineParameters.ids) {
         LOG.info(String.format("Downloading files for provided identifier %s", ident));
-        List<Map<String, List<DataSet>>> foundDataSets =
+        Map<String, List<DataSet>> foundDataSets =
             qbicDataFinder.findAllDatasetsRecursive(ident);
 
         LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
@@ -188,8 +189,10 @@ public class QbicDataDownloader {
           int datasetDownloadReturnCode = -1;
           try {
             // for the sample code and aggregates datasets per sample code
+            List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
+            datasets.add(foundDataSets);
             datasetDownloadReturnCode =
-                qbicDataDownloader.downloadDataset(foundDataSets);
+                qbicDataDownloader.downloadDataset(datasets);
           } catch (NullPointerException e) {
             LOG.error(
                 "Datasets were found by the application server, but could not be found on the datastore server for "
@@ -221,6 +224,10 @@ public class QbicDataDownloader {
     return sum;
   }
 
+  private static <T> int countDatasets(Map<String, List<T>> datasetsPerSampleCode) {
+    return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
+  }
+
 
   /**
    * Downloads all IDs which were previously filtered by either suffixes or regexes
@@ -237,7 +244,7 @@ public class QbicDataDownloader {
       try {
         for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets){
           for (String sampleCode : filesPerSample.keySet()) {
-            List<DataSetFile> filteredDataSetFiles = removeDirectories(filesPerSample.get(sampleCode));
+            List<DataSetFile> filteredDataSetFiles = withoutDirectories(filesPerSample.get(sampleCode));
             final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
                 sampleCode);
             filesDownloadReturnCode = downloadFiles(downloadRequest);
@@ -275,30 +282,30 @@ public class QbicDataDownloader {
   }
 
   private void downloadDataset(Map<String, List<DataSet>> dataSetsPerSample) {
-    for (String sampleCode : dataSetsPerSample.keySet()) {
-      for (DataSet dataset : dataSetsPerSample.get(sampleCode)) {
-        DataSetPermId permID = dataset.getPermId();
+
+    for (Entry<String, List<DataSet>> entry : dataSetsPerSample.entrySet()) {
+      String sampleCode = entry.getKey();
+      List<DataSet> sampleDatasets = entry.getValue();
+      for (DataSet sampleDataset : sampleDatasets) {
+        DataSetPermId permID = sampleDataset.getPermId();
         DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
         criteria.withDataSet().withCode().thatEquals(permID.getPermId());
         SearchResult<DataSetFile> result =
             this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
-        List<DataSetFile> filteredDataSetFiles = removeDirectories(result.getObjects());
+        List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
+        //
       }
     }
   }
 
-  private List<DataSetFile> removeDirectories(List<DataSetFile> dataSetFiles) {
-    List<DataSetFile> filteredList = new ArrayList<>();
-    dataSetFiles.forEach(
-        item -> {
-          if (!item.isDirectory()) {
-            filteredList.add(item);
-          }
-        });
-    return filteredList;
+  private static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
+    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
+    return dataSetFiles.stream()
+        .filter(notADirectory)
+        .collect(Collectors.toList());
   }
 
   private void downloadFile(DataSetFile dataSetFile, Path prefix) throws IOException {
