@@ -287,7 +287,6 @@ public class QbicDataDownloader {
       String sampleCode = entry.getKey();
       List<DataSet> sampleDatasets = entry.getValue();
       for (DataSet sampleDataset : sampleDatasets) {
-        // old code
         DataSetPermId permID = sampleDataset.getPermId();
         DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
         criteria.withDataSet().withCode().thatEquals(permID.getPermId());
