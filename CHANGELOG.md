@@ -1,5 +1,9 @@
 # Changelog
 
+## Release 0.5.1 (2021-12-13)
+
+* Fix severity issue CVE-2021-44228 (org.apache.logging.log4j 2.11.0 -> 2.15.0)
+
 ## Release 0.5.0 (2021-12-07)
 
 * Introduce feature to parse the password from environment variable
