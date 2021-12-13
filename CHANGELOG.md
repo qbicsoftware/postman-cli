@@ -1,5 +1,16 @@
 # Changelog
 
+## Release 0.5.2 (?-?-?)
+
+## Release 0.5.1 (2021-12-13)
+
+* Fix severity issue CVE-2021-44228 (org.apache.logging.log4j 2.11.0 -> 2.15.0)
+
+## Release 0.5.0 (2021-12-07)
+
+* Introduce feature to parse the password from environment variable
+* Fix issue with datasets being downloaded three times for sample codes containing an asterix
+
 ## Hotfix 0.4.7 (2021-04-12)
 
 * Write CRC32 files again next to the downloaded data-sets
