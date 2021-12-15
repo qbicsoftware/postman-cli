@@ -6,7 +6,7 @@
     <parent>
         <groupId>life.qbic</groupId>
         <artifactId>cli-parent-pom</artifactId>
-        <version>2.2.0</version>
+        <version>2.3.0</version>
     </parent>
     <artifactId>postman-cli</artifactId>
     <version>0.5.1</version>
@@ -19,8 +19,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <groovy.version>2.5.1</groovy.version>
-        <log4j.version>2.15.0</log4j.version>
+        <groovy.version>3.0.8</groovy.version>
+        <log4j.version>2.16.0</log4j.version>
     </properties>
 
     <!-- we only need to tell maven where to find our parent pom and other QBiC dependencies -->
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>life.qbic</groupId>
             <artifactId>core-utils-lib</artifactId>
-            <version>1.0.0</version>
+            <version>1.6.0</version>
         </dependency>
 
         <dependency>
