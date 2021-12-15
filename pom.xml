@@ -93,12 +93,6 @@
         </dependency>
 
         <dependency>
-            <groupId>life.qbic</groupId>
-            <artifactId>core-utils-lib</artifactId>
-            <version>1.6.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
             <version>${groovy.version}</version>
