@@ -19,7 +19,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <groovy.version>3.0.8</groovy.version>
+        <groovy.version>2.5.13</groovy.version>
         <log4j.version>2.16.0</log4j.version>
     </properties>
 
