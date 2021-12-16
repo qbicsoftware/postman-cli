@@ -1,6 +1,14 @@
 # Changelog
 
-## Release 0.5.1 (2021-12-13)
+## Hotfix 0.5.2 (2021-12-15)
+
+* Bump `life.qbic:cli-parent-pom:2.2.0` -> `2.3.0`
+* Bump `life.qbic:core-utils-lib:1.0.0` -> `1.6.0`
+* Bump `org.apache.logging.log4j:log4j-api:2.15.0` -> `2.16.0` (CVE-2021-45046)
+* Bump `org.apache.logging.log4j:log4j-core: 2.15.0` -> `2.16.0` (CVE-2021-45046)
+* Bump `org.codehaus.groovy:groovy:2.5.1` -> `2.5.13`
+
+## Hotfix 0.5.1 (2021-12-13)
 
 * Fix severity issue CVE-2021-44228 (org.apache.logging.log4j 2.11.0 -> 2.15.0)
 
