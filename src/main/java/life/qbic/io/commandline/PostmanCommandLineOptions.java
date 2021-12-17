@@ -31,14 +31,14 @@ public class PostmanCommandLineOptions {
   public List<String> ids;
 
   @Option(
+          names = {"-o", "--output-dir"},
+          description = "provide the path to a directory where you want to download your data to")
+  public String outputPath;
+
+  @Option(
       names = {"-f", "--file"},
       description = "a file with line-separated list of QBiC sample ids")
   public Path filePath;
-
-  @Option(
-      names = {"-o", "--output-dir"},
-      description = "provide the path to a directory where you want to download your data to")
-  public String outputPath;
 
   @Option(
       names = {"-c", "--conserve"},
