@@ -45,6 +45,7 @@ public class QbicDataDownloader {
   private final ChecksumReporter checksumReporter;
   private final int defaultBufferSize;
   private final boolean conservePaths;
+  private String outputPath;
   private String user;
   private String password;
   private IApplicationServerApi applicationServer;
@@ -70,11 +71,13 @@ public class QbicDataDownloader {
       int bufferSize,
       String filterType,
       boolean conservePaths,
+      String outputPath,
       ChecksumReporter checksumReporter) {
     this.checksumReporter = checksumReporter;
     this.defaultBufferSize = bufferSize;
     this.filterType = filterType;
     this.conservePaths = conservePaths;
+    this.outputPath = outputPath;
 
     if (!AppServerUri.isEmpty()) {
       this.applicationServer =
@@ -323,11 +326,18 @@ public class QbicDataDownloader {
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
         final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
-        File newFile =
-            new File(System.getProperty("user.dir") +
-                  File.separator +
-                  prefix.toString() + File.separator +
-                  filePath.toString());
+        File newFile;
+        if(life.qbic.App.isNotNullOrEmpty(outputPath)){
+          newFile = new File(outputPath +
+                              File.separator +
+                              prefix.toString() + File.separator +
+                              filePath.toString());
+        } else {
+          newFile = new File(System.getProperty("user.dir") +
+                              File.separator +
+                              prefix.toString() + File.separator +
+                              filePath.toString());
+        }
         newFile.getParentFile().mkdirs();
         OutputStream os = new FileOutputStream(newFile);
         ProgressBar progressBar =

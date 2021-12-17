@@ -32,15 +32,14 @@ public class App {
   }
 
   /**
-   * checks if the commandline parameter for reading out the password from the environment variable
-   * is correctly provided
+   * checks if the given commandline parameter is correctly provided
    *
-   * @param envVariableCommandLineParameter
+   * @param commandLineParameter
    * @return
    */
-  private static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
+  public static Boolean isNotNullOrEmpty(String commandLineParameter) {
     Boolean NotNullOrEmpty = false;
-    if (envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty()) {
+    if (commandLineParameter != null && !commandLineParameter.isEmpty()) {
       NotNullOrEmpty = true;
     }
     return NotNullOrEmpty;
@@ -92,6 +91,7 @@ public class App {
             commandLineParameters.bufferMultiplier * 1024,
             commandLineParameters.datasetType,
             commandLineParameters.conservePath,
+            commandLineParameters.outputPath,
             checksumWriter);
 
     try {
