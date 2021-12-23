@@ -1,4 +1,7 @@
 # Changelog
+
+## 0.6.0-SNAPSHOT (2021-12-23)
+
 ## Hotfix 0.5.3 (2021-12-20)
 
 * Bump `org.apache.logging.log4j:log4j-core:2.16.0` -> `2.17.0` (CVE-2021-45105)
