@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"life.qbic"},{"l":"life.qbic.io.commandline"},{"l":"life.qbic.io.parser"},{"l":"life.qbic.model.download"},{"l":"life.qbic.model.units"},{"l":"life.qbic.util"}]
