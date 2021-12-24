@@ -31,8 +31,8 @@ public class PostmanCommandLineOptions {
   public List<String> ids;
 
   @Option(
-          names = {"-o", "--output-dir"},
-          description = "provide the path to a directory where you want to download your data to")
+      names = {"-o", "--out-dir"},
+      description = "provide the path to a directory where you want to download your data to")
   public String outputPath;
 
   @Option(

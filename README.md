@@ -30,6 +30,8 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
   -dss,--dss_url=<url>        DSS URL 
   -u,  --user=<user>          openBIS user name 
   -f,  --file=<filePath>      a file with line-separated list of QBiC sample ids
+  -o,  --out-dir=<outputPath> provide the path to a existing directory 
+                              where you want to download your data to
   -t,  --type=<datasetType>   filter for a given openBIS dataset type
   -s,  --type=<suffix>        filter for a given openBIS file suffix
   -r,  --type=<regex>         filter for a given openBIS file regex    
@@ -171,6 +173,19 @@ You can filter for files by a provided regex, using the `-r` option:
 Example: -r .jobscript.FastQC.*
 
 Please note that depending on your favorite shell, you may need quote your regex. 
+### Provide a Path to an output directory
+You can provide a Path to a directory where you want your datasets to be downloaded to.
+The given Path already needs to exist. Otherwise, the datasets will be downloaded
+into the current working directory.
+
+To use this feature, provide the output path with the -o option.
+
+For example:
+
+```bash
+java -jar postman.jar -o /home/datasets -u <userid> <QBiC Sample ID>
+java -jar postman.jar -o C:\Users\user\datasets -u <userid> <QBiC Sample ID>  
+```
 
 ### Provide a file with several QBiC IDs
 In order to download datasets from several samples at once, you can provide a manifest file consisting of multiple, line-separated, QBiC IDs.

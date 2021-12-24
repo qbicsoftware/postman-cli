@@ -97,16 +97,6 @@ public class QbicDataDownloader {
     this.setCredentials(user, password);
   }
 
-  private static Path getTopDirectory(Path path) {
-    Path currentPath = Paths.get(path.toString());
-    Path parentPath;
-    while (currentPath.getParent() != null) {
-      parentPath = currentPath.getParent();
-      currentPath = parentPath;
-    }
-    return currentPath;
-  }
-
   /**
    * Setter for user and password credentials
    *
@@ -216,6 +206,12 @@ public class QbicDataDownloader {
       }
     }
   }
+  public static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
+    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
+    return dataSetFiles.stream()
+            .filter(notADirectory)
+            .collect(Collectors.toList());
+  }
 
   private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
     int sum = 0;
@@ -304,13 +300,6 @@ public class QbicDataDownloader {
     }
   }
 
-  private static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
-    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
-    return dataSetFiles.stream()
-        .filter(notADirectory)
-        .collect(Collectors.toList());
-  }
-
   private void downloadFile(DataSetFile dataSetFile, Path prefix) throws IOException {
     DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
     options.setRecursive(false);
@@ -325,21 +314,11 @@ public class QbicDataDownloader {
       InputStream initialStream = file.getInputStream();
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
-        final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
-        File newFile;
-        if(life.qbic.App.isNotNullOrEmpty(outputPath)){
-          newFile = new File(outputPath +
-                              File.separator +
-                              prefix.toString() + File.separator +
-                              filePath.toString());
-        } else {
-          newFile = new File(System.getProperty("user.dir") +
-                              File.separator +
-                              prefix.toString() + File.separator +
-                              filePath.toString());
-        }
-        newFile.getParentFile().mkdirs();
+        final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(),conservePaths);
+
+        File newFile = OutputPathFinder.determineOutputDirectoryForData(outputPath, prefix, filePath);
         OutputStream os = new FileOutputStream(newFile);
+
         ProgressBar progressBar =
             new ProgressBar(
                 filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
@@ -385,19 +364,6 @@ public class QbicDataDownloader {
     }
   }
 
-  private Path determineFinalPathFromDataset(DataSetFile file) {
-    Path finalPath;
-    if (conservePaths) {
-      finalPath = Paths.get(file.getPath());
-      // drop top parent directory name in the openBIS DSS (usually "/origin")
-      Path topDirectory = getTopDirectory(finalPath);
-      finalPath = topDirectory.relativize(finalPath);
-    } else {
-      finalPath = Paths.get(file.getPath()).getFileName();
-    }
-    return finalPath;
-  }
-
   private int downloadFiles(DownloadRequest request) throws DownloadException {
     Path pathPrefix = Paths.get(request.getSampleCode() + File.separator);
     request
@@ -431,8 +397,10 @@ public class QbicDataDownloader {
   }
 
   private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
-    Path path = Paths.get(pathPrefix.toString(), File.separator,
-        determineFinalPathFromDataset(dataSetFile).toString());
+
+    final Path filePath = OutputPathFinder.determineFinalPathFromDataset(dataSetFile,conservePaths);
+    Path path = OutputPathFinder.determineOutputDirectoryForChecksum(outputPath, pathPrefix ,filePath);
+
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 }
