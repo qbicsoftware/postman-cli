@@ -2,7 +2,7 @@
 
 ## Hotfix 0.5.4 (2022-01-04)
 
-* Bump `org.apache.logging.log4j:log4j-core:2.17.0` -> `2.17.1` (* CVE-2021-44832)
+* Bump `org.apache.logging.log4j:log4j-core:2.17.0` -> `2.17.1` (CVE-2021-44832)
 
 ## Hotfix 0.5.3 (2021-12-20)
 
