@@ -4,6 +4,7 @@ import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.fetchoptions.DataSetFetchOptions;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.fetchoptions.SampleFetchOptions;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.search.SampleSearchCriteria;
@@ -11,15 +12,16 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
+import life.qbic.QbicDataLoaderRegexUtil;
+import life.qbic.util.StringUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import life.qbic.QbicDataLoaderRegexUtil;
-import life.qbic.util.StringUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class QbicDataFinder {
 
@@ -166,6 +168,47 @@ public class QbicDataFinder {
     }
     return filesFiltered;
   }
+
+  public Map<String, List<DataSet>> findAllDatasetsWithoutChildren(String sampleId) {
+    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
+    SampleSearchCriteria criteria = new SampleSearchCriteria();
+    criteria.withCode().thatEquals(sampleId);
+
+    SampleFetchOptions fetchOptions = new SampleFetchOptions();
+    DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
+    dsFetchOptions.withType();
+    fetchOptions.withDataSetsUsing(dsFetchOptions);
+
+    SearchResult<Sample> result =
+            applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
+    List<Sample> samples = result.getObjects();
+
+    for (Sample sample : samples) {
+      dataSetsBySampleId.put(sample.getCode(), sample.getDataSets());
+    }
+    return dataSetsBySampleId;
+  }
+
+
+  public void printAvailableDatasets(List<String> sampleIds) {
+    for (String ident : sampleIds) {
+      Map<String, List<DataSet>> foundDataSets = findAllDatasetsWithoutChildren(ident);
+      for (Entry<String, List<DataSet>> entry : foundDataSets.entrySet()) {
+        List<DataSet> sampleDatasets = entry.getValue();
+        String sampleCode = entry.getKey();
+        if (!sampleDatasets.isEmpty()) {
+          LOG.info(String.format("Datasets available for provided identifier %s", sampleCode));
+          for (DataSet dataset : sampleDatasets) {
+            DataSetPermId permId = dataset.getPermId();
+            System.out.println(permId);
+          }
+        } else {
+          LOG.info(String.format("No datasets available for provided identifier %s", sampleCode));
+        }
+      }
+    }
+  }
+
 
   /**
    * Search method for a given openBIS identifier.

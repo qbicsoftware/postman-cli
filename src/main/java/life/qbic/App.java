@@ -27,8 +27,12 @@ public class App {
     // login to OpenBIS
     QbicDataDownloader qbicDataDownloader = loginToOpenBIS(commandLineParameters);
 
-    // download all requested files by the user
-    qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
+    // download all requested files by the user or check availability
+    if (!commandLineParameters.checkDatasets) {
+      qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
+    } else{
+      qbicDataDownloader.checkAvailableDatasets(commandLineParameters.ids);
+    }
   }
 
   /**

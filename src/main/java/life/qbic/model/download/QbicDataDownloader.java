@@ -13,11 +13,16 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSe
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import life.qbic.ChecksumReporter;
+import life.qbic.DownloadException;
+import life.qbic.DownloadRequest;
+import life.qbic.io.commandline.PostmanCommandLineOptions;
+import life.qbic.util.ProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.remoting.RemoteConnectFailureException;
+
+import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,14 +35,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
-import life.qbic.ChecksumReporter;
-import life.qbic.DownloadException;
-import life.qbic.DownloadRequest;
-import life.qbic.io.commandline.PostmanCommandLineOptions;
-import life.qbic.util.ProgressBar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.remoting.RemoteConnectFailureException;
 
 public class QbicDataDownloader {
 
@@ -132,6 +129,12 @@ public class QbicDataDownloader {
       throw new AuthenticationException("Authentication failed. Are you using the correct "
           + "credentials for http://qbic.life?");
     }
+  }
+
+  public void checkAvailableDatasets(List<String> Ids) {
+    QbicDataFinder qbicDataFinder =
+            new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
+    qbicDataFinder.printAvailableDatasets(Ids);
   }
 
   /**
