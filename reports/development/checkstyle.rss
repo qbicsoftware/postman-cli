@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<rss version="0.91">
+  <channel>
+    <title>Postman cli - Checkstyle report</title>
+    <link>http://github.com/qbicsoftware/postman-cli</link>
+    <description>Postman cli - Checkstyle report</description>
+    <language>en-us</language>
+    <copyright>&#169;2022</copyright>
+    <item>
+      <title>File: 19,
+             Errors: 0,
+             Warnings: 126,
+             Infos: 0
+      </title>
+            <link>http://github.com/qbicsoftware/postman-cli/checkstyle.html</link>
+      <description>
+        <p>Click <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html">here</a> for the full Checkstyle report.</p>
+
+        <table summary="Files" boder="1">
+          <thead>
+            <tr>
+              <th>Files</th>
+              <th style="width:30px;"><abbr title="Info">I</abbr></th>
+              <th style="width:30px;"><abbr title="Warning">W</abbr></th>
+              <th style="width:30px;"><abbr title="Error">E</abbr></th>
+            </tr>
+          </thead>
+          <tbody>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.units.GigaBytes.java">life/qbic/model/units/GigaBytes.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.download.AuthenticationException.java">life/qbic/model/download/AuthenticationException.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  3
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.download.ConnectionException.java">life/qbic/model/download/ConnectionException.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  8
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.util.ProgressBar.java">life/qbic/util/ProgressBar.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  8
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.io.commandline.CommandLineParser.java">life/qbic/io/commandline/CommandLineParser.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  6
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.io.commandline.PostmanCommandLineOptions.java">life/qbic/io/commandline/PostmanCommandLineOptions.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  7
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.util.StringUtil.java">life/qbic/util/StringUtil.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.units.UnitDisplay.java">life/qbic/model/units/UnitDisplay.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.download.QbicDataFinder.java">life/qbic/model/download/QbicDataFinder.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  22
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.units.MegaBytes.java">life/qbic/model/units/MegaBytes.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.download.QbicDataDownloader.java">life/qbic/model/download/QbicDataDownloader.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  42
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.io.parser.IdentifierParser.java">life/qbic/io/parser/IdentifierParser.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  2
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.units.TeraBytes.java">life/qbic/model/units/TeraBytes.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.units.KiloBytes.java">life/qbic/model/units/KiloBytes.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.App.java">life/qbic/App.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  15
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.io.commandline.OpenBISPasswordParser.java">life/qbic/io/commandline/OpenBISPasswordParser.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  4
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.QbicDataLoader.java">life/qbic/QbicDataLoader.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  8
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.units.UnitConverterFactory.java">life/qbic/model/units/UnitConverterFactory.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  1
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://github.com/qbicsoftware/postman-cli/checkstyle.html#life.qbic.model.units.Bytes.java">life/qbic/model/units/Bytes.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                      </tbody>
+        </table>
+        
+      </description>
+    </item>
+  </channel>
+</rss>
+
