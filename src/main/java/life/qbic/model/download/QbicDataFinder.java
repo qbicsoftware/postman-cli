@@ -168,46 +168,26 @@ public class QbicDataFinder {
     }
     return filesFiltered;
   }
-
-  public Map<String, List<DataSet>> findAllDatasetsWithoutChildren(String sampleId) {
-    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
-    SampleSearchCriteria criteria = new SampleSearchCriteria();
-    criteria.withCode().thatEquals(sampleId);
-
-    SampleFetchOptions fetchOptions = new SampleFetchOptions();
-    DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
-    dsFetchOptions.withType();
-    fetchOptions.withDataSetsUsing(dsFetchOptions);
-
-    SearchResult<Sample> result =
-            applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-    List<Sample> samples = result.getObjects();
-
-    for (Sample sample : samples) {
-      dataSetsBySampleId.put(sample.getCode(), sample.getDataSets());
-    }
-    return dataSetsBySampleId;
-  }
-
-
+  
   public void printAvailableDatasets(List<String> sampleIds) {
+    List<DataSetPermId> allPermIds = new ArrayList<>();
     for (String ident : sampleIds) {
-      Map<String, List<DataSet>> foundDataSets = findAllDatasetsWithoutChildren(ident);
-      for (Entry<String, List<DataSet>> entry : foundDataSets.entrySet()) {
-        List<DataSet> sampleDatasets = entry.getValue();
-        String sampleCode = entry.getKey();
-        if (!sampleDatasets.isEmpty()) {
-          LOG.info(String.format("Datasets available for provided identifier %s", sampleCode));
+      LOG.info(String.format("Datasets available for provided identifier %s", ident));
+      Map<String, List<DataSet>> foundDataSets = findAllDatasetsRecursive(ident);
+        for (Entry<String, List<DataSet>> entry : foundDataSets.entrySet()) {
+          List<DataSet> sampleDatasets = entry.getValue();
           for (DataSet dataset : sampleDatasets) {
             DataSetPermId permId = dataset.getPermId();
+            allPermIds.add(permId);
             System.out.println(permId);
           }
-        } else {
-          LOG.info(String.format("No datasets available for provided identifier %s", sampleCode));
+          if(allPermIds.isEmpty()){
+            LOG.info(String.format("No datasets available for identifier %s", ident));
+          }
         }
-      }
     }
   }
+
 
 
   /**

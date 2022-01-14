@@ -27,8 +27,8 @@ public class App {
     // login to OpenBIS
     QbicDataDownloader qbicDataDownloader = loginToOpenBIS(commandLineParameters);
 
-    // download all requested files by the user or check availability
-    if (!commandLineParameters.checkDatasets) {
+    // download all requested files by the user or print available datasets
+    if (!commandLineParameters.printDatasets) {
       qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
     } else{
       qbicDataDownloader.checkAvailableDatasets(commandLineParameters.ids);

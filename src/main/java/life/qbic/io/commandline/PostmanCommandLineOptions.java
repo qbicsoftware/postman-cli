@@ -41,9 +41,9 @@ public class PostmanCommandLineOptions {
   public boolean conservePath;
 
   @Option(
-          names = {"-a", "--available"},
-          description = "check which dataSets are available in samples")
-  public boolean checkDatasets;
+          names = {"-pr", "--print"},
+          description = "print available datasets for the provided samples")
+  public boolean printDatasets;
 
   @Option(
       names = {"-b", "--buffer-size"},
