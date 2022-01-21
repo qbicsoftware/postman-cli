@@ -13,11 +13,16 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSe
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import life.qbic.ChecksumReporter;
+import life.qbic.DownloadException;
+import life.qbic.DownloadRequest;
+import life.qbic.io.commandline.PostmanCommandLineOptions;
+import life.qbic.util.ProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.remoting.RemoteConnectFailureException;
+
+import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,14 +35,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
-import life.qbic.ChecksumReporter;
-import life.qbic.DownloadException;
-import life.qbic.DownloadRequest;
-import life.qbic.io.commandline.PostmanCommandLineOptions;
-import life.qbic.util.ProgressBar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.remoting.RemoteConnectFailureException;
 
 public class QbicDataDownloader {
 
@@ -305,8 +302,8 @@ public class QbicDataDownloader {
     options.setRecursive(false);
     IDataSetFileId fileId = dataSetFile.getPermId();
     InputStream stream =
-        this.dataStoreServer.downloadFiles(
-            sessionToken, Collections.singletonList(fileId), options);
+            this.dataStoreServer.downloadFiles(
+                    sessionToken, Collections.singletonList(fileId), options);
     DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
     DataSetFileDownload file;
 
@@ -314,20 +311,20 @@ public class QbicDataDownloader {
       InputStream initialStream = file.getInputStream();
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
-        final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(),conservePaths);
-
-        File newFile = OutputPathFinder.determineOutputDirectoryForData(outputPath, prefix, filePath);
-        OutputStream os = new FileOutputStream(newFile);
-
+        final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(), conservePaths);
+        final Path newPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, filePath);
+        LOG.info("Output directory: " + newPath.getParent().toString());
+        File newFile = new File(newPath.toString());
+        newFile.getParentFile().mkdirs();
         ProgressBar progressBar =
-            new ProgressBar(
-                filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
+                new ProgressBar(filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
         int bufferSize =
-            (file.getDataSetFile().getFileLength() < defaultBufferSize)
-                ? (int) file.getDataSetFile().getFileLength()
-                : defaultBufferSize;
+                (file.getDataSetFile().getFileLength() < defaultBufferSize)
+                        ? (int) file.getDataSetFile().getFileLength()
+                        : defaultBufferSize;
         byte[] buffer = new byte[bufferSize];
         int bytesRead;
+        OutputStream os = new FileOutputStream(newFile);
         // read from is to buffer
         while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
           progressBar.updateProgress(bufferSize);
@@ -335,8 +332,7 @@ public class QbicDataDownloader {
           os.flush();
         }
         System.out.print("\n");
-        validateChecksum(
-            Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
+        validateChecksum(Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
         initialStream.close();
         // flush OutputStream to write any buffered data to file
         os.flush();
@@ -399,7 +395,7 @@ public class QbicDataDownloader {
   private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
 
     final Path filePath = OutputPathFinder.determineFinalPathFromDataset(dataSetFile,conservePaths);
-    Path path = OutputPathFinder.determineOutputDirectoryForChecksum(outputPath, pathPrefix ,filePath);
+    Path path = OutputPathFinder.determineOutputDirectory(outputPath, pathPrefix ,filePath);
 
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }

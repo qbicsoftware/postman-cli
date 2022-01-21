@@ -30,8 +30,7 @@ Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
   -dss,--dss_url=<url>        DSS URL 
   -u,  --user=<user>          openBIS user name 
   -f,  --file=<filePath>      a file with line-separated list of QBiC sample ids
-  -o,  --out-dir=<outputPath> provide the path to a existing directory 
-                              where you want to download your data to
+  -o,  --out-dir=<outputPath> provide an existing path to change the output directory 
   -t,  --type=<datasetType>   filter for a given openBIS dataset type
   -s,  --type=<suffix>        filter for a given openBIS file suffix
   -r,  --type=<regex>         filter for a given openBIS file regex    
@@ -173,10 +172,10 @@ You can filter for files by a provided regex, using the `-r` option:
 Example: -r .jobscript.FastQC.*
 
 Please note that depending on your favorite shell, you may need quote your regex. 
-### Provide a Path to an output directory
-You can provide a Path to a directory where you want your datasets to be downloaded to.
-The given Path already needs to exist. Otherwise, the datasets will be downloaded
-into the current working directory.
+### Provide a path to an output directory#
+If no path is provided, the requested datasets will be downloaded into the current working directory.
+To change that, you can provide a path to a directory where you want your datasets to be downloaded to.
+The given path already needs to exist, otherwise there will be no change to the output directory.
 
 To use this feature, provide the output path with the -o option.
 
