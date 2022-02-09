@@ -19,7 +19,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <groovy.version>2.5.15</groovy.version>
+        <groovy.version>3.0.8</groovy.version>
         <log4j.version>2.17.1</log4j.version>
     </properties>
 
@@ -52,32 +52,6 @@
             <url>https://qbic-repo.qbic.uni-tuebingen.de/repository/maven-releases</url>
         </repository>
         <repository>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-            <id>nexus-snapshots-old</id>
-            <name>QBiC Snapshots Old</name>
-            <url>https://qbic-repo.am10.uni-tuebingen.de/repository/maven-snapshots</url>
-        </repository>
-        <repository>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>nexus-releases-old</id>
-            <name>QBiC Releases Old</name>
-            <url>https://qbic-repo.am10.uni-tuebingen.de/repository/maven-releases</url>
-        </repository>
-        <repository>
             <id>vaadin-addons</id>
             <name>Vaadin Addons</name>
             <url>https://maven.vaadin.com/vaadin-addons</url>
@@ -99,7 +73,6 @@
             <classifier>indy</classifier>
         </dependency>
 
-
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -107,9 +80,9 @@
         </dependency>
 
         <dependency>
-            <groupId>life.qbic.openbis</groupId>
-            <artifactId>openbis-api-with-deps</artifactId>
-            <version>18.06.5</version>
+            <groupId>life.qbic</groupId>
+            <artifactId>openbis-api</artifactId>
+            <version>18.06.2</version>
         </dependency>
     </dependencies>
 

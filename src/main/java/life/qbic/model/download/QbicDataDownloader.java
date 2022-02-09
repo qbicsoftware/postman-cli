@@ -37,7 +37,6 @@ import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.remoting.RemoteConnectFailureException;
 
 public class QbicDataDownloader {
 
@@ -125,7 +124,7 @@ public class QbicDataDownloader {
   public void login() throws ConnectionException, AuthenticationException {
     try {
       this.sessionToken = this.applicationServer.login(this.user, this.password);
-    } catch (RemoteConnectFailureException e) {
+    } catch (Exception e) {
       throw new ConnectionException("Connection to openBIS server failed.");
     }
     if (sessionToken == null || sessionToken.isEmpty()) {
