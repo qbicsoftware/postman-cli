@@ -330,15 +330,17 @@ public class QbicDataDownloader {
                   filePath.toString());
         newFile.getParentFile().mkdirs();
         OutputStream os = new FileOutputStream(newFile);
+        String fileName = filePath.getFileName().toString();
         ProgressBar progressBar =
             new ProgressBar(
-                filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
+                fileName, file.getDataSetFile().getFileLength());
         int bufferSize =
             (file.getDataSetFile().getFileLength() < defaultBufferSize)
                 ? (int) file.getDataSetFile().getFileLength()
                 : defaultBufferSize;
         byte[] buffer = new byte[bufferSize];
         int bytesRead;
+        LOG.info(String.format("Download of %s is starting", fileName));
         // read from is to buffer
         while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
           progressBar.updateProgress(bufferSize);
@@ -351,6 +353,7 @@ public class QbicDataDownloader {
         initialStream.close();
         // flush OutputStream to write any buffered data to file
         os.flush();
+        LOG.info(String.format("Download of %s has finished", fileName));
         os.close();
       }
     }
@@ -389,21 +392,23 @@ public class QbicDataDownloader {
   }
 
   private int downloadFiles(DownloadRequest request) throws DownloadException {
-    Path pathPrefix = Paths.get(request.getSampleCode() + File.separator);
+    String sampleCode = request.getSampleCode();
+    LOG.info(String.format("Downloading file(s) for sample %s", sampleCode));
+    Path pathPrefix = Paths.get(sampleCode + File.separator);
     request
         .getDataSets()
         .forEach(
             dataSetFile -> {
               try {
                 int downloadAttempt = 1;
-                while(downloadAttempt <= request.getMaxNumberOfAttempts()) {
+                while (downloadAttempt <= request.getMaxNumberOfAttempts()) {
                   try {
                     downloadFile(dataSetFile, pathPrefix);
                     writeCRC32Checksum(dataSetFile, pathPrefix);
                     return;
                   } catch (Exception e) {
                     LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
-                    LOG.error(String.format("Reason: %s", e.getMessage()));
+                    LOG.error(String.format("Reason: %s", e.getMessage()), e);
                     downloadAttempt++;
                     if (downloadAttempt > request.getMaxNumberOfAttempts()) {
                       throw new IOException("Maximum number of download attempts reached.");
