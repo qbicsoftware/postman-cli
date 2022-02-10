@@ -6,8 +6,8 @@
 <i>A Java command line tool to download datasets from QBiC.</i>
 
 
-[![Build Maven Package](https://github.com/qbicsoftware/postman-cli/actions/workflows/build_package.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/build_package.yml)
-[![Run Maven Tests](https://github.com/qbicsoftware/postman-cli/actions/workflows/run_tests.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/run_tests.yml)
+[![Build Maven Package](https://github.com/qbicsoftware/postman-cli/actions/workflows/build_package.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/build-package.yml)
+[![Run Maven Tests](https://github.com/qbicsoftware/postman-cli/actions/workflows/run_tests.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/run-tests.yml)
 [![CodeQL](https://github.com/qbicsoftware/postman-cli/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/codeql-analysis.yml)
 [![release](https://img.shields.io/github/v/release/qbicsoftware/postman-cli?include_prereleases)](https://github.com/qbicsoftware/postman-cli/releases)
 
