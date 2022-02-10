@@ -1,5 +1,7 @@
 # Changelog
 
+**Note:** (After 0.5.5) Please check future **release notes** in the repository's [releases](https://github.com/qbicsoftware/postman-cli/releases) section.
+
 ## Hotfix 0.5.4 (2022-01-04)
 
 * Bump `org.apache.logging.log4j:log4j-core:2.17.0` -> `2.17.1` (CVE-2021-44832)
