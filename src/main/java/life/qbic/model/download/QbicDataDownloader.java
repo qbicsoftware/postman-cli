@@ -431,7 +431,7 @@ public class QbicDataDownloader {
 
   public void notifyUserOfInvalidChecksum() {
     if (invalidChecksumOccurred) {
-      LOG.warn("Checksum mismatches were detected during file download, check the log file for details");
+      LOG.warn("Checksum mismatches were detected during file download, check the logs/summary_invalid_files.txt log file for details");
     }
   }
 
