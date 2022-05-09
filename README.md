@@ -23,7 +23,9 @@ We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/op
 ## How to run
 
 ### Download
-You can download postman from the GitHub release page: https://github.com/qbicsoftware/postman-cli/releases .
+You can download the compiled and executable Java binaries as JAR of postman from the GitHub release page: https://github.com/qbicsoftware/postman-cli/releases.
+
+If you want to build from source, checkout the commit of your choice and execute `mvn clean package`. We only recommend this if you are familiar with Java build systems though, as we cannot give you support here. In the normal case, the binary of a stable release is sufficient.
 
 ### Requirements
 You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at least version 1.8 or 11. And the client's host must have allowance to connect to the server, which is determined by our firewall settings. If you are unsure, if your client is allowed to connect, contact us at support@qbic.zendesk.com.
