@@ -26,10 +26,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -117,7 +114,6 @@ public class QbicDataDownloader {
   /**
    * Login method for openBIS authentication
    *
-   * @return 0 if successful, 1 else
    */
   public void login() throws ConnectionException, AuthenticationException {
     try {
@@ -154,7 +150,7 @@ public class QbicDataDownloader {
     LOG.info(
         String.format(
             "%s provided openBIS identifiers have been found: %s",
-            commandLineParameters.ids.size(), commandLineParameters.ids.toString()));
+            commandLineParameters.ids.size(), commandLineParameters.ids));
 
     // a suffix was provided -> only download files which contain the suffix string
     if (!commandLineParameters.suffixes.isEmpty()) {
@@ -172,7 +168,7 @@ public class QbicDataDownloader {
       for (String ident : commandLineParameters.ids) {
         LOG.info(String.format("Downloading files for provided identifier %s", ident));
         List<DataSetFile> foundRegexFilteredIDs =
-            qbicDataFinder.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
+                qbicDataFinder.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
 
         LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
 
@@ -181,13 +177,26 @@ public class QbicDataDownloader {
     } else {
       // no suffix or regex was supplied -> download all datasets
       for (String ident : commandLineParameters.ids) {
-        LOG.info(String.format("Downloading files for provided identifier %s", ident));
         Map<String, List<DataSet>> foundDataSets =
             qbicDataFinder.findAllDatasetsRecursive(ident);
-
-        LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
-
         if (foundDataSets.size() > 0) {
+          LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
+
+          //command to only print available datasets was provided
+          if(commandLineParameters.printDatasets){
+            Scanner scanner = new Scanner(System.in);
+            String permIds = foundDataSets.values().toString();
+            System.out.println(permIds);
+            //String finalPermId = permId.replace("[", "").replace("]","").replace("DataSet", "");
+            //LOG.info(String.format("The following Datasets are available for your the provided identifier %s : %s",ident, finalPermId));
+
+            LOG.info("Do you want to download them? (Y/N)");
+            String downloadWanted = scanner.next();
+            if(downloadWanted.equalsIgnoreCase("N")){
+              continue;
+            }
+          }
+          LOG.info(String.format("Downloading files for provided identifier %s", ident));
           LOG.info("Initialize download ...");
           int datasetDownloadReturnCode = -1;
           try {
@@ -237,10 +246,8 @@ public class QbicDataDownloader {
    *
    * @param ident
    * @param foundFilteredDatasets
-   * @throws IOException
    */
-  private void downloadFilesFilteredByIDs(String ident, List<Map<String, List<DataSetFile>>> foundFilteredDatasets)
-      throws IOException {
+  private void downloadFilesFilteredByIDs(String ident, List<Map<String, List<DataSetFile>>> foundFilteredDatasets) {
     if (foundFilteredDatasets.size() > 0) {
       LOG.info("Initialize download ...");
       int filesDownloadReturnCode = -1;

@@ -28,11 +28,11 @@ public class App {
     QbicDataDownloader qbicDataDownloader = loginToOpenBIS(commandLineParameters);
 
     // download all requested files by the user or print available datasets
-    if (!commandLineParameters.printDatasets) {
+    //if (!commandLineParameters.printDatasets) {
       qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
-    } else{
-      qbicDataDownloader.checkAvailableDatasets(commandLineParameters.ids);
-    }
+    //} else{
+   //   qbicDataDownloader.checkAvailableDatasets(commandLineParameters.ids);
+    //}
   }
 
   /**
@@ -43,11 +43,7 @@ public class App {
    * @return
    */
   private static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
-    Boolean NotNullOrEmpty = false;
-    if (envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty()) {
-      NotNullOrEmpty = true;
-    }
-    return NotNullOrEmpty;
+    return envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty();
   }
 
   /**
