@@ -4,7 +4,6 @@ import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.fetchoptions.DataSetFetchOptions;
-import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.fetchoptions.SampleFetchOptions;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.search.SampleSearchCriteria;
@@ -52,7 +51,7 @@ public class QbicDataFinder {
    * @param sample the sample for which descending data sets should be added
    * @param visitedSamples map with samples and datasets already visited.
    */
-  private static void fillWithDescendentDatasets(Sample sample, Map<String, List<DataSet>> visitedSamples) {
+  private static void fillWithDescendantDatasets(Sample sample, Map<String, List<DataSet>> visitedSamples) {
     if (visitedSamples.containsKey(sample.getCode())) {
       return;
     }
@@ -63,7 +62,7 @@ public class QbicDataFinder {
     // recursion end
     if (children.size() > 0) {
       for (Sample child : children) {
-        fillWithDescendentDatasets(child, visitedSamples);
+        fillWithDescendantDatasets(child, visitedSamples);
       }
     }
   }
@@ -92,7 +91,7 @@ public class QbicDataFinder {
     List<Sample> samples = result.getObjects();
 
     for (Sample sample : samples) {
-     fillWithDescendentDatasets(sample, dataSetsBySampleId);
+     fillWithDescendantDatasets(sample, dataSetsBySampleId);
     }
     return dataSetsBySampleId;
   }
@@ -168,26 +167,6 @@ public class QbicDataFinder {
     }
     return filesFiltered;
   }
-  
-  public void printAvailableDatasets(List<String> sampleIds) {
-    List<DataSetPermId> allPermIds = new ArrayList<>();
-    for (String ident : sampleIds) {
-      LOG.info(String.format("Datasets available for provided identifier %s", ident));
-      Map<String, List<DataSet>> foundDataSets = findAllDatasetsRecursive(ident);
-        for (Entry<String, List<DataSet>> entry : foundDataSets.entrySet()) {
-          List<DataSet> sampleDatasets = entry.getValue();
-          for (DataSet dataset : sampleDatasets) {
-            DataSetPermId permId = dataset.getPermId();
-            allPermIds.add(permId);
-            System.out.println(permId);
-          }
-          if(allPermIds.isEmpty()){
-            LOG.info(String.format("No datasets available for identifier %s", ident));
-          }
-        }
-    }
-  }
-
 
 
   /**
@@ -208,7 +187,7 @@ public class QbicDataFinder {
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
-    // tell the API to fetch all descendents for each returned sample
+    // tell the API to fetch all descendants for each returned sample
     SampleFetchOptions fetchOptions = new SampleFetchOptions();
     DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
     dsFetchOptions.withType();

@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 
+import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
+
 public class QbicDataDownloader {
 
   private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
@@ -127,23 +129,15 @@ public class QbicDataDownloader {
     }
   }
 
-  public void checkAvailableDatasets(List<String> Ids) {
-    QbicDataFinder qbicDataFinder =
-            new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
-    qbicDataFinder.printAvailableDatasets(Ids);
-  }
-
   /**
    * Downloads the files that the user requested checks whether any filtering option (suffix or
    * regex) has been passed and applies filtering if needed
    *
    * @param commandLineParameters
    * @param qbicDataDownloader
-   * @throws IOException
    */
   public void downloadRequestedFilesOfDatasets(
-      PostmanCommandLineOptions commandLineParameters, QbicDataDownloader qbicDataDownloader)
-      throws IOException {
+      PostmanCommandLineOptions commandLineParameters, QbicDataDownloader qbicDataDownloader) {
     QbicDataFinder qbicDataFinder =
         new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
 
@@ -175,42 +169,62 @@ public class QbicDataDownloader {
         //downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
       }
     } else {
-      // no suffix or regex was supplied -> download all datasets
+      // no suffix or regex was supplied -> download or print all datasets
+      List<Map<String, List<DataSet>>> allDatasets = new ArrayList<>();
+      List<List<DataSet>> toBePrinted = new ArrayList<>();
+
       for (String ident : commandLineParameters.ids) {
+
         Map<String, List<DataSet>> foundDataSets =
-            qbicDataFinder.findAllDatasetsRecursive(ident);
-        if (foundDataSets.size() > 0) {
-          LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
+                qbicDataFinder.findAllDatasetsRecursive(ident);
+        LOG.info(String.format("Number of datasets found for identifier %s : %s", ident, countDatasets(foundDataSets)));
+        allDatasets.add(foundDataSets);
+        toBePrinted.add(foundDataSets.get(ident));
+      }
+      if (allDatasets.size() > 0) {
+        //command to only print available datasets was provided
+        if (commandLineParameters.printDatasets) {
+          LOG.info(String.format("Datasets available to download for your provided identifiers: %s", toBePrinted));
 
-          //command to only print available datasets was provided
-          if(commandLineParameters.printDatasets){
-            Scanner scanner = new Scanner(System.in);
-            String permIds = foundDataSets.values().toString();
-            System.out.println(permIds);
-            //String finalPermId = permId.replace("[", "").replace("]","").replace("DataSet", "");
-            //LOG.info(String.format("The following Datasets are available for your the provided identifier %s : %s",ident, finalPermId));
+          Scanner scanner = new Scanner(System.in);
 
-            LOG.info("Do you want to download them? (Y/N)");
-            String downloadWanted = scanner.next();
-            if(downloadWanted.equalsIgnoreCase("N")){
-              continue;
-            }
+          LOG.info("Do you want to download them? (Y/N)");
+          String downloadWanted = scanner.next();
+          if(downloadWanted.equalsIgnoreCase("Y")){
+            download(allDatasets, qbicDataDownloader);
           }
-          LOG.info(String.format("Downloading files for provided identifier %s", ident));
+        } else{
+          download(allDatasets, qbicDataDownloader);
+        }
+      } else{
+        LOG.info("Nothing to download.");
+      }
+    }
+  }
+
+  /**
+   * Downloads all IDs
+   *
+   * @param allDatasets
+   */
+  private void download(List<Map<String, List<DataSet>>> allDatasets, QbicDataDownloader qbicDataDownloader){
+    for(Map<String, List<DataSet>> foundDataSets : allDatasets){
+      for (String ident : foundDataSets.keySet()){
+        if (foundDataSets.size() > 0) {
+          LOG.info(String.format("Downloading files for identifier %s", ident));
           LOG.info("Initialize download ...");
           int datasetDownloadReturnCode = -1;
           try {
             // for the sample code and aggregates datasets per sample code
             List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
             datasets.add(foundDataSets);
-            datasetDownloadReturnCode =
-                qbicDataDownloader.downloadDataset(datasets);
+            datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(datasets);
           } catch (NullPointerException e) {
             LOG.error(
-                "Datasets were found by the application server, but could not be found on the datastore server for "
-                    + ident
-                    + "."
-                    + " Try to supply the correct datastore server using a config file!");
+                    "Datasets were found by the application server, but could not be found on the datastore server for "
+                            + ident
+                            + "."
+                            + " Try to supply the correct datastore server using a config file!");
           }
 
           if (datasetDownloadReturnCode != 0) {
@@ -404,6 +418,9 @@ public class QbicDataDownloader {
         .getDataSets()
         .forEach(
             dataSetFile -> {
+              double length = determineBestUnitType(dataSetFile.getFileLength()).convertBytesToUnit(dataSetFile.getFileLength());
+              String unit = determineBestUnitType(dataSetFile.getFileLength()).getUnitType();
+              LOG.info(String.format("File has length of: %s %s", length, unit));
               try {
                 int downloadAttempt = 1;
                 while(downloadAttempt <= request.getMaxNumberOfAttempts()) {
