@@ -41,7 +41,7 @@ public class PostmanCommandLineOptions {
   public boolean conservePath;
 
   @Option(
-          names = {"-pr", "--print"},
+          names = {"--print"},
           description = "print available datasets for the provided samples")
   public boolean printDatasets;
 

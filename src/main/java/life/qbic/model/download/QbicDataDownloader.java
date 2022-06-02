@@ -185,7 +185,8 @@ public class QbicDataDownloader {
                     }
                 }
                 if (allDatasets.size() > 0) {
-                    LOG.info("Available files for download:");
+                    System.out.print("\n");
+                    LOG.info("Files available for download:");
                     printFileInformation(allDatasets);
                     Scanner scanner = new Scanner(System.in);
                     LOG.info("Do you want to download the files? (Y/N)");
@@ -234,7 +235,6 @@ public class QbicDataDownloader {
     private void printFileInformation(List<Map<String, List<DataSet>>> dataSets) {
         for (Map<String, List<DataSet>> dataSet : dataSets) {
             for (Entry<String, List<DataSet>> entry : dataSet.entrySet()) {
-                String sampleCode = entry.getKey();
                 List<DataSet> sampleDatasets = entry.getValue();
                 for (DataSet sampleDataset : sampleDatasets) {
                     DataSetPermId permID = sampleDataset.getPermId();
@@ -248,11 +248,12 @@ public class QbicDataDownloader {
                         String name = filePath.substring(filePath.lastIndexOf("/") + 1);
                         double length = determineBestUnitType(file.getFileLength()).convertBytesToUnit(file.getFileLength());
                         String unit = determineBestUnitType(file.getFileLength()).getUnitType();
-                        LOG.info(String.format("name: %s, length: %s %s , Dataset: %s", name, length, unit, permID));
+                        LOG.info(String.format("%s %s\t%s ",length,unit,name));
                     }
                 }
             }
         }
+        System.out.print("\n");
     }
 
     private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
