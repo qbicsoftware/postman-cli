@@ -21,7 +21,8 @@ public class ProgressBar {
   private UnitDisplay unitDisplay;
   private long start;
 
-  public ProgressBar() {}
+  public ProgressBar() {
+  }
 
   public ProgressBar(String fileName, long totalFileSize) {
     this.fileName = shortenFileName(fileName);

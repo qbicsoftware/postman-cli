@@ -13,12 +13,12 @@ package life.qbic
  */
 class DownloadException extends RuntimeException {
 
-    DownloadException() {
-        super()
-    }
+  DownloadException() {
+    super()
+  }
 
-    DownloadException(String m) {
-        super(m)
-    }
+  DownloadException(String m) {
+    super(m)
+  }
 
 }

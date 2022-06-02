@@ -11,16 +11,15 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
-import life.qbic.QbicDataLoaderRegexUtil;
-import life.qbic.util.StringUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import life.qbic.QbicDataLoaderRegexUtil;
+import life.qbic.util.StringUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class QbicDataFinder {
 
@@ -48,10 +47,11 @@ public class QbicDataFinder {
   /**
    * Fetches all datasets, even those of children - recursively
    *
-   * @param sample the sample for which descending data sets should be added
+   * @param sample         the sample for which descending data sets should be added
    * @param visitedSamples map with samples and datasets already visited.
    */
-  private static void fillWithDescendantDatasets(Sample sample, Map<String, List<DataSet>> visitedSamples) {
+  private static void fillWithDescendantDatasets(Sample sample,
+      Map<String, List<DataSet>> visitedSamples) {
     if (visitedSamples.containsKey(sample.getCode())) {
       return;
     }
@@ -91,7 +91,7 @@ public class QbicDataFinder {
     List<Sample> samples = result.getObjects();
 
     for (Sample sample : samples) {
-     fillWithDescendantDatasets(sample, dataSetsBySampleId);
+      fillWithDescendantDatasets(sample, dataSetsBySampleId);
     }
     return dataSetsBySampleId;
   }
@@ -138,7 +138,7 @@ public class QbicDataFinder {
     return filteredDatasets;
   }
 
-  private List<DataSetFile> filterDataSetBySuffix(List<DataSet> datasets, List<String> suffixes){
+  private List<DataSetFile> filterDataSetBySuffix(List<DataSet> datasets, List<String> suffixes) {
     List<DataSetFile> filteredFiles = new ArrayList<>();
     for (DataSet ds : datasets) {
       // we cannot access the files directly of the datasets -> we need to query for the files first
@@ -154,7 +154,8 @@ public class QbicDataFinder {
     return filteredFiles;
   }
 
-  private List<DataSetFile> filterDataSetFilesBySuffix(List<DataSetFile> files, List<String> suffixes){
+  private List<DataSetFile> filterDataSetFilesBySuffix(List<DataSetFile> files,
+      List<String> suffixes) {
     List<DataSetFile> filesFiltered = new ArrayList<>();
     // remove everything that doesn't match the suffix -> only add if suffix matches
     for (DataSetFile file : files) {
@@ -205,7 +206,9 @@ public class QbicDataFinder {
       }
     }
 
-    if (filterType.isEmpty()) return foundDatasets;
+    if (filterType.isEmpty()) {
+      return foundDatasets;
+    }
 
     List<DataSet> filteredDatasets = new ArrayList<>();
     for (DataSet ds : foundDatasets) {
