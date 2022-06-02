@@ -1,22 +1,66 @@
-# qPostman - A download tool for QBiC datasets.
 
-[![Maven Package](https://github.com/qbicsoftware/postman-cli/workflows/Build%20Maven%20Package/badge.svg)](https://github.com/qbicsoftware/postman-cli/workflows/Build%20Maven%20Package/badge.svg)
-[![Run Maven Tests](https://github.com/qbicsoftware/postman-cli/workflows/Run%20Maven%20Tests/badge.svg)](https://github.com/qbicsoftware/postman-cli/workflows/Run%20Maven%20Tests/badge.svg)
-[![Latest Release ](https://img.shields.io/github/v/release/qbicsoftware/postman-cli.svg)](https://github.com/qbicsoftware/postman-cli/releases)
-![Java Language](https://img.shields.io/badge/language-java-blue.svg)
-![Groovy Language](https://img.shields.io/badge/language-groovy-blue.svg)
+<div align="center">
+
+# qPostman
+
+<i>A Java command line tool to download datasets from QBiC.</i>
+
+
+[![Build Maven Package](https://github.com/qbicsoftware/postman-cli/actions/workflows/build-package.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/build-package.yml)
+[![Run Maven Tests](https://github.com/qbicsoftware/postman-cli/actions/workflows/run-tests.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/run-tests.yml)
+[![CodeQL](https://github.com/qbicsoftware/postman-cli/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/qbicsoftware/postman-cli/actions/workflows/codeql-analysis.yml)
+[![release](https://img.shields.io/github/v/release/qbicsoftware/postman-cli?include_prereleases)](https://github.com/qbicsoftware/postman-cli/releases)
+
+[![license](https://img.shields.io/github/license/qbicsoftware/postman-cli)](https://github.com/qbicsoftware/postman-cli/blob/master/LICENSE)
+![language](https://img.shields.io/badge/language-java-blue.svg)
+
+</div>
 
 A client software written in Java for dataset downloads from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
 
 We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from command line, in order to provide a quick data retreaval on server or cluster resources, where the download via the qPortal is impractical.
 
-## Download
-You can download postman from the GitHub release page: https://github.com/qbicsoftware/postman-cli/releases .
+## How to run
 
-## Requirements
+### Download
+You can download the compiled and executable Java binaries as JAR of postman from the GitHub release page: https://github.com/qbicsoftware/postman-cli/releases.
+
+If you want to build from source, checkout the commit of your choice and execute `mvn clean package`. We only recommend this if you are familiar with Java build systems though, as we cannot give you support here. In the normal case, the binary of a stable release is sufficient.
+
+### Requirements
 You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at least version 1.8 or 11. And the client's host must have allowance to connect to the server, which is determined by our firewall settings. If you are unsure, if your client is allowed to connect, contact us at support@qbic.zendesk.com.
 
-## Usage
+### Configuration
+
+Postman uses picocli file arguments. Therefore a config file has to be passed with the '@' prefix to its path:    
+Example:
+```bash
+java -jar postman.jar -u <user> <sample> @path/to/config.txt 
+```
+The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
+For example: To set the ApplicationServerURL to another URL we have to use:
+
+```properties
+-as [URL]   
+
+# Therefore to use our openbis URL we write the following line in the config file (Anything beginning with '#' is a comment):    
+# Set the AS_URL (ApplicationServerURL) to the value defined below   
+-as https://qbis.qbic.uni-tuebingen.de/openbis/openbis
+
+# The following config file options are currently supported:    
+# AS_URL (Application Server URL)       
+-as [URL]
+# DSS_URL (DataStore Server URL)     
+-dss [URL]
+```
+A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.
+
+If no config file or commandline option is provided, Postman will resort to the defaults set here: [Defaults](https://github.com/qbicsoftware/postman-cli/blob/development/src/main/java/life/qbic/io/commandline/PostmanCommandLineOptions.java).    
+Hence, the default AS is set to: `https://qbis.qbic.uni-tuebingen.de/openbis/openbis`  
+and the DSS defaults to: `https://qbis.qbic.uni-tuebingen.de/datastore_server`
+
+## How to use
+
 ### Options
 Just execute postman with `java -jar postman-cli.jar` or `java -jar postman.jar -h` to get an overview of the options:
 ```bash
@@ -191,36 +235,6 @@ QTEST002BD
 ```
 
 postman will automatically iterate over the IDs and try to download them.
-
-### Config file
-
-Postman uses picocli file arguments. Therefore a config file has to be passed with the '@' prefix to its path:    
-Example: 
-```bash
-java -jar postman.jar -u <user> <sample> @path/to/config.txt 
-```
-The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
-For example: To set the ApplicationServerURL to another URL we have to use:    
-<code>-as [URL] </code>    
-Therefore to use our openbis URL we write the following line in the config file (Anything beginning with '#' is a comment):    
-<code># Set the AS_URL (ApplicationServerURL) to the value defined below </code>    
-<code>-as https://qbis.qbic.uni-tuebingen.de/openbis/openbis</code>       
-The following config file options are currently supported:    
-AS_URL (ApplicationServerURL)       
--as [URL]       
-DSS_URL (DataStoreServerURL)     
--dss [URL]       
-
-A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.   
-
-If no config file or commandline option is provided, Postman will resort to the defaults set here: [Defaults](https://github.com/qbicsoftware/postman-cli/blob/development/src/main/java/life/qbic/io/commandline/PostmanCommandLineOptions.java).    
-Hence, the default AS is set to: <code>https://qbis.qbic.uni-tuebingen.de/openbis/openbis</code>    
-and the DSS defaults to: <code>https://qbis.qbic.uni-tuebingen.de:444/datastore_server</code>    
-
-### Performance issues
-We discovered, that a default buffer size of 1024 bytes seems not always to get all out of the performance that is possible for the dataset download. Therefore, we allow you to enter a multipler Integer value that increases the buffer size. For example a multipler of 2 will result in 2x1024 = 2048 bytes and so on.
-
-Just use the `-b` option for that. The default buffer size remains 1024 bytes, if you don't specify this value.
 
 ### File integrity check
 Postman computes the CRC32 checksum for all input streams using the native Java utility class [CRC32](https://docs.oracle.com/javase/8/docs/api/java/util/zip/CRC32.html). Postman favors [`CheckedInputStream`](https://docs.oracle.com/javase/7/docs/api/java/util/zip/CheckedInputStream.html)

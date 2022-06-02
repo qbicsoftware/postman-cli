@@ -4,13 +4,15 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import jline.TerminalFactory;
 import life.qbic.model.units.UnitConverterFactory;
 import life.qbic.model.units.UnitDisplay;
 
+
 public class ProgressBar {
 
-  private final int BARSIZE = jline.TerminalFactory.get().getWidth() / 3;
-  private final int MAXFILENAMESIZE = jline.TerminalFactory.get().getWidth() / 3;
+  private final int BARSIZE = TerminalFactory.get().getWidth() / 3;
+  private final int MAXFILENAMESIZE = TerminalFactory.get().getWidth() / 3;
   private float nextProgressJump;
   private float stepSize;
   private String fileName;
@@ -18,7 +20,6 @@ public class ProgressBar {
   private Long downloadedSize;
   private UnitDisplay unitDisplay;
   private long start;
-  private long remainingTime;
 
   public ProgressBar() {}
 
@@ -26,11 +27,10 @@ public class ProgressBar {
     this.fileName = shortenFileName(fileName);
     this.totalFileSize = totalFileSize;
     this.downloadedSize = 0L;
-    this.stepSize = totalFileSize / BARSIZE;
+    this.stepSize = (float) totalFileSize / (float) BARSIZE;
     this.nextProgressJump = this.stepSize;
     this.unitDisplay = UnitConverterFactory.determineBestUnitType(totalFileSize);
     this.start = System.currentTimeMillis();
-    this.remainingTime = 0L;
   }
 
   public void updateProgress(int addDownloadedSize) {
@@ -56,8 +56,7 @@ public class ProgressBar {
   }
 
   private void drawProgress() {
-    System.out.print(
-        String.format("%-" + computeLeftPadding() + "s %s\r", this.fileName, buildProgressBar()));
+    System.out.printf("%-" + computeLeftPadding() + "s %s\r", this.fileName, buildProgressBar());
   }
 
   private int computeLeftPadding() {
