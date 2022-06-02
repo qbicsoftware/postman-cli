@@ -20,7 +20,6 @@ import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.remoting.RemoteConnectFailureException;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -39,96 +38,98 @@ import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
 
 public class QbicDataDownloader {
 
-    private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
-    private final ChecksumReporter checksumReporter;
-    private final int defaultBufferSize;
-    private final boolean conservePaths;
-    private String user;
-    private String password;
-    private IApplicationServerApi applicationServer;
-    private IDataStoreServerApi dataStoreServer;
-    private String sessionToken;
-    private String filterType;
-    private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
+  private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
+  private final ChecksumReporter checksumReporter;
+  private final int defaultBufferSize;
+  private final boolean conservePaths;
+  private String user;
+  private String password;
+  private IApplicationServerApi applicationServer;
+  private IDataStoreServerApi dataStoreServer;
+  private String sessionToken;
+  private String filterType;
+  private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
 
-    /**
-     * Constructor for a QBiCDataLoaderInstance
-     *
-     * @param AppServerUri  The openBIS application server URL (AS)
-     * @param DataServerUri The openBIS datastore server URL (DSS)
-     * @param user          The openBIS user
-     * @param password      The openBis password
-     * @param bufferSize    The buffer size for the InputStream reader
-     */
-    public QbicDataDownloader(
-            String AppServerUri,
-            String DataServerUri,
-            String user,
-            String password,
-            int bufferSize,
-            String filterType,
-            boolean conservePaths,
-            ChecksumReporter checksumReporter) {
-        this.checksumReporter = checksumReporter;
-        this.defaultBufferSize = bufferSize;
-        this.filterType = filterType;
-        this.conservePaths = conservePaths;
+  /**
+   * Constructor for a QBiCDataLoaderInstance
+   *
+   * @param AppServerUri The openBIS application server URL (AS)
+   * @param DataServerUri The openBIS datastore server URL (DSS)
+   * @param user The openBIS user
+   * @param password The openBis password
+   * @param bufferSize The buffer size for the InputStream reader
+   */
+  public QbicDataDownloader(
+      String AppServerUri,
+      String DataServerUri,
+      String user,
+      String password,
+      int bufferSize,
+      String filterType,
+      boolean conservePaths,
+      ChecksumReporter checksumReporter) {
+    this.checksumReporter = checksumReporter;
+    this.defaultBufferSize = bufferSize;
+    this.filterType = filterType;
+    this.conservePaths = conservePaths;
 
-        if (!AppServerUri.isEmpty()) {
-            this.applicationServer =
-                    HttpInvokerUtils.createServiceStub(
-                            IApplicationServerApi.class, AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
-        } else {
-            this.applicationServer = null;
-        }
-        if (!DataServerUri.isEmpty()) {
-            this.dataStoreServer =
-                    HttpInvokerUtils.createStreamSupportingServiceStub(
-                            IDataStoreServerApi.class, DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
-        } else {
-            this.dataStoreServer = null;
-        }
-
-        this.setCredentials(user, password);
+    if (!AppServerUri.isEmpty()) {
+      this.applicationServer =
+          HttpInvokerUtils.createServiceStub(
+              IApplicationServerApi.class, AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
+    } else {
+      this.applicationServer = null;
+    }
+    if (!DataServerUri.isEmpty()) {
+      this.dataStoreServer =
+          HttpInvokerUtils.createStreamSupportingServiceStub(
+              IDataStoreServerApi.class, DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
+    } else {
+      this.dataStoreServer = null;
     }
 
-    private static Path getTopDirectory(Path path) {
-        Path currentPath = Paths.get(path.toString());
-        Path parentPath;
-        while (currentPath.getParent() != null) {
-            parentPath = currentPath.getParent();
-            currentPath = parentPath;
-        }
-        return currentPath;
-    }
+    this.setCredentials(user, password);
+  }
 
-    /**
-     * Setter for user and password credentials
-     *
-     * @param user     The openBIS user
-     * @param password The openBIS user's password
-     * @return QBiCDataLoader instance
-     */
-    public QbicDataDownloader setCredentials(String user, String password) {
-        this.user = user;
-        this.password = password;
-        return this;
+  private static Path getTopDirectory(Path path) {
+    Path currentPath = Paths.get(path.toString());
+    Path parentPath;
+    while (currentPath.getParent() != null) {
+      parentPath = currentPath.getParent();
+      currentPath = parentPath;
     }
+    return currentPath;
+  }
 
-    /**
-     * Login method for openBIS authentication
-     */
-    public void login() throws ConnectionException, AuthenticationException {
-        try {
-            this.sessionToken = this.applicationServer.login(this.user, this.password);
-        } catch (RemoteConnectFailureException e) {
-            throw new ConnectionException("Connection to openBIS server failed.");
-        }
-        if (sessionToken == null || sessionToken.isEmpty()) {
-            throw new AuthenticationException("Authentication failed. Are you using the correct "
-                    + "credentials for http://qbic.life?");
-        }
+  /**
+   * Setter for user and password credentials
+   *
+   * @param user The openBIS user
+   * @param password The openBIS user's password
+   * @return QBiCDataLoader instance
+   */
+  public QbicDataDownloader setCredentials(String user, String password) {
+    this.user = user;
+    this.password = password;
+    return this;
+  }
+
+  /**
+   * Login method for openBIS authentication
+   *
+   * @return 0 if successful, 1 else
+   */
+  public void login() throws ConnectionException, AuthenticationException {
+    try {
+      this.sessionToken = this.applicationServer.login(this.user, this.password);
+    } catch (Exception e) {
+      throw new ConnectionException("Connection to openBIS server failed.");
     }
+    if (sessionToken == null || sessionToken.isEmpty()) {
+      throw new AuthenticationException("Authentication failed. Are you using the correct "
+          + "credentials for http://qbic.life?");
+    }
+  }
 
     /**
      * Downloads the files that the user requested checks whether any filtering option (suffix or
@@ -358,111 +359,116 @@ public class QbicDataDownloader {
         DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
         DataSetFileDownload file;
 
-        while ((file = reader.read()) != null) {
-            InputStream initialStream = file.getInputStream();
-            CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
-            if (file.getDataSetFile().getFileLength() > 0) {
-                final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
-                File newFile =
-                        new File(System.getProperty("user.dir") +
-                                File.separator +
-                                prefix.toString() + File.separator +
-                                filePath.toString());
-                newFile.getParentFile().mkdirs();
-                OutputStream os = new FileOutputStream(newFile);
-                ProgressBar progressBar =
-                        new ProgressBar(
-                                filePath.getFileName().toString(), file.getDataSetFile().getFileLength());
-                int bufferSize =
-                        (file.getDataSetFile().getFileLength() < defaultBufferSize)
-                                ? (int) file.getDataSetFile().getFileLength()
-                                : defaultBufferSize;
-                byte[] buffer = new byte[bufferSize];
-                int bytesRead;
-                // read from is to buffer
-                while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
-                    progressBar.updateProgress(bufferSize);
-                    os.write(buffer, 0, bytesRead);
-                    os.flush();
+    while ((file = reader.read()) != null) {
+      InputStream initialStream = file.getInputStream();
+      CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
+      if (file.getDataSetFile().getFileLength() > 0) {
+        final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
+        File newFile =
+            new File(System.getProperty("user.dir") +
+                  File.separator +
+                  prefix.toString() + File.separator +
+                  filePath.toString());
+        newFile.getParentFile().mkdirs();
+        OutputStream os = new FileOutputStream(newFile);
+        String fileName = filePath.getFileName().toString();
+        ProgressBar progressBar =
+            new ProgressBar(
+                fileName, file.getDataSetFile().getFileLength());
+        int bufferSize =
+            (file.getDataSetFile().getFileLength() < defaultBufferSize)
+                ? (int) file.getDataSetFile().getFileLength()
+                : defaultBufferSize;
+        byte[] buffer = new byte[bufferSize];
+        int bytesRead;
+        LOG.info(String.format("Download of %s is starting", fileName));
+        // read from is to buffer
+        while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
+          progressBar.updateProgress(bufferSize);
+          os.write(buffer, 0, bytesRead);
+          os.flush();
+        }
+        System.out.print("\n");
+        validateChecksum(
+            Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
+        initialStream.close();
+        // flush OutputStream to write any buffered data to file
+        os.flush();
+        LOG.info(String.format("Download of %s has finished", fileName));
+        os.close();
+      }
+    }
+  }
+
+  private void validateChecksum(String computedChecksumHex, DataSetFile dataSetFile) {
+    String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
+    try {
+      if (computedChecksumHex.equals(expectedChecksum)) {
+        checksumReporter.reportMatchingChecksum(
+            expectedChecksum,
+            computedChecksumHex,
+            Paths.get(dataSetFile.getPath()).toUri().toURL());
+      } else {
+        checksumReporter.reportMismatchingChecksum(
+            expectedChecksum,
+            computedChecksumHex,
+            Paths.get(dataSetFile.getPath()).toUri().toURL());
+      }
+    } catch (MalformedURLException e) {
+      LOG.error(e);
+    }
+  }
+
+  private Path determineFinalPathFromDataset(DataSetFile file) {
+    Path finalPath;
+    if (conservePaths) {
+      finalPath = Paths.get(file.getPath());
+      // drop top parent directory name in the openBIS DSS (usually "/origin")
+      Path topDirectory = getTopDirectory(finalPath);
+      finalPath = topDirectory.relativize(finalPath);
+    } else {
+      finalPath = Paths.get(file.getPath()).getFileName();
+    }
+    return finalPath;
+  }
+
+  private int downloadFiles(DownloadRequest request) throws DownloadException {
+    String sampleCode = request.getSampleCode();
+    LOG.info(String.format("Downloading file(s) for sample %s", sampleCode));
+    Path pathPrefix = Paths.get(sampleCode + File.separator);
+    request
+        .getDataSets()
+        .forEach(
+            dataSetFile -> {
+              try {
+                int downloadAttempt = 1;
+                while (downloadAttempt <= request.getMaxNumberOfAttempts()) {
+                  try {
+                    downloadFile(dataSetFile, pathPrefix);
+                    writeCRC32Checksum(dataSetFile, pathPrefix);
+                    return;
+                  } catch (Exception e) {
+                    LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
+                    LOG.error(String.format("Reason: %s", e.getMessage()), e);
+                    downloadAttempt++;
+                    if (downloadAttempt > request.getMaxNumberOfAttempts()) {
+                      throw new IOException("Maximum number of download attempts reached.");
+                    }
+                  }
                 }
-                System.out.print("\n");
-                validateChecksum(
-                        Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
-                initialStream.close();
-                // flush OutputStream to write any buffered data to file
-                os.flush();
-                os.close();
-            }
-        }
-    }
+              } catch (IOException e) {
+                String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
+                LOG.error(e);
+                throw new DownloadException(
+                    "Dataset " + fileName + " could not have been downloaded.");
+              }
+            });
+    return 0;
+  }
 
-    private void validateChecksum(String computedChecksumHex, DataSetFile dataSetFile) {
-        String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
-        try {
-            if (computedChecksumHex.equals(expectedChecksum)) {
-                checksumReporter.reportMatchingChecksum(
-                        expectedChecksum,
-                        computedChecksumHex,
-                        Paths.get(dataSetFile.getPath()).toUri().toURL());
-            } else {
-                checksumReporter.reportMismatchingChecksum(
-                        expectedChecksum,
-                        computedChecksumHex,
-                        Paths.get(dataSetFile.getPath()).toUri().toURL());
-            }
-        } catch (MalformedURLException e) {
-            LOG.error(e);
-        }
-    }
-
-    private Path determineFinalPathFromDataset(DataSetFile file) {
-        Path finalPath;
-        if (conservePaths) {
-            finalPath = Paths.get(file.getPath());
-            // drop top parent directory name in the openBIS DSS (usually "/origin")
-            Path topDirectory = getTopDirectory(finalPath);
-            finalPath = topDirectory.relativize(finalPath);
-        } else {
-            finalPath = Paths.get(file.getPath()).getFileName();
-        }
-        return finalPath;
-    }
-
-    private int downloadFiles(DownloadRequest request) throws DownloadException {
-        Path pathPrefix = Paths.get(request.getSampleCode() + File.separator);
-        request
-                .getDataSets()
-                .forEach(
-                        dataSetFile -> {
-                            try {
-                                int downloadAttempt = 1;
-                                while (downloadAttempt <= request.getMaxNumberOfAttempts()) {
-                                    try {
-                                        downloadFile(dataSetFile, pathPrefix);
-                                        writeCRC32Checksum(dataSetFile, pathPrefix);
-                                        return;
-                                    } catch (Exception e) {
-                                        LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
-                                        LOG.error(String.format("Reason: %s", e.getMessage()));
-                                        downloadAttempt++;
-                                        if (downloadAttempt > request.getMaxNumberOfAttempts()) {
-                                            throw new IOException("Maximum number of download attempts reached.");
-                                        }
-                                    }
-                                }
-                            } catch (IOException e) {
-                                String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
-                                LOG.error(e);
-                                throw new DownloadException(
-                                        "Dataset " + fileName + " could not have been downloaded.");
-                            }
-                        });
-        return 0;
-    }
-
-    private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
-        Path path = Paths.get(pathPrefix.toString(), File.separator,
-                determineFinalPathFromDataset(dataSetFile).toString());
-        checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
-    }
+  private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
+    Path path = Paths.get(pathPrefix.toString(), File.separator,
+        determineFinalPathFromDataset(dataSetFile).toString());
+    checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
+  }
 }
