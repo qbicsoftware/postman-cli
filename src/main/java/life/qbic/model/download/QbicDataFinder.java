@@ -169,7 +169,6 @@ public class QbicDataFinder {
     return filesFiltered;
   }
 
-
   /**
    * Search method for a given openBIS identifier.
    *
@@ -188,7 +187,7 @@ public class QbicDataFinder {
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
-    // tell the API to fetch all descendants for each returned sample
+    // tell the API to fetch all descendents for each returned sample
     SampleFetchOptions fetchOptions = new SampleFetchOptions();
     DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
     dsFetchOptions.withType();
