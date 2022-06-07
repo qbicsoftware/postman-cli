@@ -47,10 +47,11 @@ public class QbicDataFinder {
   /**
    * Fetches all datasets, even those of children - recursively
    *
-   * @param sample the sample for which descending data sets should be added
+   * @param sample         the sample for which descending data sets should be added
    * @param visitedSamples map with samples and datasets already visited.
    */
-  private static void fillWithDescendentDatasets(Sample sample, Map<String, List<DataSet>> visitedSamples) {
+  private static void fillWithDescendentDatasets(Sample sample,
+      Map<String, List<DataSet>> visitedSamples) {
     if (visitedSamples.containsKey(sample.getCode())) {
       return;
     }
@@ -90,7 +91,7 @@ public class QbicDataFinder {
     List<Sample> samples = result.getObjects();
 
     for (Sample sample : samples) {
-     fillWithDescendentDatasets(sample, dataSetsBySampleId);
+      fillWithDescendentDatasets(sample, dataSetsBySampleId);
     }
     return dataSetsBySampleId;
   }
@@ -137,7 +138,7 @@ public class QbicDataFinder {
     return filteredDatasets;
   }
 
-  private List<DataSetFile> filterDataSetBySuffix(List<DataSet> datasets, List<String> suffixes){
+  private List<DataSetFile> filterDataSetBySuffix(List<DataSet> datasets, List<String> suffixes) {
     List<DataSetFile> filteredFiles = new ArrayList<>();
     for (DataSet ds : datasets) {
       // we cannot access the files directly of the datasets -> we need to query for the files first
@@ -153,7 +154,8 @@ public class QbicDataFinder {
     return filteredFiles;
   }
 
-  private List<DataSetFile> filterDataSetFilesBySuffix(List<DataSetFile> files, List<String> suffixes){
+  private List<DataSetFile> filterDataSetFilesBySuffix(List<DataSetFile> files,
+      List<String> suffixes) {
     List<DataSetFile> filesFiltered = new ArrayList<>();
     // remove everything that doesn't match the suffix -> only add if suffix matches
     for (DataSetFile file : files) {
@@ -203,7 +205,9 @@ public class QbicDataFinder {
       }
     }
 
-    if (filterType.isEmpty()) return foundDatasets;
+    if (filterType.isEmpty()) {
+      return foundDatasets;
+    }
 
     List<DataSet> filteredDatasets = new ArrayList<>();
     for (DataSet ds : foundDatasets) {

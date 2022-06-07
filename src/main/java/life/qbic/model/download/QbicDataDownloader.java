@@ -56,11 +56,11 @@ public class QbicDataDownloader {
   /**
    * Constructor for a QBiCDataLoaderInstance
    *
-   * @param AppServerUri The openBIS application server URL (AS)
+   * @param AppServerUri  The openBIS application server URL (AS)
    * @param DataServerUri The openBIS datastore server URL (DSS)
-   * @param user The openBIS user
-   * @param password The openBis password
-   * @param bufferSize The buffer size for the InputStream reader
+   * @param user          The openBIS user
+   * @param password      The openBis password
+   * @param bufferSize    The buffer size for the InputStream reader
    */
   public QbicDataDownloader(
       String AppServerUri,
@@ -107,7 +107,7 @@ public class QbicDataDownloader {
   /**
    * Setter for user and password credentials
    *
-   * @param user The openBIS user
+   * @param user     The openBIS user
    * @param password The openBIS user's password
    * @return QBiCDataLoader instance
    */
@@ -216,7 +216,7 @@ public class QbicDataDownloader {
 
   private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
     int sum = 0;
-    for (Map<String, List<T>> entry : datasetsPerSampleCode){
+    for (Map<String, List<T>> entry : datasetsPerSampleCode) {
       for (String sampleCode : entry.keySet()) {
         sum += entry.get(sampleCode).size();
       }
@@ -236,15 +236,17 @@ public class QbicDataDownloader {
    * @param foundFilteredDatasets
    * @throws IOException
    */
-  private void downloadFilesFilteredByIDs(String ident, List<Map<String, List<DataSetFile>>> foundFilteredDatasets)
+  private void downloadFilesFilteredByIDs(String ident,
+      List<Map<String, List<DataSetFile>>> foundFilteredDatasets)
       throws IOException {
     if (foundFilteredDatasets.size() > 0) {
       LOG.info("Initialize download ...");
       int filesDownloadReturnCode = -1;
       try {
-        for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets){
+        for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets) {
           for (String sampleCode : filesPerSample.keySet()) {
-            List<DataSetFile> filteredDataSetFiles = withoutDirectories(filesPerSample.get(sampleCode));
+            List<DataSetFile> filteredDataSetFiles = withoutDirectories(
+                filesPerSample.get(sampleCode));
             final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
                 sampleCode);
             filesDownloadReturnCode = downloadFiles(downloadRequest);
@@ -325,9 +327,9 @@ public class QbicDataDownloader {
         final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
         File newFile =
             new File(System.getProperty("user.dir") +
-                  File.separator +
-                  prefix.toString() + File.separator +
-                  filePath.toString());
+                File.separator +
+                prefix.toString() + File.separator +
+                filePath.toString());
         newFile.getParentFile().mkdirs();
         OutputStream os = new FileOutputStream(newFile);
         String fileName = filePath.getFileName().toString();
