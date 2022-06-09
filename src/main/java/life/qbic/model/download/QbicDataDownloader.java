@@ -186,12 +186,13 @@ public class QbicDataDownloader {
         List<Map<String, List<DataSet>>> allDatasets = new ArrayList<>();
         for (String ident : commandLineParameters.ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-          allDatasets.add(foundDataSets);
+
           if (foundDataSets.size() > 0) {
+            allDatasets.add(foundDataSets);
             LOG.info(String.format("Number of datasets found for identifier %s : %s", ident,
                 countDatasets(foundDataSets)));
           } else {
-            LOG.info(String.format("No Datasets found for identifier %s:", ident));
+            LOG.info(String.format("No Datasets found for identifier %s", ident));
           }
         }
         if (allDatasets.size() > 0) {
