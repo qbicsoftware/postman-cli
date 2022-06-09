@@ -56,6 +56,7 @@ public class QbicDataDownloader {
   private String sessionToken;
   private String filterType;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
+  private boolean invalidChecksumOccurred = false;
 
   /**
    * Constructor for a QBiCDataLoaderInstance
@@ -425,7 +426,9 @@ public class QbicDataDownloader {
             expectedChecksum,
             computedChecksumHex,
             Paths.get(dataSetFile.getPath()).toUri().toURL());
+        invalidChecksumOccurred = true;
       }
+
     } catch (MalformedURLException e) {
       LOG.error(e);
     }
@@ -483,4 +486,11 @@ public class QbicDataDownloader {
         determineFinalPathFromDataset(dataSetFile).toString());
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
+
+  public void notifyUserOfInvalidChecksum() {
+    if (invalidChecksumOccurred) {
+      LOG.warn("Checksum mismatches were detected during file download, check the logs/summary_invalid_files.txt log file for details");
+    }
+  }
+
 }
