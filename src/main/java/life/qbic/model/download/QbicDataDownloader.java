@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -179,14 +180,12 @@ public class QbicDataDownloader {
         //downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
       }
     } else { // no suffix or regex was supplied -> download or print all datasets
-      Boolean download = TRUE;
 
       //command to only print available datasets was provided
       if (commandLineParameters.printDatasets) {
         List<Map<String, List<DataSet>>> allDatasets = new ArrayList<>();
         for (String ident : commandLineParameters.ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-
           if (foundDataSets.size() > 0) {
             allDatasets.add(foundDataSets);
             LOG.info(String.format("Number of datasets found for identifier %s : %s", ident,
@@ -199,18 +198,10 @@ public class QbicDataDownloader {
           System.out.print("\n");
           LOG.info("Files available for download:");
           printFileInformation(allDatasets);
-          Scanner scanner = new Scanner(System.in);
-          LOG.info("Do you want to download the files? (Y/N)");
-          String downloadWanted = scanner.next();
-          if (downloadWanted.equalsIgnoreCase("N")) {
-            download = FALSE;
-          }
         } else {
           LOG.info("Nothing to download");
-          download = FALSE;
         }
-      }
-      if (download) {
+      } else {
         for (String ident : commandLineParameters.ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
           if (foundDataSets.size() > 0) {
@@ -234,6 +225,7 @@ public class QbicDataDownloader {
               LOG.error("Error while downloading dataset: " + ident);
             } else {
               LOG.info("Download successfully finished.");
+              System.out.print("\n");
             }
           } else {
             LOG.info("Nothing to download.");
@@ -258,8 +250,8 @@ public class QbicDataDownloader {
           for (DataSetFile file : filteredDataSetFiles) {
             String filePath = file.getPermId().getFilePath();
             String name = filePath.substring(filePath.lastIndexOf("/") + 1);
-            double length = determineBestUnitType(file.getFileLength()).convertBytesToUnit(
-                file.getFileLength());
+            String length = new DecimalFormat("0.00").format(determineBestUnitType(file.getFileLength()).convertBytesToUnit(
+                file.getFileLength()));
             String unit = determineBestUnitType(file.getFileLength()).getUnitType();
             LOG.info(String.format("%s %s\t%s ", length, unit, name));
           }
