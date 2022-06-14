@@ -186,15 +186,11 @@ public class QbicDataDownloader {
             allDatasets.add(foundDataSets);
             LOG.info(String.format("Number of datasets found for identifier %s : %s", ident,
                 countDatasets(foundDataSets)));
+            LOG.info("Files available for download:");
+            printFileInformation(allDatasets);
           } else {
             LOG.info(String.format("No Datasets found for identifier %s", ident));
           }
-        }
-        if (allDatasets.size() > 0) {
-          LOG.info("Files available for download:");
-          printFileInformation(allDatasets);
-        } else {
-          LOG.info("Nothing to download");
         }
       } else {
         for (String ident : commandLineParameters.ids) {
@@ -253,7 +249,6 @@ public class QbicDataDownloader {
         }
       }
     }
-    System.out.print("\n");
   }
 
   private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
@@ -388,7 +383,6 @@ public class QbicDataDownloader {
           os.write(buffer, 0, bytesRead);
           os.flush();
         }
-        System.out.print("\n");
         validateChecksum(
             Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
         initialStream.close();
