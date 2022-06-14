@@ -1,7 +1,5 @@
 package life.qbic.model.download;
 
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
@@ -31,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
@@ -179,9 +176,8 @@ public class QbicDataDownloader {
 
         //downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
       }
-    } else { // no suffix or regex was supplied -> download or print all datasets
-
-      //command to only print available datasets was provided
+    } else {
+      // no suffix or regex was supplied -> download or print all datasets
       if (commandLineParameters.printDatasets) {
         List<Map<String, List<DataSet>>> allDatasets = new ArrayList<>();
         for (String ident : commandLineParameters.ids) {
@@ -195,7 +191,6 @@ public class QbicDataDownloader {
           }
         }
         if (allDatasets.size() > 0) {
-          System.out.print("\n");
           LOG.info("Files available for download:");
           printFileInformation(allDatasets);
         } else {
@@ -225,7 +220,6 @@ public class QbicDataDownloader {
               LOG.error("Error while downloading dataset: " + ident);
             } else {
               LOG.info("Download successfully finished.");
-              System.out.print("\n");
             }
           } else {
             LOG.info("Nothing to download.");
@@ -250,8 +244,9 @@ public class QbicDataDownloader {
           for (DataSetFile file : filteredDataSetFiles) {
             String filePath = file.getPermId().getFilePath();
             String name = filePath.substring(filePath.lastIndexOf("/") + 1);
-            String length = new DecimalFormat("0.00").format(determineBestUnitType(file.getFileLength()).convertBytesToUnit(
-                file.getFileLength()));
+            String length = new DecimalFormat("0.00").format(
+                determineBestUnitType(file.getFileLength()).convertBytesToUnit(
+                    file.getFileLength()));
             String unit = determineBestUnitType(file.getFileLength()).getUnitType();
             LOG.info(String.format("%s %s\t%s ", length, unit, name));
           }
@@ -343,7 +338,6 @@ public class QbicDataDownloader {
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
-        //
       }
     }
   }
@@ -482,7 +476,8 @@ public class QbicDataDownloader {
 
   public void notifyUserOfInvalidChecksum() {
     if (invalidChecksumOccurred) {
-      LOG.warn("Checksum mismatches were detected during file download, check the logs/summary_invalid_files.txt log file for details");
+      LOG.warn(
+          "Checksum mismatches were detected during file download, check the logs/summary_invalid_files.txt log file for details");
     }
   }
 
