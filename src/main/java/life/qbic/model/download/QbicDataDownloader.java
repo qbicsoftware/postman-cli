@@ -1,7 +1,5 @@
 package life.qbic.model.download;
 
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
@@ -25,12 +23,12 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
@@ -178,39 +176,23 @@ public class QbicDataDownloader {
 
         //downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
       }
-    } else { // no suffix or regex was supplied -> download or print all datasets
-      Boolean download = TRUE;
-
-      //command to only print available datasets was provided
+    } else {
+      // no suffix or regex was supplied -> download or print all datasets
       if (commandLineParameters.printDatasets) {
         List<Map<String, List<DataSet>>> allDatasets = new ArrayList<>();
         for (String ident : commandLineParameters.ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-
           if (foundDataSets.size() > 0) {
             allDatasets.add(foundDataSets);
             LOG.info(String.format("Number of datasets found for identifier %s : %s", ident,
                 countDatasets(foundDataSets)));
+            LOG.info("Files available for download:");
+            printFileInformation(allDatasets);
           } else {
             LOG.info(String.format("No Datasets found for identifier %s", ident));
           }
         }
-        if (allDatasets.size() > 0) {
-          System.out.print("\n");
-          LOG.info("Files available for download:");
-          printFileInformation(allDatasets);
-          Scanner scanner = new Scanner(System.in);
-          LOG.info("Do you want to download the files? (Y/N)");
-          String downloadWanted = scanner.next();
-          if (downloadWanted.equalsIgnoreCase("N")) {
-            download = FALSE;
-          }
-        } else {
-          LOG.info("Nothing to download");
-          download = FALSE;
-        }
-      }
-      if (download) {
+      } else {
         for (String ident : commandLineParameters.ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
           if (foundDataSets.size() > 0) {
@@ -232,13 +214,12 @@ public class QbicDataDownloader {
 
             if (datasetDownloadReturnCode != 0) {
               LOG.error("Error while downloading dataset: " + ident);
-            } else if(!invalidChecksumOccurred) {
+            } else if (!invalidChecksumOccurred) {
               LOG.info("Download successfully finished.");
             }
           } else {
             LOG.info("Nothing to download.");
           }
-          System.out.print("\n");
         }
       }
     }
@@ -257,16 +238,17 @@ public class QbicDataDownloader {
                   new DataSetFileFetchOptions());
           List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
           for (DataSetFile file : filteredDataSetFiles) {
-            String name = getFileName(file);
-            double length = determineBestUnitType(file.getFileLength()).convertBytesToUnit(
-                file.getFileLength());
+            String filePath = file.getPermId().getFilePath();
+            String name = filePath.substring(filePath.lastIndexOf("/") + 1);
+            String length = new DecimalFormat("0.00").format(
+                determineBestUnitType(file.getFileLength()).convertBytesToUnit(
+                    file.getFileLength()));
             String unit = determineBestUnitType(file.getFileLength()).getUnitType();
             LOG.info(String.format("%s %s\t%s ", length, unit, name));
           }
         }
       }
     }
-    System.out.print("\n");
   }
 
   private String getFileName(DataSetFile file) {
@@ -288,12 +270,12 @@ public class QbicDataDownloader {
     return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
   }
 
-
   /**
    * Downloads all IDs which were previously filtered by either suffixes or regexes
    *
    * @param ident
    * @param foundFilteredDatasets
+   * @throws IOException
    */
   private void downloadFilesFilteredByIDs(String ident,
       List<Map<String, List<DataSetFile>>> foundFilteredDatasets) {
@@ -351,12 +333,12 @@ public class QbicDataDownloader {
         DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
         criteria.withDataSet().withCode().thatEquals(permID.getPermId());
         SearchResult<DataSetFile> result =
-            this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
+            this.dataStoreServer.searchFiles(sessionToken, criteria,
+                new DataSetFileFetchOptions());
         List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
-        //
       }
     }
   }
@@ -407,7 +389,6 @@ public class QbicDataDownloader {
           os.write(buffer, 0, bytesRead);
           os.flush();
         }
-        System.out.print("\n");
         initialStream.close();
         // flush OutputStream to write any buffered data to file
         os.flush();
@@ -415,7 +396,7 @@ public class QbicDataDownloader {
         validateChecksum(
                 Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
         if(invalidChecksumOccurred) {
-          notifyUserOfInvalidChecksum(dataSetFile, prefix);
+          notifyUserOfInvalidChecksum(dataSetFile);
         }
         os.close();
       }
@@ -458,6 +439,7 @@ public class QbicDataDownloader {
 
   private int downloadFiles(DownloadRequest request) throws DownloadException {
     String sampleCode = request.getSampleCode();
+    LOG.info(String.format("Downloading file(s) for sample %s", sampleCode));
     Path pathPrefix = Paths.get(sampleCode + File.separator);
     request
         .getDataSets()
@@ -495,23 +477,8 @@ public class QbicDataDownloader {
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 
-  public void notifyUserOfInvalidChecksum(DataSetFile file, Path prefix) {
+  public void notifyUserOfInvalidChecksum(DataSetFile file) {
     LOG.warn(String.format("Checksum mismatches were detected for file %s. For more Information check the logs/summary_invalid_files.txt log file." , getFileName(file)));
-
-    Scanner anotherScanner = new Scanner(System.in);
-    LOG.info("Do you want to download the affected file again? (Y/N)");
-    String redownload = anotherScanner.next();
-    System.out.println(redownload);
-    if (redownload.equalsIgnoreCase("Y")) {
-      try {
-        downloadFile(file, prefix);
-        writeCRC32Checksum(file, prefix);
-      } catch (IOException e) {
-        LOG.error(e);
-        throw new DownloadException(
-                "Dataset " + getFileName(file) + " could not have been downloaded.");
-      }
-    }
   }
 
 }
