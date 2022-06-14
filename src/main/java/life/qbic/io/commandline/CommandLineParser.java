@@ -10,7 +10,6 @@ public class CommandLineParser {
    * Parses all passed CLI parameters Prints help menu if no commandline parameters were passed
    * verifies whether all mandatory commandline parameters have been passed (IDs and username)
    *
-   *
    * @param args
    * @return
    * @throws IOException

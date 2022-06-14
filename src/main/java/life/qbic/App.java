@@ -1,5 +1,9 @@
 package life.qbic;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Optional;
 import life.qbic.io.commandline.CommandLineParser;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
@@ -9,12 +13,9 @@ import life.qbic.model.download.QbicDataDownloader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Optional;
-
-/** postman for staging data from openBIS */
+/**
+ * postman for staging data from openBIS
+ */
 public class App {
 
   private static final Logger LOG = LogManager.getLogger(App.class);
@@ -27,7 +28,7 @@ public class App {
     // login to OpenBIS
     QbicDataDownloader qbicDataDownloader = loginToOpenBIS(commandLineParameters);
 
-    // download all requested files by the user
+    // download all requested files by the user or print available datasets
     qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
   }
 
@@ -39,11 +40,7 @@ public class App {
    * @return
    */
   private static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
-    Boolean NotNullOrEmpty = false;
-    if (envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty()) {
-      NotNullOrEmpty = true;
-    }
-    return NotNullOrEmpty;
+    return envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty();
   }
 
   /**
@@ -57,15 +54,20 @@ public class App {
 
     String password;
     if (isNotNullOrEmpty(commandLineParameters.passwordEnvVariable)) {
-      Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(commandLineParameters.passwordEnvVariable);
+      Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(
+          commandLineParameters.passwordEnvVariable);
 
       if (!envPassword.isPresent()) {
-        System.out.println("No environment variable named " + commandLineParameters.passwordEnvVariable + " was found");
-        LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
+        System.out.println(
+            "No environment variable named " + commandLineParameters.passwordEnvVariable
+                + " was found");
+        LOG.info(
+            String.format("Please provide a password for user '%s':", commandLineParameters.user));
       }
       password = envPassword.orElseGet(OpenBISPasswordParser::readPasswordFromConsole);
     } else {
-      LOG.info(String.format("Please provide a password for user '%s':", commandLineParameters.user));
+      LOG.info(
+          String.format("Please provide a password for user '%s':", commandLineParameters.user));
       password = OpenBISPasswordParser.readPasswordFromConsole();
     }
 
@@ -79,9 +81,11 @@ public class App {
 
     ChecksumReporter checksumWriter =
         new FileSystemWriter(
-            Paths.get(System.getProperty("user.dir") + File.separator + "logs/summary_valid_files.txt"),
             Paths.get(
-                System.getProperty("user.dir") + File.separator + "logs/summary_invalid_files.txt"));
+                System.getProperty("user.dir") + File.separator + "logs/summary_valid_files.txt"),
+            Paths.get(
+                System.getProperty("user.dir") + File.separator
+                    + "logs/summary_invalid_files.txt"));
 
     QbicDataDownloader qbicDataDownloader =
         new QbicDataDownloader(
@@ -106,4 +110,5 @@ public class App {
     }
     return qbicDataDownloader;
   }
+
 }

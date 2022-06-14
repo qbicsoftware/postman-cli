@@ -22,8 +22,8 @@ public class PostmanCommandLineOptions {
   public String user;
 
   @Option(
-          names = {"-p", "--env-password"},
-          description = "provide the name of an environment variable to read in the password from")
+      names = {"-p", "--env-password"},
+      description = "provide the name of an environment variable to read in the password from")
   public String passwordEnvVariable;
 
   // this consumes all parameters that are not labeled!
@@ -39,6 +39,11 @@ public class PostmanCommandLineOptions {
       names = {"-c", "--conserve"},
       description = "Conserve the file path structure during download")
   public boolean conservePath;
+
+  @Option(
+      names = {"--print"},
+      description = "print available datasets for the provided samples")
+  public boolean printDatasets;
 
   @Option(
       names = {"-b", "--buffer-size"},

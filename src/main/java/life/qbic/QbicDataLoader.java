@@ -29,11 +29,11 @@ public class QbicDataLoader {
   /**
    * Constructor for a QBiCDataLoaderInstance
    *
-   * @param AppServerUri The openBIS application server URL (AS)
+   * @param AppServerUri  The openBIS application server URL (AS)
    * @param DataServerUri The openBIS datastore server URL (DSS)
-   * @param user The openBIS user
-   * @param password The openBis password
-   * @param bufferSize The buffer size for the InputStream reader
+   * @param user          The openBIS user
+   * @param password      The openBis password
+   * @param bufferSize    The buffer size for the InputStream reader
    */
   public QbicDataLoader(
       String AppServerUri,
@@ -68,7 +68,7 @@ public class QbicDataLoader {
   /**
    * Setter for user and password credentials
    *
-   * @param user The openBIS user
+   * @param user     The openBIS user
    * @param password The openBIS user's password
    * @return QBiCDataLoader instance
    */
@@ -110,7 +110,9 @@ public class QbicDataLoader {
       }
     }
 
-    if (filterType.isEmpty()) return foundDatasets;
+    if (filterType.isEmpty()) {
+      return foundDatasets;
+    }
 
     List<DataSet> filteredDatasets = new ArrayList<>();
     for (DataSet ds : foundDatasets) {

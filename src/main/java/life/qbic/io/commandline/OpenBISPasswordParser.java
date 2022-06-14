@@ -18,12 +18,10 @@ public class OpenBISPasswordParser {
   }
 
   /**
-   *
    * @param variableName Name of given environment variable
-   *
    * @return the password read from the environment variable
    */
-  public static Optional<String> readPasswordFromEnvVariable(String variableName){
+  public static Optional<String> readPasswordFromEnvVariable(String variableName) {
 
     Optional<String> password = Optional.ofNullable(System.getenv(variableName));
     return password;
@@ -31,5 +29,3 @@ public class OpenBISPasswordParser {
   }
 
 }
-
-
