@@ -214,7 +214,7 @@ public class QbicDataDownloader {
 
             if (datasetDownloadReturnCode != 0) {
               LOG.error("Error while downloading dataset: " + ident);
-            } else {
+            } else if (!invalidChecksumOccurred) {
               LOG.info("Download successfully finished.");
             }
           } else {
@@ -251,6 +251,11 @@ public class QbicDataDownloader {
     }
   }
 
+  private String getFileName(DataSetFile file) {
+    String filePath = file.getPermId().getFilePath();
+    return filePath.substring(filePath.lastIndexOf("/") + 1);
+  }
+
   private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
     int sum = 0;
     for (Map<String, List<T>> entry : datasetsPerSampleCode) {
@@ -265,12 +270,12 @@ public class QbicDataDownloader {
     return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
   }
 
-
   /**
    * Downloads all IDs which were previously filtered by either suffixes or regexes
    *
    * @param ident
    * @param foundFilteredDatasets
+   * @throws IOException
    */
   private void downloadFilesFilteredByIDs(String ident,
       List<Map<String, List<DataSetFile>>> foundFilteredDatasets) {
@@ -296,7 +301,7 @@ public class QbicDataDownloader {
       }
       if (filesDownloadReturnCode != 0) {
         LOG.error("Error while downloading dataset: " + ident);
-      } else {
+      } else if(!invalidChecksumOccurred) {
         LOG.info("Download successfully finished");
       }
 
@@ -328,7 +333,8 @@ public class QbicDataDownloader {
         DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
         criteria.withDataSet().withCode().thatEquals(permID.getPermId());
         SearchResult<DataSetFile> result =
-            this.dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
+            this.dataStoreServer.searchFiles(sessionToken, criteria,
+                new DataSetFileFetchOptions());
         List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
@@ -383,12 +389,15 @@ public class QbicDataDownloader {
           os.write(buffer, 0, bytesRead);
           os.flush();
         }
-        validateChecksum(
-            Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
         initialStream.close();
         // flush OutputStream to write any buffered data to file
         os.flush();
         LOG.info(String.format("Download of %s has finished", fileName));
+        validateChecksum(
+                Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
+        if(invalidChecksumOccurred) {
+          notifyUserOfInvalidChecksum(dataSetFile);
+        }
         os.close();
       }
     }
@@ -468,11 +477,8 @@ public class QbicDataDownloader {
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 
-  public void notifyUserOfInvalidChecksum() {
-    if (invalidChecksumOccurred) {
-      LOG.warn(
-          "Checksum mismatches were detected during file download, check the logs/summary_invalid_files.txt log file for details");
-    }
+  public void notifyUserOfInvalidChecksum(DataSetFile file) {
+    LOG.warn(String.format("Checksum mismatches were detected for file %s. For more Information check the logs/summary_invalid_files.txt log file." , getFileName(file)));
   }
 
 }

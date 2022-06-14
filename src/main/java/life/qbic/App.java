@@ -30,7 +30,6 @@ public class App {
 
     // download all requested files by the user or print available datasets
     qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
-    qbicDataDownloader.notifyUserOfInvalidChecksum();
   }
 
   /**
