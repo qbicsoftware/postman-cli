@@ -28,7 +28,7 @@ public class App {
     // login to OpenBIS
     QbicDataDownloader qbicDataDownloader = loginToOpenBIS(commandLineParameters);
 
-    // download all requested files by the user
+    // download all requested files by the user or print available datasets
     qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
     qbicDataDownloader.notifyUserOfInvalidChecksum();
   }
@@ -41,11 +41,7 @@ public class App {
    * @return
    */
   private static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
-    Boolean NotNullOrEmpty = false;
-    if (envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty()) {
-      NotNullOrEmpty = true;
-    }
-    return NotNullOrEmpty;
+    return envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty();
   }
 
   /**

@@ -50,7 +50,7 @@ public class QbicDataFinder {
    * @param sample         the sample for which descending data sets should be added
    * @param visitedSamples map with samples and datasets already visited.
    */
-  private static void fillWithDescendentDatasets(Sample sample,
+  private static void fillWithDescendantDatasets(Sample sample,
       Map<String, List<DataSet>> visitedSamples) {
     if (visitedSamples.containsKey(sample.getCode())) {
       return;
@@ -62,7 +62,7 @@ public class QbicDataFinder {
     // recursion end
     if (children.size() > 0) {
       for (Sample child : children) {
-        fillWithDescendentDatasets(child, visitedSamples);
+        fillWithDescendantDatasets(child, visitedSamples);
       }
     }
   }
@@ -91,7 +91,7 @@ public class QbicDataFinder {
     List<Sample> samples = result.getObjects();
 
     for (Sample sample : samples) {
-      fillWithDescendentDatasets(sample, dataSetsBySampleId);
+      fillWithDescendantDatasets(sample, dataSetsBySampleId);
     }
     return dataSetsBySampleId;
   }

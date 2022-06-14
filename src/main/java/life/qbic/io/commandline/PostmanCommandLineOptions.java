@@ -41,6 +41,11 @@ public class PostmanCommandLineOptions {
   public boolean conservePath;
 
   @Option(
+      names = {"--print"},
+      description = "print available datasets for the provided samples")
+  public boolean printDatasets;
+
+  @Option(
       names = {"-b", "--buffer-size"},
       description =
           "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."

@@ -1,5 +1,7 @@
 package life.qbic.model.download;
 
+import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
+
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
@@ -21,6 +23,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -140,18 +143,16 @@ public class QbicDataDownloader {
    *
    * @param commandLineParameters
    * @param qbicDataDownloader
-   * @throws IOException
    */
   public void downloadRequestedFilesOfDatasets(
-      PostmanCommandLineOptions commandLineParameters, QbicDataDownloader qbicDataDownloader)
-      throws IOException {
+      PostmanCommandLineOptions commandLineParameters, QbicDataDownloader qbicDataDownloader) {
     QbicDataFinder qbicDataFinder =
         new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
 
     LOG.info(
         String.format(
             "%s provided openBIS identifiers have been found: %s",
-            commandLineParameters.ids.size(), commandLineParameters.ids.toString()));
+            commandLineParameters.ids.size(), commandLineParameters.ids));
 
     // a suffix was provided -> only download files which contain the suffix string
     if (!commandLineParameters.suffixes.isEmpty()) {
@@ -176,39 +177,75 @@ public class QbicDataDownloader {
         //downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
       }
     } else {
-      // no suffix or regex was supplied -> download all datasets
-      for (String ident : commandLineParameters.ids) {
-        LOG.info(String.format("Downloading files for provided identifier %s", ident));
-        Map<String, List<DataSet>> foundDataSets =
-            qbicDataFinder.findAllDatasetsRecursive(ident);
-
-        LOG.info(String.format("Number of datasets found: %s", countDatasets(foundDataSets)));
-
-        if (foundDataSets.size() > 0) {
-          LOG.info("Initialize download ...");
-          int datasetDownloadReturnCode = -1;
-          try {
-            // for the sample code and aggregates datasets per sample code
-            List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
-            datasets.add(foundDataSets);
-            datasetDownloadReturnCode =
-                qbicDataDownloader.downloadDataset(datasets);
-          } catch (NullPointerException e) {
-            LOG.error(
-                "Datasets were found by the application server, but could not be found on the datastore server for "
-                    + ident
-                    + "."
-                    + " Try to supply the correct datastore server using a config file!");
-          }
-
-          if (datasetDownloadReturnCode != 0) {
-            LOG.error("Error while downloading dataset: " + ident);
+      // no suffix or regex was supplied -> download or print all datasets
+      if (commandLineParameters.printDatasets) {
+        List<Map<String, List<DataSet>>> allDatasets = new ArrayList<>();
+        for (String ident : commandLineParameters.ids) {
+          Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+          if (foundDataSets.size() > 0) {
+            allDatasets.add(foundDataSets);
+            LOG.info(String.format("Number of datasets found for identifier %s : %s", ident,
+                countDatasets(foundDataSets)));
+            LOG.info("Files available for download:");
+            printFileInformation(allDatasets);
           } else {
-            LOG.info("Download successfully finished.");
+            LOG.info(String.format("No Datasets found for identifier %s", ident));
           }
+        }
+      } else {
+        for (String ident : commandLineParameters.ids) {
+          Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+          if (foundDataSets.size() > 0) {
+            LOG.info(String.format("Downloading files for identifier %s", ident));
+            LOG.info("Initialize download ...");
+            int datasetDownloadReturnCode = -1;
+            try {
+              // for the sample code and aggregates datasets per sample code
+              List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
+              datasets.add(foundDataSets);
+              datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(datasets);
+            } catch (NullPointerException e) {
+              LOG.error(
+                  "Datasets were found by the application server, but could not be found on the datastore server for "
+                      + ident
+                      + "."
+                      + " Try to supply the correct datastore server using a config file!");
+            }
 
-        } else {
-          LOG.info("Nothing to download.");
+            if (datasetDownloadReturnCode != 0) {
+              LOG.error("Error while downloading dataset: " + ident);
+            } else {
+              LOG.info("Download successfully finished.");
+            }
+          } else {
+            LOG.info("Nothing to download.");
+          }
+        }
+      }
+    }
+  }
+
+  private void printFileInformation(List<Map<String, List<DataSet>>> dataSets) {
+    for (Map<String, List<DataSet>> dataSet : dataSets) {
+      for (Entry<String, List<DataSet>> entry : dataSet.entrySet()) {
+        List<DataSet> sampleDatasets = entry.getValue();
+        for (DataSet sampleDataset : sampleDatasets) {
+          DataSetPermId permID = sampleDataset.getPermId();
+          DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
+          criteria.withDataSet().withCode().thatEquals(permID.getPermId());
+          SearchResult<DataSetFile> result =
+              this.dataStoreServer.searchFiles(sessionToken, criteria,
+                  new DataSetFileFetchOptions());
+          List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
+          for (DataSetFile file : filteredDataSetFiles) {
+            String filePath = file.getPermId().getFilePath();
+            String name = filePath.substring(filePath.lastIndexOf("/") + 1);
+            String length = new DecimalFormat("0.00").format(
+                determineBestUnitType(file.getFileLength()).convertBytesToUnit(
+                    file.getFileLength()));
+            String unit = determineBestUnitType(file.getFileLength()).getUnitType();
+            LOG.info(String.format("%s %s\t%s ", length, unit, name));
+          }
         }
       }
     }
@@ -234,11 +271,9 @@ public class QbicDataDownloader {
    *
    * @param ident
    * @param foundFilteredDatasets
-   * @throws IOException
    */
   private void downloadFilesFilteredByIDs(String ident,
-      List<Map<String, List<DataSetFile>>> foundFilteredDatasets)
-      throws IOException {
+      List<Map<String, List<DataSetFile>>> foundFilteredDatasets) {
     if (foundFilteredDatasets.size() > 0) {
       LOG.info("Initialize download ...");
       int filesDownloadReturnCode = -1;
@@ -298,7 +333,6 @@ public class QbicDataDownloader {
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
-        //
       }
     }
   }
@@ -349,7 +383,6 @@ public class QbicDataDownloader {
           os.write(buffer, 0, bytesRead);
           os.flush();
         }
-        System.out.print("\n");
         validateChecksum(
             Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
         initialStream.close();
@@ -437,7 +470,8 @@ public class QbicDataDownloader {
 
   public void notifyUserOfInvalidChecksum() {
     if (invalidChecksumOccurred) {
-      LOG.warn("Checksum mismatches were detected during file download, check the logs/summary_invalid_files.txt log file for details");
+      LOG.warn(
+          "Checksum mismatches were detected during file download, check the logs/summary_invalid_files.txt log file for details");
     }
   }
 
