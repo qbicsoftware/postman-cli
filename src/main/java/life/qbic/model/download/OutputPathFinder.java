@@ -1,7 +1,6 @@
 package life.qbic.model.download;
 
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,7 +39,7 @@ public class OutputPathFinder {
     public static Path determineOutputDirectory(String outputPath, Path prefix, Path filePath){
         Path path;
         String newPath = File.separator + prefix.toString() + File.separator + filePath.toString();
-        if (life.qbic.App.isNotNullOrEmpty(outputPath) && isPathValid(outputPath)) {
+        if (outputPath != null && !outputPath.isEmpty() && isPathValid(outputPath)) {
             path = Paths.get(outputPath + newPath);
         } else {
             path = Paths.get(System.getProperty("user.dir") + newPath);
