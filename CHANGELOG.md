@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0-SNAPSHOT (2021-12-23)
+**Note:** (After 0.5.5) Please check future **release notes** in the repository's [releases](https://github.com/qbicsoftware/postman-cli/releases) section.
 
 ## Hotfix 0.5.4 (2022-01-04)
 
@@ -69,4 +69,3 @@
 * Calculate CRC32 checksums for every downloaded file and compares it against the sum stored in openBIS
 * Provide summary report files for valid and broken files
 * Remove duplicate data set file ids
-

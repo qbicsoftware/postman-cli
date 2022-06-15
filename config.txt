@@ -7,4 +7,3 @@
 
 # Set the DSS_URL (DataStoreServerURL) to the value defined below
 -dss https://qbis.qbic.uni-tuebingen.de:444/datastore_server
-
