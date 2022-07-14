@@ -1,7 +1,5 @@
 package life.qbic.model.download;
 
-import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
-
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
@@ -23,7 +21,6 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,12 +44,10 @@ public class QbicDataDownloader {
   private final ChecksumReporter checksumReporter;
   private final int defaultBufferSize;
   private final boolean conservePaths;
-  private String user;
-  private String password;
-  private IApplicationServerApi applicationServer;
-  private IDataStoreServerApi dataStoreServer;
-  private String sessionToken;
-  private String filterType;
+  private final IApplicationServerApi applicationServer;
+  private final IDataStoreServerApi dataStoreServer;
+  private final String sessionToken;
+  private final String filterType;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private boolean invalidChecksumOccurred = false;
 
@@ -61,23 +56,23 @@ public class QbicDataDownloader {
    *
    * @param AppServerUri  The openBIS application server URL (AS)
    * @param DataServerUri The openBIS datastore server URL (DSS)
-   * @param user          The openBIS user
-   * @param password      The openBis password
+   //* @param user          The openBIS user
+   //* @param password      The openBis password
    * @param bufferSize    The buffer size for the InputStream reader
    */
   public QbicDataDownloader(
       String AppServerUri,
       String DataServerUri,
-      String user,
-      String password,
       int bufferSize,
       String filterType,
       boolean conservePaths,
-      ChecksumReporter checksumReporter) {
+      ChecksumReporter checksumReporter,
+      String sessionToken) {
     this.checksumReporter = checksumReporter;
     this.defaultBufferSize = bufferSize;
     this.filterType = filterType;
     this.conservePaths = conservePaths;
+    this.sessionToken = sessionToken;
 
     if (!AppServerUri.isEmpty()) {
       this.applicationServer =
@@ -93,8 +88,6 @@ public class QbicDataDownloader {
     } else {
       this.dataStoreServer = null;
     }
-
-    this.setCredentials(user, password);
   }
 
   private static Path getTopDirectory(Path path) {
@@ -105,36 +98,6 @@ public class QbicDataDownloader {
       currentPath = parentPath;
     }
     return currentPath;
-  }
-
-  /**
-   * Setter for user and password credentials
-   *
-   * @param user     The openBIS user
-   * @param password The openBIS user's password
-   * @return QBiCDataLoader instance
-   */
-  public QbicDataDownloader setCredentials(String user, String password) {
-    this.user = user;
-    this.password = password;
-    return this;
-  }
-
-  /**
-   * Login method for openBIS authentication
-   *
-   * @return 0 if successful, 1 else
-   */
-  public void login() throws ConnectionException, AuthenticationException {
-    try {
-      this.sessionToken = this.applicationServer.login(this.user, this.password);
-    } catch (Exception e) {
-      throw new ConnectionException("Connection to openBIS server failed.");
-    }
-    if (sessionToken == null || sessionToken.isEmpty()) {
-      throw new AuthenticationException("Authentication failed. Are you using the correct "
-          + "credentials for http://qbic.life?");
-    }
   }
 
   /**
@@ -178,21 +141,6 @@ public class QbicDataDownloader {
       }
     } else {
       // no suffix or regex was supplied -> download or print all datasets
-      if (commandLineParameters.printDatasets) {
-        List<Map<String, List<DataSet>>> allDatasets = new ArrayList<>();
-        for (String ident : commandLineParameters.ids) {
-          Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-          if (foundDataSets.size() > 0) {
-            allDatasets.add(foundDataSets);
-            LOG.info(String.format("Number of datasets found for identifier %s : %s", ident,
-                countDatasets(foundDataSets)));
-            LOG.info("Files available for download:");
-            printFileInformation(allDatasets);
-          } else {
-            LOG.info(String.format("No Datasets found for identifier %s", ident));
-          }
-        }
-      } else {
         for (String ident : commandLineParameters.ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
           if (foundDataSets.size() > 0) {
@@ -222,33 +170,6 @@ public class QbicDataDownloader {
           }
         }
       }
-    }
-  }
-
-  private void printFileInformation(List<Map<String, List<DataSet>>> dataSets) {
-    for (Map<String, List<DataSet>> dataSet : dataSets) {
-      for (Entry<String, List<DataSet>> entry : dataSet.entrySet()) {
-        List<DataSet> sampleDatasets = entry.getValue();
-        for (DataSet sampleDataset : sampleDatasets) {
-          DataSetPermId permID = sampleDataset.getPermId();
-          DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
-          criteria.withDataSet().withCode().thatEquals(permID.getPermId());
-          SearchResult<DataSetFile> result =
-              this.dataStoreServer.searchFiles(sessionToken, criteria,
-                  new DataSetFileFetchOptions());
-          List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
-          for (DataSetFile file : filteredDataSetFiles) {
-            String filePath = file.getPermId().getFilePath();
-            String name = filePath.substring(filePath.lastIndexOf("/") + 1);
-            String length = new DecimalFormat("0.00").format(
-                determineBestUnitType(file.getFileLength()).convertBytesToUnit(
-                    file.getFileLength()));
-            String unit = determineBestUnitType(file.getFileLength()).getUnitType();
-            LOG.info(String.format("%s %s\t%s ", length, unit, name));
-          }
-        }
-      }
-    }
   }
 
   private String getFileName(DataSetFile file) {
@@ -266,14 +187,14 @@ public class QbicDataDownloader {
     return sum;
   }
 
-  private static <T> int countDatasets(Map<String, List<T>> datasetsPerSampleCode) {
+  public static <T> int countDatasets(Map<String, List<T>> datasetsPerSampleCode) {
     return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
   }
 
   /**
    * Downloads all IDs which were previously filtered by either suffixes or regexes
    *
-   * @param ident
+   * @param ident Sample identifiers
    * @param foundFilteredDatasets
    * @throws IOException
    */
@@ -343,7 +264,7 @@ public class QbicDataDownloader {
     }
   }
 
-  private static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
+  public static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
     Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
     return dataSetFiles.stream()
         .filter(notADirectory)
@@ -355,8 +276,8 @@ public class QbicDataDownloader {
     options.setRecursive(false);
     IDataSetFileId fileId = dataSetFile.getPermId();
     InputStream stream =
-        this.dataStoreServer.downloadFiles(
-            sessionToken, Collections.singletonList(fileId), options);
+            this.dataStoreServer.downloadFiles(
+                    sessionToken, Collections.singletonList(fileId), options);
     DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
     DataSetFileDownload file;
 
@@ -366,20 +287,20 @@ public class QbicDataDownloader {
       if (file.getDataSetFile().getFileLength() > 0) {
         final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
         File newFile =
-            new File(System.getProperty("user.dir") +
-                File.separator +
-                prefix.toString() + File.separator +
-                filePath.toString());
+                new File(System.getProperty("user.dir") +
+                        File.separator +
+                        prefix.toString() + File.separator +
+                        filePath.toString());
         newFile.getParentFile().mkdirs();
         OutputStream os = new FileOutputStream(newFile);
         String fileName = filePath.getFileName().toString();
         ProgressBar progressBar =
-            new ProgressBar(
-                fileName, file.getDataSetFile().getFileLength());
+                new ProgressBar(
+                        fileName, file.getDataSetFile().getFileLength());
         int bufferSize =
-            (file.getDataSetFile().getFileLength() < defaultBufferSize)
-                ? (int) file.getDataSetFile().getFileLength()
-                : defaultBufferSize;
+                (file.getDataSetFile().getFileLength() < defaultBufferSize)
+                        ? (int) file.getDataSetFile().getFileLength()
+                        : defaultBufferSize;
         byte[] buffer = new byte[bufferSize];
         int bytesRead;
         LOG.info(String.format("Download of %s is starting", fileName));

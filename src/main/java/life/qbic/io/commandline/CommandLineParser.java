@@ -11,7 +11,7 @@ public class CommandLineParser {
    * verifies whether all mandatory commandline parameters have been passed (IDs and username)
    *
    * @param args
-   * @return
+   * @return commandline parameters
    * @throws IOException
    */
   public static PostmanCommandLineOptions parseAndVerifyCommandLineParameters(String[] args)
@@ -20,15 +20,21 @@ public class CommandLineParser {
       CommandLine.usage(new PostmanCommandLineOptions(), System.out);
       System.exit(0);
     }
-
     PostmanCommandLineOptions commandLineParameters = new PostmanCommandLineOptions();
-    new CommandLine(commandLineParameters).parse(args);
+    CommandLine.ParseResult parsed = new CommandLine(commandLineParameters).parseArgs(args);
 
+
+
+    //System.out.println(parsed.subcommand().commandSpec().name().matches("status"));
     if (commandLineParameters.helpRequested) {
       CommandLine.usage(new PostmanCommandLineOptions(), System.out);
       System.exit(0);
     }
-
+    if(parsed.subcommands().isEmpty()){
+      System.out.println(
+              "You have to provide one of the following subcommands: status, download");
+      System.exit(1);
+    }
     if ((commandLineParameters.ids == null || commandLineParameters.ids.isEmpty())
         && commandLineParameters.filePath == null) {
       System.out.println(
@@ -44,5 +50,11 @@ public class CommandLineParser {
     }
 
     return commandLineParameters;
+  }
+
+  public static String getSubcommand(String[] args){
+    PostmanCommandLineOptions commandLineParameters = new PostmanCommandLineOptions();
+    CommandLine.ParseResult parsed = new CommandLine(commandLineParameters).parseArgs(args);
+    return parsed.subcommand().commandSpec().name();
   }
 }
