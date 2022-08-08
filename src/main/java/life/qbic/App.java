@@ -1,15 +1,17 @@
 package life.qbic;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Optional;
-import life.qbic.io.commandline.CommandLineParser;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
-import life.qbic.model.download.*;
+import life.qbic.model.download.Authentication;
+import life.qbic.model.download.AuthenticationException;
+import life.qbic.model.download.ConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import picocli.CommandLine;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 
 /**
  * postman for staging data from openBIS
@@ -19,47 +21,11 @@ public class App {
   private static final Logger LOG = LogManager.getLogger(App.class);
 
   public static void main(String[] args) throws IOException {
-    // parse and verify all commandline parameters
-    PostmanCommandLineOptions commandLineParameters =
-        CommandLineParser.parseAndVerifyCommandLineParameters(args);
 
-    // login to OpenBIS
-    Authentication authentication = loginToOpenBIS(commandLineParameters);
+    CommandLine cmd = new CommandLine(new PostmanCommandLineOptions());
+    int exitCode = cmd.execute(args);
+    System.exit(exitCode);
 
-
-    String subcommand = CommandLineParser.getSubcommand(args);
-    if(subcommand.equals("download")){
-      ChecksumReporter checksumWriter =
-              new FileSystemWriter(
-                      Paths.get(
-                              System.getProperty("user.dir") + File.separator + "logs/summary_valid_files.txt"),
-                      Paths.get(
-                              System.getProperty("user.dir") + File.separator
-                                      + "logs/summary_invalid_files.txt"));
-
-      QbicDataDownloader qbicDataDownloader =
-              new QbicDataDownloader(
-                      commandLineParameters.as_url,
-                      commandLineParameters.dss_url,
-                      commandLineParameters.bufferMultiplier * 1024,
-                      commandLineParameters.datasetType,
-                      commandLineParameters.conservePath,
-                      checksumWriter,
-                      authentication.getSessionToken());
-
-      // download all requested files by the user
-      qbicDataDownloader.downloadRequestedFilesOfDatasets(commandLineParameters, qbicDataDownloader);
-
-    } else if(subcommand.equals("status")){
-      QbicDataStatus qbicDataStatus = new QbicDataStatus(
-              commandLineParameters.as_url,
-              commandLineParameters.dss_url,
-              commandLineParameters.datasetType,
-              authentication.getSessionToken());
-
-      //provides information about the requested samples as commandline output
-      qbicDataStatus.GetDataStatus(commandLineParameters);
-    }
   }
 
   /**
@@ -73,27 +39,26 @@ public class App {
   /**
    * Logs into OpenBIS asks for and verifies password.
    *
-   * @param commandLineParameters The command line parameters.
-   * @return An instance of a QbicDataDownloader.
+   * @return An instance of the Authentication class.
    */
-  private static Authentication loginToOpenBIS(
-      PostmanCommandLineOptions commandLineParameters) {
+  public static Authentication loginToOpenBIS(
+      String passwordEnvVariable, String user, String as_url) {
 
     String password;
-    if (isNotNullOrEmpty(commandLineParameters.passwordEnvVariable)) {
+    if (isNotNullOrEmpty(passwordEnvVariable)) {
       Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(
-          commandLineParameters.passwordEnvVariable);
+          passwordEnvVariable);
       if (!envPassword.isPresent()) {
         System.out.println(
-            "No environment variable named " + commandLineParameters.passwordEnvVariable
+            "No environment variable named " + passwordEnvVariable
                 + " was found");
         LOG.info(
-            String.format("Please provide a password for user '%s':", commandLineParameters.user));
+            String.format("Please provide a password for user '%s':", user));
       }
       password = envPassword.orElseGet(OpenBISPasswordParser::readPasswordFromConsole);
     } else {
       LOG.info(
-          String.format("Please provide a password for user '%s':", commandLineParameters.user));
+          String.format("Please provide a password for user '%s':", user));
       password = OpenBISPasswordParser.readPasswordFromConsole();
     }
 
@@ -106,9 +71,9 @@ public class App {
     new File(System.getProperty("user.dir") + File.separator + "logs").mkdirs();
     Authentication authentication =
             new Authentication(
-                    commandLineParameters.user,
+                    user,
                     password,
-                    commandLineParameters.as_url);
+                    as_url);
     try {
       authentication.login();
     } catch (ConnectionException e) {

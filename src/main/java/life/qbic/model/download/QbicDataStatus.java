@@ -9,7 +9,6 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import life.qbic.io.commandline.PostmanCommandLineOptions;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -45,11 +44,11 @@ public class QbicDataStatus {
         }
     }
 
-    public void GetDataStatus(PostmanCommandLineOptions commandLineParameters){
+    public void GetDataStatus(List<String> ids){
         QbicDataFinder qbicDataFinder =
                 new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
 
-        for (String ident : commandLineParameters.ids) {
+        for (String ident : ids) {
             Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
             System.out.printf("Number of datasets found for identifier %s : %s%n", ident,
                     QbicDataDownloader.countDatasets(foundDataSets));

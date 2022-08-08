@@ -13,11 +13,14 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSe
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import life.qbic.ChecksumReporter;
+import life.qbic.DownloadException;
+import life.qbic.DownloadRequest;
+import life.qbic.util.ProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,13 +33,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
-import life.qbic.ChecksumReporter;
-import life.qbic.DownloadException;
-import life.qbic.DownloadRequest;
-import life.qbic.io.commandline.PostmanCommandLineOptions;
-import life.qbic.util.ProgressBar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class QbicDataDownloader {
 
@@ -101,39 +97,36 @@ public class QbicDataDownloader {
   }
 
   /**
-   * Downloads the files that the user requested checks whether any filtering option (suffix or
-   * regex) has been passed and applies filtering if needed
-   *
-   * @param commandLineParameters
-   * @param qbicDataDownloader
+   * Downloads the files that the user requested
+   * checks whether any filtering option (suffix or regex) has been passed and applies filtering if needed
    */
   public void downloadRequestedFilesOfDatasets(
-      PostmanCommandLineOptions commandLineParameters, QbicDataDownloader qbicDataDownloader) {
+          List<String> ids, List<String> suffixes, List<String> regexPatterns, QbicDataDownloader qbicDataDownloader) {
     QbicDataFinder qbicDataFinder =
         new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
 
     LOG.info(
         String.format(
             "%s provided openBIS identifiers have been found: %s",
-            commandLineParameters.ids.size(), commandLineParameters.ids));
+            ids.size(), ids));
 
     // a suffix was provided -> only download files which contain the suffix string
-    if (!commandLineParameters.suffixes.isEmpty()) {
-      for (String ident : commandLineParameters.ids) {
+    if (suffixes!=null && !suffixes.isEmpty()) {
+      for (String ident : ids) {
         LOG.info(String.format("Downloading filtered files for provided identifier %s", ident));
         List<Map<String, List<DataSetFile>>> foundSuffixFilteredIDs =
-            qbicDataFinder.findAllSuffixFilteredIDs(ident, commandLineParameters.suffixes);
+            qbicDataFinder.findAllSuffixFilteredIDs(ident, suffixes);
 
         LOG.info(String.format("Number of files found: %s", countDatasets(foundSuffixFilteredIDs)));
 
         downloadFilesFilteredByIDs(ident, foundSuffixFilteredIDs);
       }
       // a regex pattern was provided -> only download files which contain the regex pattern
-    } else if (!commandLineParameters.regexPatterns.isEmpty()) {
-      for (String ident : commandLineParameters.ids) {
+    } else if (regexPatterns!=null && !regexPatterns.isEmpty()) {
+      for (String ident : ids) {
         LOG.info(String.format("Downloading files for provided identifier %s", ident));
         List<DataSetFile> foundRegexFilteredIDs =
-            qbicDataFinder.findAllRegexFilteredIDs(ident, commandLineParameters.regexPatterns);
+            qbicDataFinder.findAllRegexFilteredIDs(ident, regexPatterns);
 
         LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
 
@@ -141,7 +134,7 @@ public class QbicDataDownloader {
       }
     } else {
       // no suffix or regex was supplied -> download or print all datasets
-        for (String ident : commandLineParameters.ids) {
+        for (String ident : ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
           if (foundDataSets.size() > 0) {
             LOG.info(String.format("Downloading files for identifier %s", ident));
@@ -200,6 +193,7 @@ public class QbicDataDownloader {
    */
   private void downloadFilesFilteredByIDs(String ident,
       List<Map<String, List<DataSetFile>>> foundFilteredDatasets) {
+    System.out.println(foundFilteredDatasets);
     if (foundFilteredDatasets.size() > 0) {
       LOG.info("Initialize download ...");
       int filesDownloadReturnCode = -1;
