@@ -48,6 +48,10 @@ public class Authentication {
         return sessionToken;
     }
 
+    public void logout(){
+        applicationServer.logout(user);
+    }
+
 
     /**
      * Setter for user and password credentials

@@ -18,6 +18,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 // main command with format specifiers for the usage help message
 @Command(name = "Postman",
         footer = "Optional: specify a config file by running postman with '@/path/to/config.txt'. Details can be found in the README.",
@@ -66,13 +69,12 @@ public class PostmanCommandLineOptions {
                         as_url,
                         dss_url,
                         bufferMultiplier * 1024,
-                        datasetType,
                         conservePath,
                         checksumWriter,
                         authentication.getSessionToken());
       ids = verifyProvidedIdentifiers();
       // download all requested files by the user
-      qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes, regexPatterns, qbicDataDownloader);
+      qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes, regexPatterns,datasetType, qbicDataDownloader);
   }
 
   @Command(name = "status",
@@ -93,6 +95,7 @@ public class PostmanCommandLineOptions {
       ids = verifyProvidedIdentifiers();
       //provides information about the requested samples as commandline output
       qbicDataStatus.GetDataStatus(ids);
+      authentication.logout();
     }
 
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids", scope = CommandLine.ScopeType.INHERIT)
@@ -144,15 +147,15 @@ public class PostmanCommandLineOptions {
   public String datasetType = "";
 
   private List<String> verifyProvidedIdentifiers() throws IOException {
-    if ((ids == null || ids.isEmpty()) && filePath == null) {
-      System.out.println(
+    if ((isNull(ids) || ids.isEmpty()) && isNull(filePath)) {
+      System.err.println(
           "You have to provide one ID as command line argument or a file containing IDs.");
       System.exit(1);
-    } else if ((ids != null) && (filePath != null)) {
-      System.out.println(
+    } else if (nonNull(ids) && nonNull(filePath)) {
+      System.err.println(
           "Arguments --identifier and --file are mutually exclusive, please provide only one.");
       System.exit(1);
-    } else if (filePath != null) {
+    } else if (nonNull(filePath)){
       ids = IdentifierParser.readProvidedIdentifiers(filePath.toFile());
     }
     return ids;

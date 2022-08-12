@@ -43,7 +43,6 @@ public class QbicDataDownloader {
   private final IApplicationServerApi applicationServer;
   private final IDataStoreServerApi dataStoreServer;
   private final String sessionToken;
-  private final String filterType;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private boolean invalidChecksumOccurred = false;
 
@@ -52,21 +51,19 @@ public class QbicDataDownloader {
    *
    * @param AppServerUri  The openBIS application server URL (AS)
    * @param DataServerUri The openBIS datastore server URL (DSS)
-   //* @param user          The openBIS user
-   //* @param password      The openBis password
    * @param bufferSize    The buffer size for the InputStream reader
+   * @param conservePaths Flag to conserve the file path structure during download
+   * @param sessionToken The session token for the datastore & application servers
    */
   public QbicDataDownloader(
       String AppServerUri,
       String DataServerUri,
       int bufferSize,
-      String filterType,
       boolean conservePaths,
       ChecksumReporter checksumReporter,
       String sessionToken) {
     this.checksumReporter = checksumReporter;
     this.defaultBufferSize = bufferSize;
-    this.filterType = filterType;
     this.conservePaths = conservePaths;
     this.sessionToken = sessionToken;
 
@@ -101,7 +98,7 @@ public class QbicDataDownloader {
    * checks whether any filtering option (suffix or regex) has been passed and applies filtering if needed
    */
   public void downloadRequestedFilesOfDatasets(
-          List<String> ids, List<String> suffixes, List<String> regexPatterns, QbicDataDownloader qbicDataDownloader) {
+          List<String> ids, List<String> suffixes, List<String> regexPatterns, String filterType, QbicDataDownloader qbicDataDownloader) {
     QbicDataFinder qbicDataFinder =
         new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
 
