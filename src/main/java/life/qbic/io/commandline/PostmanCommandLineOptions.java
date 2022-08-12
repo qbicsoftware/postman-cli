@@ -58,11 +58,8 @@ public class PostmanCommandLineOptions {
         Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
         ChecksumReporter checksumWriter =
                 new FileSystemWriter(
-                        Paths.get(
-                                System.getProperty("user.dir") + File.separator + "logs/summary_valid_files.txt"),
-                        Paths.get(
-                                System.getProperty("user.dir") + File.separator
-                                        + "logs/summary_invalid_files.txt"));
+                        Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_valid_files.txt"),
+                        Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_invalid_files.txt"));
 
       QbicDataDownloader qbicDataDownloader =
                 new QbicDataDownloader(
