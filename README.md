@@ -67,14 +67,13 @@ Just execute postman with `java -jar postman-cli.jar` or `java -jar postman.jar 
 
 ~$ java -jar postman.jar                    
 Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
-                    [-t=<datasetType>] -u=<user> [SAMPLE_ID]...
+                     -u=<user> [SAMPLE_ID]...
       [SAMPLE_ID]...          one or more QBiC sample ids
   @/path/to/config.txt        config file which specifies the AS and DSS url
   -as, --as_url=<url>         AS URL 
   -dss,--dss_url=<url>        DSS URL 
   -u,  --user=<user>          openBIS user name 
   -f,  --file=<filePath>      a file with line-separated list of QBiC sample ids
-  -t,  --type=<datasetType>   filter for a given openBIS dataset type
   -s,  --type=<suffix>        filter for a given openBIS file suffix
   -r,  --type=<regex>         filter for a given openBIS file regex    
   -p,  --env-password=<passwordEnvVariable> 
@@ -121,92 +120,6 @@ For example filter for fastq files only:
 
 ```
 java -jar postman.jar -s fastq.gz -u <userid> QMFKD003AG  
-```
-
-### Filter for openBIS dataset type (recommended for advanced users)
-
-You can filter for dataset types, using the `-t` option and one of the following openBIS dataset types we are currently using:
-
-```bash
-ARR
-AUDIT
-CEL
-CSV
-EXPERIMENTAL_DESIGN
-EXPRESSION_MATRIX
-FASTQ
-FEATUREXML
-GZ
-IDXML
-JPG
-MAT
-MZML
-PDF
-PNG
-Q_BMI_IMAGING_DATA
-Q_DOCUMENT
-Q_EXT_MS_QUALITYCONTROL_RESULTS
-Q_EXT_NGS_QUALITYCONTROL_RESULTS
-Q_FASTA_DATA
-Q_HT_QPCR_DATA
-Q_MA_AGILENT_DATA
-Q_MA_CHIP_IMAGE
-Q_MA_RAW_DATA
-Q_MS_MZML_DATA
-Q_MS_RAW_DATA
-Q_MTB_ARCHIVE
-Q_NGS_HLATYPING_DATA
-Q_NGS_IMMUNE_MONITORING_DATA
-Q_NGS_IONTORRENT_DATA
-Q_NGS_MAPPING_DATA
-Q_NGS_MTB_DATA
-Q_NGS_RAW_DATA
-Q_NGS_READ_MATCH_ARCHIVE
-Q_NGS_VARIANT_CALLING_DATA
-Q_PEPTIDE_DATA
-Q_PROJECT_DATA
-Q_TEST
-Q_VACCINE_CONSTRUCT_DATA
-Q_WF_EDDA_BENCHMARK_LOGS
-Q_WF_EDDA_BENCHMARK_RESULTS
-Q_WF_MA_QUALITYCONTROL_LOGS
-Q_WF_MA_QUALITYCONTROL_RESULTS
-Q_WF_MS_INDIVIDUALIZED_PROTEOME_LOGS
-Q_WF_MS_INDIVIDUALIZED_PROTEOME_RESULTS
-Q_WF_MS_LIGANDOMICS_ID_LOGS
-Q_WF_MS_LIGANDOMICS_ID_RESULTS
-Q_WF_MS_LIGANDOMICS_QC_LOGS
-Q_WF_MS_LIGANDOMICS_QC_RESULTS
-Q_WF_MS_MAXQUANT_LOGS
-Q_WF_MS_MAXQUANT_ORIGINAL_OUT
-Q_WF_MS_MAXQUANT_RESULTS
-Q_WF_MS_PEAKPICKING_LOGS
-Q_WF_MS_PEPTIDEID_LOGS
-Q_WF_MS_PEPTIDEID_RESULTS
-Q_WF_MS_QUALITYCONTROL_LOGS
-Q_WF_MS_QUALITYCONTROL_RESULTS
-Q_WF_NGS_16S_TAXONOMIC_PROFILING_LOGS
-Q_WF_NGS_EPITOPE_PREDICTION_LOGS
-Q_WF_NGS_EPITOPE_PREDICTION_RESULTS
-Q_WF_NGS_HLATYPING_LOGS
-Q_WF_NGS_HLATYPING_RESULTS
-Q_WF_NGS_MAPPING_LOGS
-Q_WF_NGS_MAPPING_RESULTS
-Q_WF_NGS_QUALITYCONTROL_LOGS
-Q_WF_NGS_QUALITYCONTROL_RESULTS
-Q_WF_NGS_RNAEXPRESSIONANALYSIS_LOGS
-Q_WF_NGS_RNAEXPRESSIONANALYSIS_RESULTS
-Q_WF_NGS_SHRNA_COUNTING_LOGS
-Q_WF_NGS_SHRNA_COUNTING_RESULTS
-Q_WF_NGS_VARIANT_ANNOTATION_LOGS
-Q_WF_NGS_VARIANT_ANNOTATION_RESULTS
-Q_WF_NGS_VARIANT_CALLING_LOGS
-Q_WF_NGS_VARIANT_CALLING_RESULTS
-RAW
-SHA256SUM
-TAR
-UNKNOWN
-VCF
 ```
 
 ### Filter for file regex

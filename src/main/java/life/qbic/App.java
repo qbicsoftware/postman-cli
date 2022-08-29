@@ -94,7 +94,6 @@ public class App {
             commandLineParameters.user,
             password,
             commandLineParameters.bufferMultiplier * 1024,
-            commandLineParameters.datasetType,
             commandLineParameters.conservePath,
             checksumWriter);
 
