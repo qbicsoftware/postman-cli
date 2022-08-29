@@ -18,15 +18,12 @@ import java.util.Map;
 public class QbicDataStatus {
     private final IApplicationServerApi applicationServer;
     private final IDataStoreServerApi dataStoreServer;
-    String filterType;
     String sessionToken;
 
     public QbicDataStatus(
             String AppServerUri,
             String DataServerUri,
-            String filterType,
             String sessionToken) {
-        this.filterType = filterType;
         this.sessionToken = sessionToken;
         if (!AppServerUri.isEmpty()) {
             this.applicationServer =
@@ -46,8 +43,7 @@ public class QbicDataStatus {
 
     public void GetDataStatus(List<String> ids){
         QbicDataFinder qbicDataFinder =
-                new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
-
+                new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
         for (String ident : ids) {
             Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
             System.out.printf("Number of datasets found for identifier %s : %s%n", ident,
@@ -77,6 +73,7 @@ public class QbicDataStatus {
 
                         System.out.printf("\t\t%s\t%s\t%s %s%n",iso_registrationDate, name, length, unit);
                     }
+                    System.out.print("\n");
                 }
             }
     }

@@ -16,6 +16,7 @@ import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import life.qbic.ChecksumReporter;
 import life.qbic.DownloadException;
 import life.qbic.DownloadRequest;
+import life.qbic.FileSystemWriter;
 import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,7 +38,6 @@ import java.util.zip.CheckedInputStream;
 public class QbicDataDownloader {
 
   private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
-  private final ChecksumReporter checksumReporter;
   private final int defaultBufferSize;
   private final boolean conservePaths;
   private final IApplicationServerApi applicationServer;
@@ -45,6 +45,11 @@ public class QbicDataDownloader {
   private final String sessionToken;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private boolean invalidChecksumOccurred = false;
+
+  private final ChecksumReporter checksumReporter =
+          new FileSystemWriter(
+                  Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_valid_files.txt"),
+                  Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_invalid_files.txt"));
 
   /**
    * Constructor for a QBiCDataLoaderInstance
@@ -56,13 +61,11 @@ public class QbicDataDownloader {
    * @param sessionToken The session token for the datastore & application servers
    */
   public QbicDataDownloader(
-      String AppServerUri,
-      String DataServerUri,
-      int bufferSize,
-      boolean conservePaths,
-      ChecksumReporter checksumReporter,
-      String sessionToken) {
-    this.checksumReporter = checksumReporter;
+          String AppServerUri,
+          String DataServerUri,
+          int bufferSize,
+          boolean conservePaths,
+          String sessionToken) {
     this.defaultBufferSize = bufferSize;
     this.conservePaths = conservePaths;
     this.sessionToken = sessionToken;
@@ -95,12 +98,12 @@ public class QbicDataDownloader {
 
   /**
    * Downloads the files that the user requested
-   * checks whether any filtering option (suffix or regex) has been passed and applies filtering if needed
+   * checks whether the filtering option suffix has been passed and applies filtering if needed
    */
   public void downloadRequestedFilesOfDatasets(
-          List<String> ids, List<String> suffixes, List<String> regexPatterns, String filterType, QbicDataDownloader qbicDataDownloader) {
+          List<String> ids, List<String> suffixes, QbicDataDownloader qbicDataDownloader) {
     QbicDataFinder qbicDataFinder =
-        new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
+        new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
 
     LOG.info(
         String.format(
@@ -118,19 +121,8 @@ public class QbicDataDownloader {
 
         downloadFilesFilteredByIDs(ident, foundSuffixFilteredIDs);
       }
-      // a regex pattern was provided -> only download files which contain the regex pattern
-    } else if (regexPatterns!=null && !regexPatterns.isEmpty()) {
-      for (String ident : ids) {
-        LOG.info(String.format("Downloading files for provided identifier %s", ident));
-        List<DataSetFile> foundRegexFilteredIDs =
-            qbicDataFinder.findAllRegexFilteredIDs(ident, regexPatterns);
-
-        LOG.info(String.format("Number of files found: %s", foundRegexFilteredIDs.size()));
-
-        //downloadFilesFilteredByIDs(ident, foundRegexFilteredIDs);
-      }
     } else {
-      // no suffix or regex was supplied -> download or print all datasets
+      // no suffix was supplied -> download or print all datasets
         for (String ident : ids) {
           Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
           if (foundDataSets.size() > 0) {
@@ -182,7 +174,7 @@ public class QbicDataDownloader {
   }
 
   /**
-   * Downloads all IDs which were previously filtered by either suffixes or regexes
+   * Downloads all IDs which were previously filtered by suffixes
    *
    * @param ident Sample identifiers
    * @param foundFilteredDatasets

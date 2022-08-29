@@ -1,8 +1,6 @@
 package life.qbic.io.commandline;
 
 import life.qbic.App;
-import life.qbic.ChecksumReporter;
-import life.qbic.FileSystemWriter;
 import life.qbic.io.parser.IdentifierParser;
 import life.qbic.model.download.Authentication;
 import life.qbic.model.download.QbicDataDownloader;
@@ -11,11 +9,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static java.util.Objects.isNull;
@@ -34,7 +29,7 @@ import static java.util.Objects.nonNull;
         footerHeading = "%n")
 
 public class PostmanCommandLineOptions {
-
+   //parameters to format the help message
   @Command(name = "download",
           description = "Download data from OpenBis",
           usageHelpAutoWidth = true,
@@ -44,34 +39,25 @@ public class PostmanCommandLineOptions {
           optionListHeading = "%nOptions:%n",
           footerHeading = "%n")
     void download(
-            @Option(names = {"-c", "--conserve"},
+          @Option(names = {"-c", "--conserve"},
                   description = "Conserve the file path structure during download") boolean conservePath,
-            @Option(names = {"-b", "--buffer-size"}, defaultValue = "1",
+          @Option(names = {"-b", "--buffer-size"}, defaultValue = "1",
                   description = "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
                           + " Only change this if you know what you are doing.") int bufferMultiplier,
-            @Option(names = {"-s", "--suffix"},
-                    description = "returns all files of datasets containing the supplied suffix") List<String> suffixes,
-            @Option(//not used currently
-                    names = {"-r", "--regex"},
-                    description = "returns all files of datasets using your supplied regular expression") List<String> regexPatterns) throws IOException {
+          @Option(names = {"-s", "--suffix"},
+                  description = "returns all files of datasets containing the supplied suffix") List<String> suffixes) throws IOException {
 
         Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
-        ChecksumReporter checksumWriter =
-                new FileSystemWriter(
-                        Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_valid_files.txt"),
-                        Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_invalid_files.txt"));
 
-      QbicDataDownloader qbicDataDownloader =
-                new QbicDataDownloader(
-                        as_url,
-                        dss_url,
-                        bufferMultiplier * 1024,
-                        conservePath,
-                        checksumWriter,
-                        authentication.getSessionToken());
-      ids = verifyProvidedIdentifiers();
-      // download all requested files by the user
-      qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes, regexPatterns,datasetType, qbicDataDownloader);
+        QbicDataDownloader qbicDataDownloader =
+                  new QbicDataDownloader(
+                          as_url,
+                          dss_url,
+                          bufferMultiplier * 1024,
+                          conservePath,
+                          authentication.getSessionToken());
+        ids = verifyProvidedIdentifiers();
+        qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes, qbicDataDownloader);
   }
 
   @Command(name = "status",
@@ -84,15 +70,9 @@ public class PostmanCommandLineOptions {
           footerHeading = "%n")
     void status() throws IOException {
       Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
-      QbicDataStatus qbicDataStatus = new QbicDataStatus(
-              as_url,
-              dss_url,
-              datasetType,
-              authentication.getSessionToken());
+      QbicDataStatus qbicDataStatus = new QbicDataStatus(as_url, dss_url, authentication.getSessionToken());
       ids = verifyProvidedIdentifiers();
-      //provides information about the requested samples as commandline output
       qbicDataStatus.GetDataStatus(ids);
-      authentication.logout();
     }
 
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids", scope = CommandLine.ScopeType.INHERIT)
@@ -135,13 +115,6 @@ public class PostmanCommandLineOptions {
           description = "display a help message and exit",
           scope = CommandLine.ScopeType.INHERIT)
   public boolean helpRequested = false;
-
-  // not used currently
-  @Option(
-      names = {"-t", "--type"},
-      description = "filter for a given openBIS dataset type",
-      scope = CommandLine.ScopeType.INHERIT)
-  public String datasetType = "";
 
   private List<String> verifyProvidedIdentifiers() throws IOException {
     if ((isNull(ids) || ids.isEmpty()) && isNull(filePath)) {
