@@ -31,17 +31,14 @@ public class QbicDataFinder {
 
   private String sessionToken;
 
-  private String filterType;
 
   public QbicDataFinder(
       IApplicationServerApi applicationServer,
       IDataStoreServerApi dataStoreServer,
-      String sessionToken,
-      String filterType) {
+      String sessionToken) {
     this.applicationServer = applicationServer;
     this.dataStoreServer = dataStoreServer;
     this.sessionToken = sessionToken;
-    this.filterType = filterType;
   }
 
   /**

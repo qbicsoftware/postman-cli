@@ -52,7 +52,6 @@ public class QbicDataDownloader {
   private IApplicationServerApi applicationServer;
   private IDataStoreServerApi dataStoreServer;
   private String sessionToken;
-  private String filterType;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private boolean invalidChecksumOccurred = false;
 
@@ -71,12 +70,10 @@ public class QbicDataDownloader {
       String user,
       String password,
       int bufferSize,
-      String filterType,
       boolean conservePaths,
       ChecksumReporter checksumReporter) {
     this.checksumReporter = checksumReporter;
     this.defaultBufferSize = bufferSize;
-    this.filterType = filterType;
     this.conservePaths = conservePaths;
 
     if (!AppServerUri.isEmpty()) {
@@ -147,7 +144,7 @@ public class QbicDataDownloader {
   public void downloadRequestedFilesOfDatasets(
       PostmanCommandLineOptions commandLineParameters, QbicDataDownloader qbicDataDownloader) {
     QbicDataFinder qbicDataFinder =
-        new QbicDataFinder(applicationServer, dataStoreServer, sessionToken, filterType);
+        new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
 
     LOG.info(
         String.format(

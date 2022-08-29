@@ -63,11 +63,6 @@ public class PostmanCommandLineOptions {
   public List<String> regexPatterns = new ArrayList<>();
 
   @Option(
-      names = {"-t", "--type"},
-      description = "filter for a given openBIS dataset type")
-  public String datasetType = "";
-
-  @Option(
       names = {"-dss", "--dss_url"},
       description = "DataStoreServer URL")
   public String dss_url = "https://qbis.qbic.uni-tuebingen.de/datastore_server";
