@@ -37,7 +37,7 @@ Example:
 ```bash
 java -jar postman.jar -u <user> <sample> @path/to/config.txt 
 ```
-The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
+The structure of the configuration file is: <code>[-cliOption] [value]</code>   
 For example: To set the ApplicationServerURL to another URL we have to use:
 
 ```properties
@@ -108,10 +108,10 @@ QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###       
 
 ### Download all data of a project
 
-If you want to download all datasets for a given project id, you can use the wildcard symbol `*`:
+If you want to download all datasets for a given project id, you can use the wildcard symbol `*` and have to specify the project code inside of quotation marks:
 
 ```bash
-~$ java -jar postman.jar -u <your_qbic_username> <QBiC Project ID>*
+~$ java -jar postman.jar -u <your_qbic_username> "<QBiC Project ID>*"
 ```
 
 ### Filter for file suffix
