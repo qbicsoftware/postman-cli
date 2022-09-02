@@ -112,6 +112,7 @@ public class QbicDataDownloader {
 
     // a suffix was provided -> only download files which contain the suffix string
     if (suffixes!=null && !suffixes.isEmpty()) {
+      LOG.info(String.format("The suffix %s has been found", suffixes.toArray()));
       for (String ident : ids) {
         LOG.info(String.format("Downloading filtered files for provided identifier %s", ident));
         List<Map<String, List<DataSetFile>>> foundSuffixFilteredIDs =
@@ -178,39 +179,39 @@ public class QbicDataDownloader {
    *
    * @param ident Sample identifiers
    * @param foundFilteredDatasets
-   * @throws IOException
    */
   private void downloadFilesFilteredByIDs(String ident,
       List<Map<String, List<DataSetFile>>> foundFilteredDatasets) {
-    System.out.println(foundFilteredDatasets);
-    if (foundFilteredDatasets.size() > 0) {
-      LOG.info("Initialize download ...");
-      int filesDownloadReturnCode = -1;
-      try {
-        for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets) {
-          for (String sampleCode : filesPerSample.keySet()) {
-            List<DataSetFile> filteredDataSetFiles = withoutDirectories(
-                filesPerSample.get(sampleCode));
-            final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
-                sampleCode);
-            filesDownloadReturnCode = downloadFiles(downloadRequest);
+
+    for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets) {
+      for (List<DataSetFile> files : filesPerSample.values()) {
+        if(files.isEmpty()){
+          LOG.info("Nothing to download.");
+        } else {
+          LOG.info("Initialize download ...");
+          int filesDownloadReturnCode = -1;
+          try {
+              for (String sampleCode : filesPerSample.keySet()) {
+                List<DataSetFile> filteredDataSetFiles = withoutDirectories(
+                        filesPerSample.get(sampleCode));
+                final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
+                        sampleCode);
+                filesDownloadReturnCode = downloadFiles(downloadRequest);
+              }
+          } catch (NullPointerException e) {
+            LOG.error(
+                    "Datasets were found by the application server, but could not be found on the datastore server for "
+                            + ident
+                            + "."
+                            + " Try to supply the correct datastore server using a config file!");
+          }
+          if (filesDownloadReturnCode != 0) {
+            LOG.error("Error while downloading dataset: " + ident);
+          } else if(!invalidChecksumOccurred) {
+            LOG.info("Download successfully finished");
           }
         }
-      } catch (NullPointerException e) {
-        LOG.error(
-            "Datasets were found by the application server, but could not be found on the datastore server for "
-                + ident
-                + "."
-                + " Try to supply the correct datastore server using a config file!");
       }
-      if (filesDownloadReturnCode != 0) {
-        LOG.error("Error while downloading dataset: " + ident);
-      } else if(!invalidChecksumOccurred) {
-        LOG.info("Download successfully finished");
-      }
-
-    } else {
-      LOG.info("Nothing to download.");
     }
   }
 
