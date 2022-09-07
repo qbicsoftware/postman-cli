@@ -23,12 +23,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -38,12 +36,13 @@ import java.util.zip.CheckedInputStream;
 public class QbicDataDownloader {
 
   private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
+  private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private final int defaultBufferSize;
   private final boolean conservePaths;
   private final IApplicationServerApi applicationServer;
   private final IDataStoreServerApi dataStoreServer;
   private final String sessionToken;
-  private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
+  private final Map<DataSetFile, Path> invalidChecksumFiles = new HashMap<>();
   private boolean invalidChecksumOccurred = false;
 
   private final ChecksumReporter checksumReporter =
@@ -153,11 +152,11 @@ public class QbicDataDownloader {
           }
         }
       }
+    repeatDownload(invalidChecksumFiles);
   }
 
   private String getFileName(DataSetFile file) {
-    String filePath = file.getPermId().getFilePath();
-    return filePath.substring(filePath.lastIndexOf("/") + 1);
+    return Paths.get(file.getPath()).getFileName().toString();
   }
 
   private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
@@ -302,6 +301,7 @@ public class QbicDataDownloader {
                 Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
         if(invalidChecksumOccurred) {
           notifyUserOfInvalidChecksum(dataSetFile);
+          invalidChecksumFiles.put(dataSetFile,prefix);
         }
         os.close();
       }
@@ -312,6 +312,7 @@ public class QbicDataDownloader {
     String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
     try {
       if (computedChecksumHex.equals(expectedChecksum)) {
+        invalidChecksumOccurred = false;
         checksumReporter.reportMatchingChecksum(
             expectedChecksum,
             computedChecksumHex,
@@ -367,7 +368,7 @@ public class QbicDataDownloader {
                   }
                 }
               } catch (IOException e) {
-                String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
+                String fileName = getFileName(dataSetFile);
                 LOG.error(e);
                 throw new DownloadException(
                     "Dataset " + fileName + " could not have been downloaded.");
@@ -380,6 +381,47 @@ public class QbicDataDownloader {
     Path path = Paths.get(pathPrefix.toString(), File.separator,
         determineFinalPathFromDataset(dataSetFile).toString());
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
+  }
+
+  private void deleteFile(DataSetFile file, Path prefix){
+    String filePath = System.getProperty("user.dir") +
+            File.separator +
+            prefix.toString() + File.separator +
+            determineFinalPathFromDataset(file).toString();
+    Path pathToDelete = Paths.get(filePath);
+    try {
+      Files.deleteIfExists(Paths.get(filePath + ".crc32"));
+      Files.deleteIfExists(pathToDelete);
+    } catch(IOException e){
+      LOG.error(String.format("File %s could not be deleted. Reason: %s", getFileName(file), e.getMessage()), e);
+    }
+  }
+
+  private void repeatDownload(Map<DataSetFile, Path> invalidChecksumFiles) throws DownloadException {
+    if (!invalidChecksumFiles.isEmpty()) {
+      System.out.println("Downloading files with checksum mismatches again:");
+      for (DataSetFile file : invalidChecksumFiles.keySet()) {
+        Path prefix = invalidChecksumFiles.get(file);
+        deleteFile(file, prefix);
+        System.out.printf("Invalid file %s has been deleted.%n", getFileName(file));
+        int downloadAttempt = 1;
+        while (downloadAttempt <= DEFAULT_DOWNLOAD_ATTEMPTS) {
+          try {
+            downloadFile(file, prefix);
+            writeCRC32Checksum(file, prefix);
+
+            downloadAttempt = DEFAULT_DOWNLOAD_ATTEMPTS + 1;
+          } catch (IOException e) {
+            LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
+            LOG.error(String.format("Reason: %s", e.getMessage()), e);
+            downloadAttempt++;
+            if (downloadAttempt > DEFAULT_DOWNLOAD_ATTEMPTS) {
+              throw new DownloadException("Maximum number of download attempts reached. Dataset " + getFileName(file) + " could not have been downloaded.");
+            }
+          }
+        }
+      }
+    }
   }
 
   public void notifyUserOfInvalidChecksum(DataSetFile file) {
