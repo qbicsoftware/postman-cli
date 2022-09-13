@@ -13,16 +13,12 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSe
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import life.qbic.ChecksumReporter;
-import life.qbic.DownloadException;
-import life.qbic.DownloadRequest;
-import life.qbic.FileSystemWriter;
-import life.qbic.util.ProgressBar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,6 +30,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
+import life.qbic.ChecksumReporter;
+import life.qbic.DownloadException;
+import life.qbic.DownloadRequest;
+import life.qbic.FileSystemWriter;
+import life.qbic.util.ProgressBar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class QbicDataDownloader {
 
@@ -113,14 +116,14 @@ public class QbicDataDownloader {
     // a suffix was provided -> only download files which contain the suffix string
     if (suffixes!=null && !suffixes.isEmpty()) {
       LOG.info(String.format("The suffix %s has been found", suffixes.toArray()));
-      for (String ident : ids) {
-        LOG.info(String.format("Downloading filtered files for provided identifier %s", ident));
+      for (String identifier : ids) {
+        LOG.info(String.format("Downloading filtered files for provided identifier %s", identifier));
         List<Map<String, List<DataSetFile>>> foundSuffixFilteredIDs =
-            qbicDataFinder.findAllSuffixFilteredIDs(ident, suffixes);
+            qbicDataFinder.findAllSuffixFilteredIDs(identifier, suffixes);
 
-        LOG.info(String.format("Number of files found: %s", countDatasets(foundSuffixFilteredIDs)));
+        LOG.info(String.format("Number of files found: %s", countFiles(foundSuffixFilteredIDs)));
 
-        downloadFilesFilteredByIDs(ident, foundSuffixFilteredIDs);
+        downloadFilesFilteredByIDs(identifier, foundSuffixFilteredIDs);
       }
     } else {
       // no suffix was supplied -> download or print all datasets
@@ -160,9 +163,9 @@ public class QbicDataDownloader {
     return filePath.substring(filePath.lastIndexOf("/") + 1);
   }
 
-  private <T> Integer countDatasets(List<Map<String, List<T>>> datasetsPerSampleCode) {
+  private Integer countFiles(List<Map<String, List<DataSetFile>>> filesPerSampleCode) {
     int sum = 0;
-    for (Map<String, List<T>> entry : datasetsPerSampleCode) {
+    for (Map<String, List<DataSetFile>> entry : filesPerSampleCode) {
       for (String sampleCode : entry.keySet()) {
         sum += entry.get(sampleCode).size();
       }
@@ -170,7 +173,7 @@ public class QbicDataDownloader {
     return sum;
   }
 
-  public static <T> int countDatasets(Map<String, List<T>> datasetsPerSampleCode) {
+  public static <T> int countFiles(Map<String, List<T>> datasetsPerSampleCode) {
     return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
   }
 
@@ -178,12 +181,12 @@ public class QbicDataDownloader {
    * Downloads all IDs which were previously filtered by suffixes
    *
    * @param ident Sample identifiers
-   * @param foundFilteredDatasets
+   * @param foundFilteredFiles already filtered data.
    */
   private void downloadFilesFilteredByIDs(String ident,
-      List<Map<String, List<DataSetFile>>> foundFilteredDatasets) {
+      List<Map<String, List<DataSetFile>>> foundFilteredFiles) {
 
-    for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredDatasets) {
+    for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredFiles) {
       for (List<DataSetFile> files : filesPerSample.values()) {
         if(files.isEmpty()){
           LOG.info("Nothing to download.");
@@ -275,8 +278,11 @@ public class QbicDataDownloader {
                         File.separator +
                         prefix.toString() + File.separator +
                         filePath.toString());
-        newFile.getParentFile().mkdirs();
-        OutputStream os = new FileOutputStream(newFile);
+        boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
+        if (!successfullyCreatedDirectory) {
+          LOG.error("Could not create directory " + newFile.getParentFile());
+        }
+        OutputStream os = Files.newOutputStream(newFile.toPath());
         String fileName = filePath.getFileName().toString();
         ProgressBar progressBar =
                 new ProgressBar(

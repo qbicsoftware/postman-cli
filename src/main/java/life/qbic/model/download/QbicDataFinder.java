@@ -95,8 +95,8 @@ public class QbicDataFinder {
    * Finds all IDs of files filtered by a suffix
    *
    * @param ident sample ID
-   * @param suffixes
-   * @return
+   * @param suffixes the suffixes to filter for
+   * @return a filtered list of sample, dataset file maps
    */
   public List<Map<String, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
       List<String> suffixes) {
@@ -108,7 +108,9 @@ public class QbicDataFinder {
       List<DataSet> sampleDataSets = entry.getValue();
       List<DataSetFile> filteredFiles =
           filterDataSetBySuffix(sampleDataSets, suffixes);
-
+      if (filteredFiles.isEmpty()) {
+        continue;
+      }
       Map<String, List<DataSetFile>> result = new HashMap<>();
       result.put(sampleCode, filteredFiles);
       filteredDatasets.add(result);

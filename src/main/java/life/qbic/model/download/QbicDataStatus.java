@@ -47,7 +47,7 @@ public class QbicDataStatus {
         for (String ident : ids) {
             Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
             System.out.printf("Number of datasets found for identifier %s : %s%n", ident,
-                    QbicDataDownloader.countDatasets(foundDataSets));
+                    QbicDataDownloader.countFiles(foundDataSets));
             if (foundDataSets.size() > 0) {
                 printFileInformation(foundDataSets);
             }
