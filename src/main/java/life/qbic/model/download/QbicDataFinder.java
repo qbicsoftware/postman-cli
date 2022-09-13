@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import life.qbic.QbicDataLoaderRegexUtil;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,23 +24,19 @@ public class QbicDataFinder {
 
   private static final Logger LOG = LogManager.getLogger(QbicDataFinder.class);
 
-  private IApplicationServerApi applicationServer;
+  private final IApplicationServerApi applicationServer;
 
-  private IDataStoreServerApi dataStoreServer;
+  private final IDataStoreServerApi dataStoreServer;
 
-  private String sessionToken;
-
-  private String filterType;
+  private final String sessionToken;
 
   public QbicDataFinder(
       IApplicationServerApi applicationServer,
       IDataStoreServerApi dataStoreServer,
-      String sessionToken,
-      String filterType) {
+      String sessionToken) {
     this.applicationServer = applicationServer;
     this.dataStoreServer = dataStoreServer;
     this.sessionToken = sessionToken;
-    this.filterType = filterType;
   }
 
   /**
@@ -70,7 +65,7 @@ public class QbicDataFinder {
   /**
    * Finds all datasets of a given sampleID, even those of its children - recursively
    *
-   * @param sampleId
+   * @param sampleId provided by user
    * @return all found datasets for a given sampleID
    */
   public Map<String, List<DataSet>> findAllDatasetsRecursive(String sampleId) {
@@ -97,27 +92,11 @@ public class QbicDataFinder {
   }
 
   /**
-   * Calls groovy code Filters all IDs by provided regex patterns
-   *
-   * @param ident
-   * @param regexPatterns
-   * @return
-   */
-  public List<DataSetFile> findAllRegexFilteredIDs(String ident, List<String> regexPatterns) {
-    // TODO adjust for datasets per sample
-    //List<DataSet> allDatasets = findAllDatasetsRecursive(ident);
-
-    // TODO replace empty list
-    return QbicDataLoaderRegexUtil.findAllRegexFilteredIDsGroovy(
-        regexPatterns, new ArrayList<>(), dataStoreServer, sessionToken);
-  }
-
-  /**
    * Finds all IDs of files filtered by a suffix
    *
-   * @param ident
-   * @param suffixes
-   * @return
+   * @param ident sample ID
+   * @param suffixes the suffixes to filter for
+   * @return a filtered list of sample, dataset file maps
    */
   public List<Map<String, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
       List<String> suffixes) {
@@ -129,7 +108,9 @@ public class QbicDataFinder {
       List<DataSet> sampleDataSets = entry.getValue();
       List<DataSetFile> filteredFiles =
           filterDataSetBySuffix(sampleDataSets, suffixes);
-
+      if (filteredFiles.isEmpty()) {
+        continue;
+      }
       Map<String, List<DataSetFile>> result = new HashMap<>();
       result.put(sampleCode, filteredFiles);
       filteredDatasets.add(result);
@@ -187,7 +168,7 @@ public class QbicDataFinder {
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
 
-    // tell the API to fetch all descendents for each returned sample
+    // tell the API to fetch all descendants for each returned sample
     SampleFetchOptions fetchOptions = new SampleFetchOptions();
     DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
     dsFetchOptions.withType();

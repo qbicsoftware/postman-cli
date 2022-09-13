@@ -18,7 +18,7 @@
 
 A client software written in Java for dataset downloads from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
 
-We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from command line, in order to provide a quick data retreaval on server or cluster resources, where the download via the qPortal is impractical.
+We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from command line, in order to provide a quick data retrieval on server or cluster resources, where the download via the qPortal is impractical.
 
 ## How to run
 
@@ -32,18 +32,18 @@ You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at lea
 
 ### Configuration
 
-Postman uses picocli file arguments. Therefore a config file has to be passed with the '@' prefix to its path:    
+Postman uses picocli file arguments. Therefore, a config file has to be passed with the '@' prefix to its path:    
 Example:
 ```bash
 java -jar postman.jar -u <user> <sample> @path/to/config.txt 
 ```
 The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
-For example: To set the ApplicationServerURL to another URL we have to use:
+For example: To set the ApplicationServerURL to another URL we have to use: <code>-as [URL]</code>
 
-```properties
--as [URL]   
+To use our openBIS URL we write the following lines in the config file:  
+(Anything beginning with '#' is a comment)   
+```
 
-# Therefore to use our openbis URL we write the following line in the config file (Anything beginning with '#' is a comment):    
 # Set the AS_URL (ApplicationServerURL) to the value defined below   
 -as https://qbis.qbic.uni-tuebingen.de/openbis/openbis
 
@@ -52,8 +52,9 @@ For example: To set the ApplicationServerURL to another URL we have to use:
 -as [URL]
 # DSS_URL (DataStore Server URL)     
 -dss [URL]
+
 ```
-A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided postman uses the default values set in the PostmanCommandLineOptions class.
+A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided, postman uses the default values set in the PostmanCommandLineOptions class.
 
 If no config file or commandline option is provided, Postman will resort to the defaults set here: [Defaults](https://github.com/qbicsoftware/postman-cli/blob/development/src/main/java/life/qbic/io/commandline/PostmanCommandLineOptions.java).    
 Hence, the default AS is set to: `https://qbis.qbic.uni-tuebingen.de/openbis/openbis`  
@@ -62,40 +63,128 @@ and the DSS defaults to: `https://qbis.qbic.uni-tuebingen.de/datastore_server`
 ## How to use
 
 ### Options
-Just execute postman with `java -jar postman-cli.jar` or `java -jar postman.jar -h` to get an overview of the options:
+Just execute postman with `java -jar postman-cli.jar` or `java -jar postman.jar -h` to get an overview of the options available for all subcommands:
 ```bash
 
-~$ java -jar postman.jar                    
-Usage: <main class> [-h] [-b=<bufferMultiplier>] [-f=<filePath>]
-                    [-t=<datasetType>] -u=<user> [SAMPLE_ID]...
-      [SAMPLE_ID]...          one or more QBiC sample ids
-  @/path/to/config.txt        config file which specifies the AS and DSS url
-  -as, --as_url=<url>         AS URL 
-  -dss,--dss_url=<url>        DSS URL 
-  -u,  --user=<user>          openBIS user name 
-  -f,  --file=<filePath>      a file with line-separated list of QBiC sample ids
-  -t,  --type=<datasetType>   filter for a given openBIS dataset type
-  -s,  --type=<suffix>        filter for a given openBIS file suffix
-  -r,  --type=<regex>         filter for a given openBIS file regex    
-  -p,  --env-password=<passwordEnvVariable> 
-                              provide the name of an environment variable to read in
-                               the password from
-  -b,  --buffer-size=<bufferMultiplier>
-                              a integer muliple of 1024 bytes (default). Only
-                                change this if you know what you are doing.
-  -h, --help                  display a help message
+~$ java -jar postman.jar     
+               
+Usage: Postman [-h] [-as=<as_url>] [-dss=<dss_url>] [-f=<filePath>] [-p=<passwordEnvVariable>] [-t=<datasetType>]
+               -u=<user> [SAMPLE_ID...] [COMMAND]
+
+Parameters:
+      [SAMPLE_ID...]         one or more QBiC sample ids
+
+Options:
+  -u,   --user=<user>                         openBIS user name
+  -p,   --env-password=<passwordEnvVariable>  provide the name of an environment variable to read in the password from
+  -as,  --as_url=<as_url>                     ApplicationServer URL
+  -dss, --dss_url=<dss_url>                   DataStoreServer URL
+  -f,   --file=<filePath>                     a file with line-separated list of QBiC sample ids
+  -h,   --help                                display a help message and exit
+  
+Commands:
+  download  Download data from OpenBis
+  status    provides the status of the datasets of the given identifiers
+
+Optional: specify a config file by running postman with '@/path/to/config.txt'.
+
 ```
-### Provide a QBiC ID
+To get only the options for one of the two subcommands, execute postman with `java -jar postman.jar download -h` or `java -jar postman.jar status -h`.
+#### Provide a file with several QBiC IDs
+In order to download datasets from several samples at once, you can provide a manifest file consisting of multiple, line-separated, QBiC IDs.
+Hand it to postman with the `-f` option.
+
+For example:
+
+```bash
+java -jar postman.jar download -s fastq.gz -f myids.txt -u <userid>  
+```
+
+with `myids.txt` like:
+
+```
+QTEST001AE
+QTEST002BD
+...
+```
+
+postman will automatically iterate over the IDs.
+
+#### Provide your password with an environment variable
+If you do not want to provide your password manually every time, you can use the `-p` option instead.
+Set a new environment variable with your password as a value. Then, you can execute postman with `-p <VARIABLE_NAME>` and postman will automatically read in your password from the environment variable.
+###### Setting environment variable
+###### - Windows  
+To set your environment variable for the current cmd session, you can use this command:
+```bash  
+~$ set VARIABLE_NAME=password 
+```
+Make sure to not put a space before and after the "=" sign.  
+This command will not define a permanent environment variable. It will only be accessible during the current cmd session.
+If you want to assign it permanently, you have to add it via the advanced settings of the Control Panel.   
+######- MacOs/Linux  
+  To set your environment variable for the current cmd session, you can use this command:
+```bash  
+~$ export VARIABLE_NAME=password 
+```
+Make sure to not put a space before and after the "=" sign.  
+This command will not define a permanent environment variable. It will only be accessible during the current cmd session.
+If you want to assign it permanently, you have to add the export command to your bash shells startup script.
+
+### Subcommands 
+There are two available subcommands to use: `download` and `status`.  
+It is **always required** to specify one of these subcommands.
+
+### `Status`
+Provide this subcommand if you only want to get information about the given samples. **Nothing will be downloaded**.  
+For each Sample ID, all available datasets and the files they contain will be shown as output on the terminal. 
+For all files size, registration date and name are provided.
+
+The easiest way to access the information about a sample is to execute postman with the subcommand `status` together with the QBiC ID for that sample and your username (same as the one you use for the qPortal):
+```bash
+~$ java -jar postman.jar status -u <your_qbic_username> <QBiC Sample ID>
+```
+Postman will prompt you for your password, which is the password from your QBiC user account.
+After a successful authentication, a possible result can look like this:
+```bash
+[bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar status -u bbbfs01 NGSQSTTS016A8 NGSQSTTS019AW                                                                                          
+Provide password for user 'bbbfs01':     
+
+Number of datasets found for identifier NGSQSTTS016A8  : 1
+        Dataset 20211215154407692-131872 (NGSQSTTS016A8)
+                2013-05-07 03:57:15     testfile        1048576 Bytes
+                2013-05-07 03:57:15     testfile        1048576 Bytes
+                
+Number of datasets found for identifier NGSQSTTS019AW : 2
+        Dataset 20211215154408961-131875 (NGSQSTTS019AW)
+                2013-05-07 03:57:15     testfile        1048576 Bytes
+        Dataset 20211215154408961-131873 (NGSQSTTS019AW)
+                2013-05-07 03:57:15     testfile        1048576 Bytes
+
+```
+##### Dataset vs. File
+The structure of samples can sometimes seem a little confusing. To clarify the difference of a dataset and a file, you can take a look at the example result above.
+- A sample can contain several datasets. 
+- All of these datasets can contain several files.  
+&rarr; a dataset is a collection of files and does not contain any data itself.  
+&rarr; the files are the ones that contain data, depending on the file format.
+
+Another thing to think of is that samples as well as datasets can be empty.
+
+### `Download`
+The other available subcommand is `download`.
+With this command, existing files will be downloaded for the provided sample IDs.
+
 The simplest scenario is, that you want to download a dataset/datasets from a sample. Just provide the QBiC ID for that sample and your username (same as the one you use for the qPortal):
 ```bash
-~$ java -jar postman.jar -u <your_qbic_username> <QBiC Sample ID>
+~$ java -jar postman.jar download -u <your_qbic_username> <QBiC Sample ID>
 ```
-postman will prompt you for your password, which is the password from your QBiC user account.
+Postman will prompt you for your password, which is the password from your QBiC user account.
 
 After you have provided your password and authenticate successfully, postman tries to download all datasets that are registered for that given sample ID and downloads them to the current working directory:
 
 ```bash
-[bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar -u bbbfs01 QMFKD003AG                                                                                          
+[bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar download -u bbbfs01 QMFKD003AG                                                                                          
 Provide password for user 'bbbfs01':                                                                                                                           
                                                                                                                                                                
 12:32:02.038 [main] INFO  life.qbic.App - OpenBis login returned with 0                                                                                        
@@ -107,136 +196,29 @@ Provide password for user 'bbbfs01':
 QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###                                                            ]    0.38/7.94   Gb       
 ```
 
-### Download all data of a project
-
-If you want to download all datasets for a given project id, you can use the wildcard symbol `*`:
-
-```bash
-~$ java -jar postman.jar -u <your_qbic_username> <QBiC Project ID>*
+##### Options
+When using the subcommand `download`, there are further options available:
 ```
-
-### Filter for file suffix
+ -c, --conserve             Conserve the file path structure during download
+ -b, --buffer-size=<arg1>   Dataset download performance can be improved by increasing this value with a multiple of 1024 (default). 
+                            Only change this if you know what you are doing.
+ -s, --suffix=<arg2>        Returns all files of datasets containing the supplied suffix
+```
+###### Filter for file suffix
 
 For example filter for fastq files only:
 
 ```
-java -jar postman.jar -s fastq.gz -u <userid> QMFKD003AG  
+java -jar postman.jar download -s fastq.gz -u <userid> QMFKD003AG  
 ```
+###### Download all data of a project
 
-### Filter for openBIS dataset type (recommended for advanced users)
-
-You can filter for dataset types, using the `-t` option and one of the following openBIS dataset types we are currently using:
-
+If you want to download all datasets for a given project id, you can use the wildcard symbol `*` and have to specify the project code inside of quotation marks:
 ```bash
-ARR
-AUDIT
-CEL
-CSV
-EXPERIMENTAL_DESIGN
-EXPRESSION_MATRIX
-FASTQ
-FEATUREXML
-GZ
-IDXML
-JPG
-MAT
-MZML
-PDF
-PNG
-Q_BMI_IMAGING_DATA
-Q_DOCUMENT
-Q_EXT_MS_QUALITYCONTROL_RESULTS
-Q_EXT_NGS_QUALITYCONTROL_RESULTS
-Q_FASTA_DATA
-Q_HT_QPCR_DATA
-Q_MA_AGILENT_DATA
-Q_MA_CHIP_IMAGE
-Q_MA_RAW_DATA
-Q_MS_MZML_DATA
-Q_MS_RAW_DATA
-Q_MTB_ARCHIVE
-Q_NGS_HLATYPING_DATA
-Q_NGS_IMMUNE_MONITORING_DATA
-Q_NGS_IONTORRENT_DATA
-Q_NGS_MAPPING_DATA
-Q_NGS_MTB_DATA
-Q_NGS_RAW_DATA
-Q_NGS_READ_MATCH_ARCHIVE
-Q_NGS_VARIANT_CALLING_DATA
-Q_PEPTIDE_DATA
-Q_PROJECT_DATA
-Q_TEST
-Q_VACCINE_CONSTRUCT_DATA
-Q_WF_EDDA_BENCHMARK_LOGS
-Q_WF_EDDA_BENCHMARK_RESULTS
-Q_WF_MA_QUALITYCONTROL_LOGS
-Q_WF_MA_QUALITYCONTROL_RESULTS
-Q_WF_MS_INDIVIDUALIZED_PROTEOME_LOGS
-Q_WF_MS_INDIVIDUALIZED_PROTEOME_RESULTS
-Q_WF_MS_LIGANDOMICS_ID_LOGS
-Q_WF_MS_LIGANDOMICS_ID_RESULTS
-Q_WF_MS_LIGANDOMICS_QC_LOGS
-Q_WF_MS_LIGANDOMICS_QC_RESULTS
-Q_WF_MS_MAXQUANT_LOGS
-Q_WF_MS_MAXQUANT_ORIGINAL_OUT
-Q_WF_MS_MAXQUANT_RESULTS
-Q_WF_MS_PEAKPICKING_LOGS
-Q_WF_MS_PEPTIDEID_LOGS
-Q_WF_MS_PEPTIDEID_RESULTS
-Q_WF_MS_QUALITYCONTROL_LOGS
-Q_WF_MS_QUALITYCONTROL_RESULTS
-Q_WF_NGS_16S_TAXONOMIC_PROFILING_LOGS
-Q_WF_NGS_EPITOPE_PREDICTION_LOGS
-Q_WF_NGS_EPITOPE_PREDICTION_RESULTS
-Q_WF_NGS_HLATYPING_LOGS
-Q_WF_NGS_HLATYPING_RESULTS
-Q_WF_NGS_MAPPING_LOGS
-Q_WF_NGS_MAPPING_RESULTS
-Q_WF_NGS_QUALITYCONTROL_LOGS
-Q_WF_NGS_QUALITYCONTROL_RESULTS
-Q_WF_NGS_RNAEXPRESSIONANALYSIS_LOGS
-Q_WF_NGS_RNAEXPRESSIONANALYSIS_RESULTS
-Q_WF_NGS_SHRNA_COUNTING_LOGS
-Q_WF_NGS_SHRNA_COUNTING_RESULTS
-Q_WF_NGS_VARIANT_ANNOTATION_LOGS
-Q_WF_NGS_VARIANT_ANNOTATION_RESULTS
-Q_WF_NGS_VARIANT_CALLING_LOGS
-Q_WF_NGS_VARIANT_CALLING_RESULTS
-RAW
-SHA256SUM
-TAR
-UNKNOWN
-VCF
+~$ java -jar postman.jar -u <your_qbic_username> "<QBiC Project ID>*"
 ```
 
-### Filter for file regex
-
-You can filter for files by a provided regex, using the `-r` option:    
-Example: -r .jobscript.FastQC.*
-
-Please note that depending on your favorite shell, you may need quote your regex. 
-
-### Provide a file with several QBiC IDs
-In order to download datasets from several samples at once, you can provide a manifest file consisting of multiple, line-separated, QBiC IDs.
-Hand it to postman with the `-f` option.
-
-For example:
-
-```bash
-java -jar postman.jar -s fastq.gz -f myids.txt -u <userid>  
-```
-
-with `myids.txt` like:
-
-```
-QTEST001AE
-QTEST002BD
-...
-```
-
-postman will automatically iterate over the IDs and try to download them.
-
-### File integrity check
+##### File integrity check
 Postman computes the CRC32 checksum for all input streams using the native Java utility class [CRC32](https://docs.oracle.com/javase/8/docs/api/java/util/zip/CRC32.html). Postman favors [`CheckedInputStream`](https://docs.oracle.com/javase/7/docs/api/java/util/zip/CheckedInputStream.html)
 over the traditional InputStream, and promotes the CRC checksum computation.
 
