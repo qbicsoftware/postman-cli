@@ -36,7 +36,7 @@ public class Authentication {
         try {
             sessionToken = applicationServer.login(user, password);
         } catch (Exception e) {
-            throw new ConnectionException("Connection to openBIS server failed.");
+            throw new ConnectionException("Connection to openBIS server failed.", e);
         }
         if (sessionToken == null || sessionToken.isEmpty()) {
             throw new AuthenticationException("Authentication failed. Are you using the correct "

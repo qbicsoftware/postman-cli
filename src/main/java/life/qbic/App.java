@@ -1,5 +1,8 @@
 package life.qbic;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.model.download.Authentication;
@@ -8,10 +11,6 @@ import life.qbic.model.download.ConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Optional;
 
 /**
  * postman for staging data from openBIS
@@ -77,6 +76,7 @@ public class App {
     try {
       authentication.login();
     } catch (ConnectionException e) {
+      LOG.error(e.getMessage(), e);
       LOG.error("Could not connect to QBiC's data source. Have you requested access to the "
           + "server? If not please write to support@qbic.zendesk.com");
       System.exit(1);
