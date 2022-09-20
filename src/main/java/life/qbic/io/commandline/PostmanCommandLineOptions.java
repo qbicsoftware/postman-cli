@@ -3,8 +3,8 @@ package life.qbic.io.commandline;
 import life.qbic.App;
 import life.qbic.io.parser.IdentifierParser;
 import life.qbic.model.download.Authentication;
+import life.qbic.model.download.QbicDataDisplay;
 import life.qbic.model.download.QbicDataDownloader;
-import life.qbic.model.download.QbicDataStatus;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -60,19 +60,19 @@ public class PostmanCommandLineOptions {
         qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes, qbicDataDownloader);
   }
 
-  @Command(name = "status",
-          description = "provides the status of the datasets of the given identifiers",
+  @Command(name = "display",
+          description = "displays information about the datasets of the given identifiers",
           usageHelpAutoWidth = true,
           sortOptions = false,
           descriptionHeading = "%nDescription: ",
           parameterListHeading = "%nParameters:%n",
           optionListHeading = "%nOptions:%n",
           footerHeading = "%n")
-    void status() throws IOException {
+    void display() throws IOException {
       Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
-      QbicDataStatus qbicDataStatus = new QbicDataStatus(as_url, dss_url, authentication.getSessionToken());
+      QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url, dss_url, authentication.getSessionToken());
       ids = verifyProvidedIdentifiers();
-      qbicDataStatus.GetDataStatus(ids);
+      qbicDataDisplay.GetInformation(ids);
     }
 
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids", scope = CommandLine.ScopeType.INHERIT)

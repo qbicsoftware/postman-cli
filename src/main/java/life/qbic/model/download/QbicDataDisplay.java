@@ -9,18 +9,21 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import life.qbic.model.units.UnitDisplay;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class QbicDataStatus {
+import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
+
+public class QbicDataDisplay {
     private final IApplicationServerApi applicationServer;
     private final IDataStoreServerApi dataStoreServer;
     String sessionToken;
 
-    public QbicDataStatus(
+    public QbicDataDisplay(
             String AppServerUri,
             String DataServerUri,
             String sessionToken) {
@@ -41,42 +44,47 @@ public class QbicDataStatus {
         }
     }
 
-    public void GetDataStatus(List<String> ids){
+    public void GetInformation(List<String> ids){
         QbicDataFinder qbicDataFinder =
                 new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
         for (String ident : ids) {
             Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-            System.out.printf("Number of datasets found for identifier %s : %s%n", ident,
+            System.out.printf("Number of datasets found for identifier %s : %s %n", ident,
                     QbicDataDownloader.countFiles(foundDataSets));
             if (foundDataSets.size() > 0) {
-                printFileInformation(foundDataSets);
+                printInformation(foundDataSets, ident);
             }
         }
     }
 
-    private void printFileInformation(Map<String, List<DataSet>> sampleDataSets) {
+    private void printInformation(Map<String, List<DataSet>> sampleDataSets, String id) {
+        for (Map.Entry<String, List<DataSet>> entry : sampleDataSets.entrySet()) {
+            for (DataSet dataSet : entry.getValue()) {
+                Date registrationDate = dataSet.getRegistrationDate();
+                String iso_registrationDate = registrationDate.toInstant().atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+                System.out.printf("# Dataset %s %n",entry.getKey());
+                System.out.printf("# Source %s %n",id);
+                System.out.printf("# Registration %s %n", iso_registrationDate);
 
-            for (Map.Entry<String, List<DataSet>> entry : sampleDataSets.entrySet()) {
-                for (DataSet dataSet : entry.getValue()) {
-                    DataSetPermId permID = dataSet.getPermId();
-                    System.out.printf("\tDataset %s (%s)%n",permID,entry.getKey());
-                    List<DataSetFile> dataSetFiles = getFiles(permID);
-                    for (DataSetFile file : dataSetFiles) {
-                        String filePath = file.getPermId().getFilePath();
-                        String name = filePath.substring(filePath.lastIndexOf("/") + 1);
-                        Long length = file.getFileLength();
-                        String unit = "Bytes";
-                        Date registrationDate = file.getDataStore().getRegistrationDate();
-                        String iso_registrationDate = registrationDate.toInstant().atZone(ZoneId.systemDefault())
-                                .toLocalDateTime()
-                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+                DataSetPermId permID = dataSet.getPermId();
+                List<DataSetFile> dataSetFiles = getFiles(permID);
+                for (DataSetFile file : dataSetFiles) {
+                    String filePath = file.getPermId().getFilePath();
+                    String name = filePath.substring(filePath.lastIndexOf("/") + 1);
+                    long size = file.getFileLength();
+                    // units used here have base 2
+                    UnitDisplay bestUnit = determineBestUnitType(size);
+                    Double finalSize = Math.round(10.0 * bestUnit.convertBytesToUnit(size)) / 10.0;
 
-                        System.out.printf("\t\t%s\t%s\t%s %s%n",iso_registrationDate, name, length, unit);
-                    }
-                    System.out.print("\n");
+                    System.out.printf("%s\t%s %s%n", name, finalSize, bestUnit.getUnitType());
                 }
+                System.out.print("\n");
             }
+        }
     }
+
 
     private List<DataSetFile> getFiles(DataSetPermId permID) {
         DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
