@@ -278,9 +278,11 @@ public class QbicDataDownloader {
                         File.separator +
                         prefix.toString() + File.separator +
                         filePath.toString());
-        boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
-        if (!successfullyCreatedDirectory) {
-          LOG.error("Could not create directory " + newFile.getParentFile());
+        if(!newFile.getParentFile().exists()) {
+          boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
+          if (!successfullyCreatedDirectory) {
+            LOG.error("Could not create directory " + newFile.getParentFile());
+          }
         }
         OutputStream os = Files.newOutputStream(newFile.toPath());
         String fileName = filePath.getFileName().toString();
