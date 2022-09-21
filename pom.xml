@@ -127,6 +127,7 @@
               <archive>
                 <manifest>
                   <mainClass>life.qbic.App</mainClass>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                 </manifest>
               </archive>
               <descriptorRefs>

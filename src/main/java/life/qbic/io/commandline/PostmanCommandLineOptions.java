@@ -26,7 +26,8 @@ import static java.util.Objects.nonNull;
         parameterListHeading = "%nParameters:%n",
         optionListHeading = "%nOptions:%n",
         commandListHeading = "%nCommands:%n",
-        footerHeading = "%n")
+        footerHeading = "%n",
+        versionProvider = VersionProvider.class)
 
 public class PostmanCommandLineOptions {
    //parameters to format the help message
@@ -115,6 +116,11 @@ public class PostmanCommandLineOptions {
           description = "display a help message and exit",
           scope = CommandLine.ScopeType.INHERIT)
   public boolean helpRequested = false;
+
+  @Option(names = {"-V", "--version"},
+          versionHelp = true,
+          description = "display version info")
+  public boolean versionInfoRequested;
 
   private List<String> verifyProvidedIdentifiers() throws IOException {
     if ((isNull(ids) || ids.isEmpty()) && isNull(filePath)) {
