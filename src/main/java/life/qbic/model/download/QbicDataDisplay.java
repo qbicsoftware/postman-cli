@@ -11,6 +11,9 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +23,12 @@ public class QbicDataDisplay {
     private final IApplicationServerApi applicationServer;
     private final IDataStoreServerApi dataStoreServer;
     String sessionToken;
+
+    DateTimeFormatter utcDateTimeFormatterIso8601 = new DateTimeFormatterBuilder()
+        .appendPattern("yyyy-MM-dd'T'hh:mm:ss")
+        .appendZoneId()
+        .toFormatter()
+        .withZone(ZoneOffset.UTC);
 
     public QbicDataDisplay(
             String AppServerUri,
@@ -59,7 +68,7 @@ public class QbicDataDisplay {
         for (Map.Entry<String, List<DataSet>> entry : sampleDataSets.entrySet()) {
             for (DataSet dataSet : entry.getValue()) {
                 Date registrationDate = dataSet.getRegistrationDate();
-                String iso_registrationDate = registrationDate.toInstant().toString();
+                String iso_registrationDate = utcDateTimeFormatterIso8601.format(registrationDate.toInstant());
                 System.out.printf("# Dataset %s %n",entry.getKey());
                 System.out.printf("# Source %s %n",id);
                 System.out.printf("# Registration %s %n", iso_registrationDate);
