@@ -1,5 +1,7 @@
 package life.qbic.model.download;
 
+import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
+
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
@@ -9,14 +11,10 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import life.qbic.model.units.UnitDisplay;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
-import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
+import life.qbic.model.units.UnitDisplay;
 
 public class QbicDataDisplay {
     private final IApplicationServerApi applicationServer;
@@ -61,9 +59,7 @@ public class QbicDataDisplay {
         for (Map.Entry<String, List<DataSet>> entry : sampleDataSets.entrySet()) {
             for (DataSet dataSet : entry.getValue()) {
                 Date registrationDate = dataSet.getRegistrationDate();
-                String iso_registrationDate = registrationDate.toInstant().atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss"));
+                String iso_registrationDate = registrationDate.toInstant().toString();
                 System.out.printf("# Dataset %s %n",entry.getKey());
                 System.out.printf("# Source %s %n",id);
                 System.out.printf("# Registration %s %n", iso_registrationDate);
