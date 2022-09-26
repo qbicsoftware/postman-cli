@@ -1,5 +1,11 @@
 package life.qbic.io.commandline;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 import life.qbic.App;
 import life.qbic.io.parser.IdentifierParser;
 import life.qbic.model.download.Authentication;
@@ -9,15 +15,9 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 // main command with format specifiers for the usage help message
-@Command(name = "Postman",
+@Command(name = "postman-cli",
         footer = "Optional: specify a config file by running postman with '@/path/to/config.txt'. Details can be found in the README.",
         description = "A client software for dataset downloads from QBiC's data management system openBIS.",
         usageHelpAutoWidth = true,
@@ -60,15 +60,15 @@ public class PostmanCommandLineOptions {
         qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes, qbicDataDownloader);
   }
 
-  @Command(name = "display",
-          description = "displays information about the datasets of the given identifiers",
+  @Command(name = "list",
+          description = "lists all the datasets found for the given identifiers",
           usageHelpAutoWidth = true,
           sortOptions = false,
           descriptionHeading = "%nDescription: ",
           parameterListHeading = "%nParameters:%n",
           optionListHeading = "%nOptions:%n",
           footerHeading = "%n")
-    void display() throws IOException {
+    void listDatasets() throws IOException {
       Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
       QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url, dss_url, authentication.getSessionToken());
       ids = verifyProvidedIdentifiers();
