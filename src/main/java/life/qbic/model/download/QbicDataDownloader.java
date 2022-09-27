@@ -119,7 +119,7 @@ public class QbicDataDownloader {
       LOG.info(String.format("The suffix %s has been found", suffixes.toArray()));
       for (String identifier : ids) {
         LOG.info(String.format("Downloading filtered files for provided identifier %s", identifier));
-        List<Map<String, List<DataSetFile>>> foundSuffixFilteredIDs =
+        List<Map<Sample, List<DataSetFile>>> foundSuffixFilteredIDs =
             qbicDataFinder.findAllSuffixFilteredIDs(identifier, suffixes);
 
         LOG.info(String.format("Number of files found: %s", countFiles(foundSuffixFilteredIDs)));
@@ -136,9 +136,8 @@ public class QbicDataDownloader {
             int datasetDownloadReturnCode = -1;
             try {
               // for the sample code and aggregates datasets per sample code
-              List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
-              //FIXME migrate type
-              //datasets.add(foundDataSets);
+              List<Map<Sample, List<DataSet>>> datasets = new ArrayList<>();
+              datasets.add(foundDataSets);
               datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(datasets);
             } catch (NullPointerException e) {
               LOG.error(
@@ -165,14 +164,9 @@ public class QbicDataDownloader {
     return filePath.substring(filePath.lastIndexOf("/") + 1);
   }
 
-  private Integer countFiles(List<Map<String, List<DataSetFile>>> filesPerSampleCode) {
-    int sum = 0;
-    for (Map<String, List<DataSetFile>> entry : filesPerSampleCode) {
-      for (String sampleCode : entry.keySet()) {
-        sum += entry.get(sampleCode).size();
-      }
-    }
-    return sum;
+  private Integer countFiles(List<Map<Sample, List<DataSetFile>>> filesPerSampleCode) {
+    return filesPerSampleCode.stream()
+        .mapToInt(QbicDataDownloader::countFiles).sum();
   }
 
   public static <T> int countFiles(Map<Sample, List<T>> datasetsPerSampleCode) {
@@ -186,9 +180,9 @@ public class QbicDataDownloader {
    * @param foundFilteredFiles already filtered data.
    */
   private void downloadFilesFilteredByIDs(String ident,
-      List<Map<String, List<DataSetFile>>> foundFilteredFiles) {
+      List<Map<Sample, List<DataSetFile>>> foundFilteredFiles) {
 
-    for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredFiles) {
+    for (Map<Sample, List<DataSetFile>> filesPerSample : foundFilteredFiles) {
       for (List<DataSetFile> files : filesPerSample.values()) {
         if(files.isEmpty()){
           LOG.info("Nothing to download.");
@@ -196,11 +190,13 @@ public class QbicDataDownloader {
           LOG.info("Initialize download ...");
           int filesDownloadReturnCode = -1;
           try {
-              for (String sampleCode : filesPerSample.keySet()) {
-                List<DataSetFile> filteredDataSetFiles = withoutDirectories(
-                        filesPerSample.get(sampleCode));
+              for (Entry<Sample, List<DataSetFile>> entry : filesPerSample.entrySet()) {
+                List<DataSetFile> dataSetFiles = entry.getValue();
+                String sampleCode = entry.getKey().getCode();
+
+                List<DataSetFile> filteredDataSetFiles = withoutDirectories(dataSetFiles);
                 final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
-                        sampleCode);
+                    sampleCode);
                 filesDownloadReturnCode = downloadFiles(downloadRequest);
               }
           } catch (NullPointerException e) {
@@ -226,17 +222,17 @@ public class QbicDataDownloader {
    * @param dataSetList A list of data sets
    * @return 0 if successful, 1 else
    */
-  private int downloadDataset(List<Map<String, List<DataSet>>> dataSetList) {
-    for (Map<String, List<DataSet>> dataSetsPerSample : dataSetList) {
+  private int downloadDataset(List<Map<Sample, List<DataSet>>> dataSetList) {
+    for (Map<Sample, List<DataSet>> dataSetsPerSample : dataSetList) {
       downloadDataset(dataSetsPerSample);
     }
     return 0;
   }
 
-  private void downloadDataset(Map<String, List<DataSet>> dataSetsPerSample) {
+  private void downloadDataset(Map<Sample, List<DataSet>> dataSetsPerSample) {
 
-    for (Entry<String, List<DataSet>> entry : dataSetsPerSample.entrySet()) {
-      String sampleCode = entry.getKey();
+    for (Entry<Sample, List<DataSet>> entry : dataSetsPerSample.entrySet()) {
+      String sampleCode = entry.getKey().getCode();
       List<DataSet> sampleDatasets = entry.getValue();
       for (DataSet sampleDataset : sampleDatasets) {
         DataSetPermId permID = sampleDataset.getPermId();

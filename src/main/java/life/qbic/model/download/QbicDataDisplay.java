@@ -68,21 +68,20 @@ public class QbicDataDisplay {
 
     private void printInformation(Map<Sample, List<DataSet>> sampleDataSets) {
         for (Map.Entry<Sample, List<DataSet>> entry : sampleDataSets.entrySet()) {
-//            System.out.println(
-//                "entry.getKey().getType().getCode() = " + entry.getKey().getType().getCode());
-//            System.out.println("entry.getKey().getCode() = " + entry.getKey().getCode());
-
-//            System.out.println("entry.getValue().size() = " + entry.getValue().size());
             for (DataSet dataSet : entry.getValue()) {
+                List<DataSetFile> dataSetFiles = getFiles(dataSet.getPermId());
+
+                //skip if no files found
+                if (dataSetFiles.isEmpty()) {
+                    continue;
+                }
                 Sample analyte = searchAnalyteParent(entry.getKey());
                 Date registrationDate = dataSet.getRegistrationDate();
                 String iso_registrationDate = utcDateTimeFormatterIso8601.format(registrationDate.toInstant());
-                System.out.printf("# Dataset %s %n", dataSet.getPermId());
+                System.out.printf("# Dataset %s (%s)%n", dataSet.getSample().getCode(), dataSet.getPermId());
                 System.out.printf("# Source %s %n", analyte.getCode());
                 System.out.printf("# Registration %s %n", iso_registrationDate);
 
-                DataSetPermId permID = dataSet.getPermId();
-                List<DataSetFile> dataSetFiles = getFiles(permID);
                 for (DataSetFile file : dataSetFiles) {
                     String filePath = file.getPermId().getFilePath();
                     String name = filePath.substring(filePath.lastIndexOf("/") + 1);

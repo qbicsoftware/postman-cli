@@ -78,6 +78,7 @@ public class QbicDataFinder {
     SampleFetchOptions fetchOptions = new SampleFetchOptions();
     DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
     dsFetchOptions.withType();
+    dsFetchOptions.withSample();
     fetchOptions.withType();
     fetchOptions.withChildrenUsing(fetchOptions);
     fetchOptions.withParentsUsing(fetchOptions);
@@ -100,21 +101,21 @@ public class QbicDataFinder {
    * @param suffixes the suffixes to filter for
    * @return a filtered list of sample, dataset file maps
    */
-  public List<Map<String, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
+  public List<Map<Sample, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
       List<String> suffixes) {
     Map<Sample, List<DataSet>> allDatasets = findAllDatasetsRecursive(ident);
-    List<Map<String, List<DataSetFile>>> filteredDatasets = new ArrayList<>();
+    List<Map<Sample, List<DataSetFile>>> filteredDatasets = new ArrayList<>();
 
     for (Entry<Sample, List<DataSet>> entry : allDatasets.entrySet()) {
-      String sampleCode = entry.getKey().getCode(); //FIXME hotfix
       List<DataSet> sampleDataSets = entry.getValue();
       List<DataSetFile> filteredFiles =
           filterDataSetBySuffix(sampleDataSets, suffixes);
       if (filteredFiles.isEmpty()) {
         continue;
       }
-      Map<String, List<DataSetFile>> result = new HashMap<>();
-      result.put(sampleCode, filteredFiles);
+      Sample sample = entry.getKey();
+      Map<Sample, List<DataSetFile>> result = new HashMap<>();
+      result.put(sample, filteredFiles);
       filteredDatasets.add(result);
     }
 
@@ -128,6 +129,7 @@ public class QbicDataFinder {
       // using the datasetID
       DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
       criteria.withDataSet().withCode().thatEquals(ds.getCode());
+      criteria.withDataSet().withSample();
       SearchResult<DataSetFile> result =
           dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
       List<DataSetFile> files = result.getObjects();
