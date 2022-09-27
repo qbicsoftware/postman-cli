@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import life.qbic.model.units.UnitDisplay;
 
 public class QbicDataDisplay {
@@ -60,21 +61,24 @@ public class QbicDataDisplay {
             System.out.printf("Number of datasets found for identifier %s : %s %n", ident,
                     QbicDataDownloader.countFiles(foundDataSets));
             if (foundDataSets.size() > 0) {
-                printInformation(foundDataSets, ident);
+                printInformation(foundDataSets);
             }
         }
     }
 
-    private void printInformation(Map<Sample, List<DataSet>> sampleDataSets, String id) {
+    private void printInformation(Map<Sample, List<DataSet>> sampleDataSets) {
         for (Map.Entry<Sample, List<DataSet>> entry : sampleDataSets.entrySet()) {
-            System.out.println(
-                "entry.getKey().getType().getCode() = " + entry.getKey().getType().getCode());
-            System.out.println("entry.getValue().size() = " + entry.getValue().size());
+//            System.out.println(
+//                "entry.getKey().getType().getCode() = " + entry.getKey().getType().getCode());
+//            System.out.println("entry.getKey().getCode() = " + entry.getKey().getCode());
+
+//            System.out.println("entry.getValue().size() = " + entry.getValue().size());
             for (DataSet dataSet : entry.getValue()) {
+                Sample analyte = searchAnalyteParent(entry.getKey());
                 Date registrationDate = dataSet.getRegistrationDate();
                 String iso_registrationDate = utcDateTimeFormatterIso8601.format(registrationDate.toInstant());
-                System.out.printf("# Dataset %s %n",entry.getKey().getCode());
-                System.out.printf("# Source %s %n",id);
+                System.out.printf("# Dataset %s %n", dataSet.getPermId());
+                System.out.printf("# Source %s %n", analyte.getCode());
                 System.out.printf("# Registration %s %n", iso_registrationDate);
 
                 DataSetPermId permID = dataSet.getPermId();
@@ -92,6 +96,20 @@ public class QbicDataDisplay {
                 System.out.print("\n");
             }
         }
+    }
+
+    /**
+     * Searches the parents for a Q_TEST_SAMPLE assuming at most one Q_TEST_SAMPLE exists in the parent samples.
+     * If not Q_TEST_SAMPLE was found, the original sample is returned.
+     * @param sample the sample to which a dataset is attached to
+     * @return the Q_TEST_SAMPLE parent if exists, the sample itself otherwise.
+     */
+    private Sample searchAnalyteParent(Sample sample) {
+        Optional<Sample> firstTestSample = sample.getParents().stream()
+            .filter(
+                it -> it.getType().getCode().equals("Q_TEST_SAMPLE"))
+            .findFirst();
+        return firstTestSample.orElse(sample);
     }
 
 

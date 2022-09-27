@@ -78,9 +78,10 @@ public class QbicDataFinder {
     SampleFetchOptions fetchOptions = new SampleFetchOptions();
     DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
     dsFetchOptions.withType();
-    fetchOptions.withChildrenUsing(fetchOptions);
-    fetchOptions.withDataSetsUsing(dsFetchOptions);
     fetchOptions.withType();
+    fetchOptions.withChildrenUsing(fetchOptions);
+    fetchOptions.withParentsUsing(fetchOptions);
+    fetchOptions.withDataSetsUsing(dsFetchOptions);
 
     SearchResult<Sample> result =
         applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
