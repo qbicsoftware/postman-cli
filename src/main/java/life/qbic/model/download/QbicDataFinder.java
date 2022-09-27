@@ -46,14 +46,14 @@ public class QbicDataFinder {
    * @param visitedSamples map with samples and datasets already visited.
    */
   private static void fillWithDescendantDatasets(Sample sample,
-      Map<String, List<DataSet>> visitedSamples) {
-    if (visitedSamples.containsKey(sample.getCode())) {
+      Map<Sample, List<DataSet>> visitedSamples) {
+    if (visitedSamples.containsKey(sample)) {
       return;
     }
 
     List<Sample> children = sample.getChildren();
     List<DataSet> foundDataSets = sample.getDataSets();
-    visitedSamples.put(sample.getCode(), foundDataSets);
+    visitedSamples.put(sample, foundDataSets);
     // recursion end
     if (children.size() > 0) {
       for (Sample child : children) {
@@ -68,8 +68,8 @@ public class QbicDataFinder {
    * @param sampleId provided by user
    * @return all found datasets for a given sampleID
    */
-  public Map<String, List<DataSet>> findAllDatasetsRecursive(String sampleId) {
-    Map<String, List<DataSet>> dataSetsBySampleId = new HashMap<>();
+  public Map<Sample, List<DataSet>> findAllDatasetsRecursive(String sampleId) {
+    Map<Sample, List<DataSet>> dataSetsBySample = new HashMap<>();
 
     SampleSearchCriteria criteria = new SampleSearchCriteria();
     criteria.withCode().thatEquals(sampleId);
@@ -80,15 +80,16 @@ public class QbicDataFinder {
     dsFetchOptions.withType();
     fetchOptions.withChildrenUsing(fetchOptions);
     fetchOptions.withDataSetsUsing(dsFetchOptions);
+    fetchOptions.withType();
 
     SearchResult<Sample> result =
         applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
     List<Sample> samples = result.getObjects();
 
     for (Sample sample : samples) {
-      fillWithDescendantDatasets(sample, dataSetsBySampleId);
+      fillWithDescendantDatasets(sample, dataSetsBySample);
     }
-    return dataSetsBySampleId;
+    return dataSetsBySample;
   }
 
   /**
@@ -100,11 +101,11 @@ public class QbicDataFinder {
    */
   public List<Map<String, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
       List<String> suffixes) {
-    Map<String, List<DataSet>> allDatasets = findAllDatasetsRecursive(ident);
+    Map<Sample, List<DataSet>> allDatasets = findAllDatasetsRecursive(ident);
     List<Map<String, List<DataSetFile>>> filteredDatasets = new ArrayList<>();
 
-    for (Entry<String, List<DataSet>> entry : allDatasets.entrySet()) {
-      String sampleCode = entry.getKey();
+    for (Entry<Sample, List<DataSet>> entry : allDatasets.entrySet()) {
+      String sampleCode = entry.getKey().getCode(); //FIXME hotfix
       List<DataSet> sampleDataSets = entry.getValue();
       List<DataSetFile> filteredFiles =
           filterDataSetBySuffix(sampleDataSets, suffixes);

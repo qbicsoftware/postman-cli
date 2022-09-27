@@ -6,6 +6,7 @@ import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
@@ -55,7 +56,7 @@ public class QbicDataDisplay {
         QbicDataFinder qbicDataFinder =
                 new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
         for (String ident : ids) {
-            Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+            Map<Sample, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
             System.out.printf("Number of datasets found for identifier %s : %s %n", ident,
                     QbicDataDownloader.countFiles(foundDataSets));
             if (foundDataSets.size() > 0) {
@@ -64,12 +65,15 @@ public class QbicDataDisplay {
         }
     }
 
-    private void printInformation(Map<String, List<DataSet>> sampleDataSets, String id) {
-        for (Map.Entry<String, List<DataSet>> entry : sampleDataSets.entrySet()) {
+    private void printInformation(Map<Sample, List<DataSet>> sampleDataSets, String id) {
+        for (Map.Entry<Sample, List<DataSet>> entry : sampleDataSets.entrySet()) {
+            System.out.println(
+                "entry.getKey().getType().getCode() = " + entry.getKey().getType().getCode());
+            System.out.println("entry.getValue().size() = " + entry.getValue().size());
             for (DataSet dataSet : entry.getValue()) {
                 Date registrationDate = dataSet.getRegistrationDate();
                 String iso_registrationDate = utcDateTimeFormatterIso8601.format(registrationDate.toInstant());
-                System.out.printf("# Dataset %s %n",entry.getKey());
+                System.out.printf("# Dataset %s %n",entry.getKey().getCode());
                 System.out.printf("# Source %s %n",id);
                 System.out.printf("# Registration %s %n", iso_registrationDate);
 

@@ -4,6 +4,7 @@ import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownload;
@@ -128,7 +129,7 @@ public class QbicDataDownloader {
     } else {
       // no suffix was supplied -> download or print all datasets
         for (String ident : ids) {
-          Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+          Map<Sample, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
           if (foundDataSets.size() > 0) {
             LOG.info(String.format("Downloading files for identifier %s", ident));
             LOG.info("Initialize download ...");
@@ -136,7 +137,8 @@ public class QbicDataDownloader {
             try {
               // for the sample code and aggregates datasets per sample code
               List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
-              datasets.add(foundDataSets);
+              //FIXME migrate type
+              //datasets.add(foundDataSets);
               datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(datasets);
             } catch (NullPointerException e) {
               LOG.error(
@@ -173,7 +175,7 @@ public class QbicDataDownloader {
     return sum;
   }
 
-  public static <T> int countFiles(Map<String, List<T>> datasetsPerSampleCode) {
+  public static <T> int countFiles(Map<Sample, List<T>> datasetsPerSampleCode) {
     return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
   }
 
