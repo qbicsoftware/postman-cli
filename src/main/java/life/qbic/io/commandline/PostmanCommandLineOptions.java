@@ -57,7 +57,7 @@ public class PostmanCommandLineOptions {
                           conservePath,
                           authentication.getSessionToken());
         ids = verifyProvidedIdentifiers();
-        qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes, qbicDataDownloader);
+        qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes);
   }
 
   @Command(name = "list",
@@ -72,7 +72,7 @@ public class PostmanCommandLineOptions {
       Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
       QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url, dss_url, authentication.getSessionToken());
       ids = verifyProvidedIdentifiers();
-      qbicDataDisplay.GetInformation(ids);
+      qbicDataDisplay.getInformation(ids);
     }
 
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids", scope = CommandLine.ScopeType.INHERIT)

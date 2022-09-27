@@ -27,8 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import life.qbic.ChecksumReporter;
@@ -54,6 +52,7 @@ public class QbicDataDownloader {
           new FileSystemWriter(
                   Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_valid_files.txt"),
                   Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_invalid_files.txt"));
+  private QbicDataFinder qbicDataFinder;
 
   /**
    * Constructor for a QBiCDataLoaderInstance
@@ -88,6 +87,7 @@ public class QbicDataDownloader {
     } else {
       this.dataStoreServer = null;
     }
+    qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
   }
 
   private static Path getTopDirectory(Path path) {
@@ -104,11 +104,7 @@ public class QbicDataDownloader {
    * Downloads the files that the user requested
    * checks whether the filtering option suffix has been passed and applies filtering if needed
    */
-  public void downloadRequestedFilesOfDatasets(
-          List<String> ids, List<String> suffixes, QbicDataDownloader qbicDataDownloader) {
-    QbicDataFinder qbicDataFinder =
-        new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
-
+  public void downloadRequestedFilesOfDatasets(List<String> ids, List<String> suffixes) {
     LOG.info(
         String.format(
             "%s provided openBIS identifiers have been found: %s",
@@ -122,7 +118,8 @@ public class QbicDataDownloader {
         List<Map<Sample, List<DataSetFile>>> foundSuffixFilteredIDs =
             qbicDataFinder.findAllSuffixFilteredIDs(identifier, suffixes);
 
-        LOG.info(String.format("Number of files found: %s", countFiles(foundSuffixFilteredIDs)));
+        LOG.info(String.format("Number of files found: %s",
+            foundSuffixFilteredIDs.stream().mapToInt(innerMap -> innerMap.values().size()).sum()));
 
         downloadFilesFilteredByIDs(identifier, foundSuffixFilteredIDs);
       }
@@ -138,7 +135,7 @@ public class QbicDataDownloader {
               // for the sample code and aggregates datasets per sample code
               List<Map<Sample, List<DataSet>>> datasets = new ArrayList<>();
               datasets.add(foundDataSets);
-              datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(datasets);
+              datasetDownloadReturnCode = downloadDataset(datasets);
             } catch (NullPointerException e) {
               LOG.error(
                   "Datasets were found by the application server, but could not be found on the datastore server for "
@@ -164,14 +161,7 @@ public class QbicDataDownloader {
     return filePath.substring(filePath.lastIndexOf("/") + 1);
   }
 
-  private Integer countFiles(List<Map<Sample, List<DataSetFile>>> filesPerSampleCode) {
-    return filesPerSampleCode.stream()
-        .mapToInt(QbicDataDownloader::countFiles).sum();
-  }
 
-  public static <T> int countFiles(Map<Sample, List<T>> datasetsPerSampleCode) {
-    return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
-  }
 
   /**
    * Downloads all IDs which were previously filtered by suffixes
@@ -194,7 +184,7 @@ public class QbicDataDownloader {
                 List<DataSetFile> dataSetFiles = entry.getValue();
                 String sampleCode = entry.getKey().getCode();
 
-                List<DataSetFile> filteredDataSetFiles = withoutDirectories(dataSetFiles);
+                List<DataSetFile> filteredDataSetFiles = QbicDataFinder.withoutDirectories(dataSetFiles);
                 final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
                     sampleCode);
                 filesDownloadReturnCode = downloadFiles(downloadRequest);
@@ -241,19 +231,12 @@ public class QbicDataDownloader {
         SearchResult<DataSetFile> result =
             this.dataStoreServer.searchFiles(sessionToken, criteria,
                 new DataSetFileFetchOptions());
-        List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
+        List<DataSetFile> filteredDataSetFiles = QbicDataFinder.withoutDirectories(result.getObjects());
         final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
             sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
         downloadFiles(downloadRequest);
       }
     }
-  }
-
-  public static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
-    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
-    return dataSetFiles.stream()
-        .filter(notADirectory)
-        .collect(Collectors.toList());
   }
 
   private void downloadFile(DataSetFile dataSetFile, Path prefix) throws IOException {

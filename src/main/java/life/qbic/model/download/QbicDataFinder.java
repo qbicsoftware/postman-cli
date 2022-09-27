@@ -4,6 +4,7 @@ import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.fetchoptions.DataSetFetchOptions;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.fetchoptions.SampleFetchOptions;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.search.SampleSearchCriteria;
@@ -16,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import life.qbic.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,6 +63,22 @@ public class QbicDataFinder {
         fillWithDescendantDatasets(child, visitedSamples);
       }
     }
+  }
+
+  public static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
+    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
+    return dataSetFiles.stream()
+        .filter(notADirectory)
+        .collect(Collectors.toList());
+  }
+
+  public List<DataSetFile> getFiles(DataSetPermId permID) {
+      DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
+      criteria.withDataSet().withCode().thatEquals(permID.getPermId());
+      SearchResult<DataSetFile> result =
+          dataStoreServer.searchFiles(sessionToken, criteria,
+                      new DataSetFileFetchOptions());
+      return withoutDirectories(result.getObjects());
   }
 
   /**
@@ -205,4 +224,5 @@ public class QbicDataFinder {
 
     return filteredDatasets;
   }
+
 }
