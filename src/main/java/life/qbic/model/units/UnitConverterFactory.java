@@ -2,29 +2,29 @@ package life.qbic.model.units;
 
 public class UnitConverterFactory {
 
-  static double kiloByteFactor = Math.pow(1024, 1);
+  private static final double KILO_BYTE_FACTOR = Math.pow(1000, 1);
 
-  static double megaByteFactor = Math.pow(1024, 2);
+  private static final double MEGA_BYTE_FACTOR = Math.pow(1000, 2);
 
-  static double gigaByteFactor = Math.pow(1024, 3);
+  private static final double GIGA_BYTE_FACTOR = Math.pow(1000, 3);
 
-  static double teraByteFactor = Math.pow(1024, 4);
+  private static final double TERA_BYTE_FACTOR = Math.pow(1000, 4);
 
   public static UnitDisplay determineBestUnitType(long bytes) {
 
-    if (bytes > teraByteFactor) {
+    if (bytes > TERA_BYTE_FACTOR) {
       return new TeraBytes();
     }
 
-    if (bytes > gigaByteFactor) {
+    if (bytes > GIGA_BYTE_FACTOR) {
       return new GigaBytes();
     }
 
-    if (bytes > megaByteFactor) {
+    if (bytes > MEGA_BYTE_FACTOR) {
       return new MegaBytes();
     }
 
-    if (bytes > kiloByteFactor) {
+    if (bytes > KILO_BYTE_FACTOR) {
       return new KiloBytes();
     }
 

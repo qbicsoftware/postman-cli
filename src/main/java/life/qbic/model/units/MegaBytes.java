@@ -2,9 +2,7 @@ package life.qbic.model.units;
 
 class MegaBytes implements UnitDisplay {
 
-  private String unit = "Mb";
-
-  private double divisor = Math.pow(1024, 2);
+  private final double divisor = Math.pow(1000, 2);
 
   @Override
   public double convertBytesToUnit(long bytes) {
@@ -13,6 +11,6 @@ class MegaBytes implements UnitDisplay {
 
   @Override
   public String getUnitType() {
-    return this.unit;
+    return "MB";
   }
 }
