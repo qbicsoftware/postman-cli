@@ -99,8 +99,7 @@ public class QbicDataDisplay {
                     .collect(Collectors.toList());
 
                 for (DataSetFile file : sortedFiles) {
-                    String filePath = file.getPermId().getFilePath();
-                    String name = filePath.substring(filePath.lastIndexOf("/") + 1);
+                    String name = getFileName(file);
                     String fileSize = FileSizeFormatter.format(FileSize.of(file.getFileLength()),6);
                     System.out.printf("%s\t%s%n", fileSize, name);
                 }
