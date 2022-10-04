@@ -86,9 +86,9 @@ public class ProgressBar {
     FileSize totalSize = FileSize.of(totalFileSize);
     progressBar.append(
         String.format(
-            "%s/%s [%s] (%.02f Mb/s)",
+            "%s / %s [%s] (%.02f Mb/s)",
             FileSizeFormatter.format(downloadedSize, 6),
-            FileSizeFormatter.format(totalSize, 6),
+            FileSizeFormatter.format(totalSize),
             remainingTime,
             downloadSpeed));
     return progressBar.toString();

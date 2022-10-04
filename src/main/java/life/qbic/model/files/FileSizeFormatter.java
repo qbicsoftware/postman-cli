@@ -56,11 +56,11 @@ public class FileSizeFormatter {
    * @return a string representing the file size in human-readable format
    */
   public static String format(FileSize fileSize, int minWidth) {
-    minWidth = Math.min(minWidth, 1);
+    minWidth = Math.max(minWidth, 1);
     Unit bestUnit = Unit.bestFor(fileSize);
     DecimalFormat decimalFormat = new DecimalFormat("#0.00");
     decimalFormat.setRoundingMode(RoundingMode.HALF_UP);
-    return String.format("%" + minWidth + "s%-2s",
+    return String.format("%" + minWidth + "s %2s",
         decimalFormat.format(bestUnit.scaledValue(fileSize.bytes())), bestUnit.symbol());
   }
 

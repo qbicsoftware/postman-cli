@@ -96,7 +96,7 @@ public class QbicDataDisplay {
                 for (DataSetFile file : dataSetFiles) {
                     String filePath = file.getPermId().getFilePath();
                     String name = filePath.substring(filePath.lastIndexOf("/") + 1);
-                    String fileSize = FileSizeFormatter.format(FileSize.of(file.getFileLength()),3);
+                    String fileSize = FileSizeFormatter.format(FileSize.of(file.getFileLength()),6);
                     System.out.printf("%s\t%s%n", fileSize, name);
                 }
                 System.out.print("\n");
