@@ -84,7 +84,7 @@ Options:
   
 Commands:
   download  Download data from OpenBis
-  list      List all available datasets for the given identifiers and get further information
+  list      List all available datasets for the given identifiers with additional metadata 
 
 Optional: specify a config file by running postman with '@/path/to/config.txt'.
 
