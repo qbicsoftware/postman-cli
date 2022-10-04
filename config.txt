@@ -3,7 +3,9 @@
 # with your value of choice (e.g. https://qbis.qbic.uni-tuebingen.de/openbis/openbis as value for -as)
 
 # Set the AS_URL (ApplicationServerURL) to the value defined below
--as https://qbis.qbic.uni-tuebingen.de/openbis/openbis
+# -as https://qbis.qbic.uni-tuebingen.de/openbis/openbis
+-as https://openbis1605test.am10.uni-tuebingen.de/openbis/openbis
 
 # Set the DSS_URL (DataStoreServerURL) to the value defined below
--dss https://qbis.qbic.uni-tuebingen.de:444/datastore_server
+# -dss https://qbis.qbic.uni-tuebingen.de:444/datastore_server
+-dss https://openbis1605test.am10.uni-tuebingen.de/datastore_server
