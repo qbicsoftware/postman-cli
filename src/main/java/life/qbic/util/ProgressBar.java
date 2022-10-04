@@ -5,8 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 import jline.TerminalFactory;
-import life.qbic.model.units.UnitConverterFactory;
-import life.qbic.model.units.UnitDisplay;
+import life.qbic.model.files.FileSize;
+import life.qbic.model.files.FileSizeFormatter;
 
 
 public class ProgressBar {
@@ -14,15 +14,11 @@ public class ProgressBar {
   private final int BARSIZE = TerminalFactory.get().getWidth() / 3;
   private final int MAXFILENAMESIZE = TerminalFactory.get().getWidth() / 3;
   private float nextProgressJump;
-  private float stepSize;
-  private String fileName;
-  private Long totalFileSize;
+  private final float stepSize;
+  private final String fileName;
+  private final Long totalFileSize;
   private Long downloadedSize;
-  private UnitDisplay unitDisplay;
-  private long start;
-
-  public ProgressBar() {
-  }
+  private final long start;
 
   public ProgressBar(String fileName, long totalFileSize) {
     this.fileName = shortenFileName(fileName);
@@ -30,7 +26,6 @@ public class ProgressBar {
     this.downloadedSize = 0L;
     this.stepSize = (float) totalFileSize / (float) BARSIZE;
     this.nextProgressJump = this.stepSize;
-    this.unitDisplay = UnitConverterFactory.determineBestUnitType(totalFileSize);
     this.start = System.currentTimeMillis();
   }
 
@@ -87,15 +82,15 @@ public class ProgressBar {
     }
 
     progressBar.append("]\t");
+    FileSize downloadedSize = FileSize.of(this.downloadedSize);
+    FileSize totalSize = FileSize.of(totalFileSize);
     progressBar.append(
         String.format(
-            "%6.02f/%-7.02f%s [%s] (%.02f Mb/s)",
-            unitDisplay.convertBytesToUnit(this.downloadedSize),
-            unitDisplay.convertBytesToUnit(this.totalFileSize),
-            unitDisplay.getUnitType(),
+            "%s/%s [%s] (%.02f Mb/s)",
+            FileSizeFormatter.format(downloadedSize, 6),
+            FileSizeFormatter.format(totalSize, 6),
             remainingTime,
             downloadSpeed));
-
     return progressBar.toString();
   }
 
