@@ -17,13 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import life.qbic.util.StringUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class QbicDataFinder {
-
-  private static final Logger LOG = LogManager.getLogger(QbicDataFinder.class);
-
+  
   private final IApplicationServerApi applicationServer;
 
   private final IDataStoreServerApi dataStoreServer;
@@ -148,57 +144,5 @@ public class QbicDataFinder {
       }
     }
     return filesFiltered;
-  }
-
-  /**
-   * Search method for a given openBIS identifier.
-   *
-   * <p>LIKELY NOT USEFUL ANYMORE - RECURSIVE METHOD SHOULD WORK JUST AS WELL -> use
-   * findAllDatasetsRecursive
-   *
-   * @param sampleId An openBIS sample ID
-   * @return A list of all data sets attached to the sample ID
-   */
-  @Deprecated
-  public List<DataSet> findAllDatasets(
-      String sampleId,
-      IApplicationServerApi applicationServer,
-      String sessionToken,
-      String filterType) {
-    SampleSearchCriteria criteria = new SampleSearchCriteria();
-    criteria.withCode().thatEquals(sampleId);
-
-    // tell the API to fetch all descendants for each returned sample
-    SampleFetchOptions fetchOptions = new SampleFetchOptions();
-    DataSetFetchOptions dsFetchOptions = new DataSetFetchOptions();
-    dsFetchOptions.withType();
-    fetchOptions.withChildrenUsing(fetchOptions);
-    fetchOptions.withDataSetsUsing(dsFetchOptions);
-    SearchResult<Sample> result =
-        applicationServer.searchSamples(sessionToken, criteria, fetchOptions);
-
-    // get all datasets of sample with provided sample code and all descendants
-    List<DataSet> foundDatasets = new ArrayList<>();
-    for (Sample sample : result.getObjects()) {
-      foundDatasets.addAll(sample.getDataSets());
-      for (Sample desc : sample.getChildren()) {
-        foundDatasets.addAll(desc.getDataSets());
-      }
-    }
-
-    if (filterType.isEmpty()) {
-      return foundDatasets;
-    }
-
-    List<DataSet> filteredDatasets = new ArrayList<>();
-    for (DataSet ds : foundDatasets) {
-      LOG.info(ds.getType().getCode() + " found.");
-      if (filterType.equals(ds.getType().getCode())) {
-
-        filteredDatasets.add(ds);
-      }
-    }
-
-    return filteredDatasets;
   }
 }
