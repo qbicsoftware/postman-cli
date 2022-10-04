@@ -84,12 +84,12 @@ Options:
   
 Commands:
   download  Download data from OpenBis
-  status    provides the status of the datasets of the given identifiers
+  list      List all available datasets for the given identifiers with additional metadata 
 
 Optional: specify a config file by running postman with '@/path/to/config.txt'.
 
 ```
-To get only the options for one of the two subcommands, execute postman with `java -jar postman.jar download -h` or `java -jar postman.jar status -h`.
+To get only the options for one of the two subcommands, execute postman with `java -jar postman.jar download -h` or `java -jar postman.jar list -h`.
 #### Provide a file with several QBiC IDs
 In order to download datasets from several samples at once, you can provide a manifest file consisting of multiple, line-separated, QBiC IDs.
 Hand it to postman with the `-f` option.
@@ -132,34 +132,40 @@ This command will not define a permanent environment variable. It will only be a
 If you want to assign it permanently, you have to add the export command to your bash shells startup script.
 
 ### Subcommands 
-There are two available subcommands to use: `download` and `status`.  
+There are two available subcommands to use: `download` and `list`.  
 It is **always required** to specify one of these subcommands.
 
-### `Status`
-Provide this subcommand if you only want to get information about the given samples. **Nothing will be downloaded**.  
-For each Sample ID, all available datasets and the files they contain will be shown as output on the terminal. 
-For all files size, registration date and name are provided.
+### `list`
+Provide this subcommand if you only want to get information about the given samples. **Nothing will be downloaded**.
 
-The easiest way to access the information about a sample is to execute postman with the subcommand `status` together with the QBiC ID for that sample and your username (same as the one you use for the qPortal):
+For each Sample ID, all available datasets and the files they contain will be listed as output on the terminal. 
+For all files size and name are provided. Additionally, registration date, size and source of each dataset are displayed.
+
+The easiest way to access the information about a sample is to execute postman with the subcommand `list` together with the QBiC ID for that sample and your username (same as the one you use for the qPortal):
 ```bash
-~$ java -jar postman.jar status -u <your_qbic_username> <QBiC Sample ID>
+~$ java -jar postman.jar list -u <your_qbic_username> <QBiC Sample ID>
 ```
 Postman will prompt you for your password, which is the password from your QBiC user account.
 After a successful authentication, a possible result can look like this:
 ```bash
-[bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar status -u bbbfs01 NGSQSTTS016A8 NGSQSTTS019AW                                                                                          
+[bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar list -u bbbfs01 NGSQSTTS016A8 NGSQSTTS019AW                                                                                          
 Provide password for user 'bbbfs01':     
 
-Number of datasets found for identifier NGSQSTTS016A8  : 1
-        Dataset 20211215154407692-131872 (NGSQSTTS016A8)
-                2013-05-07 03:57:15     testfile        1048576 Bytes
-                2013-05-07 03:57:15     testfile        1048576 Bytes
-                
-Number of datasets found for identifier NGSQSTTS019AW : 2
-        Dataset 20211215154408961-131875 (NGSQSTTS019AW)
-                2013-05-07 03:57:15     testfile        1048576 Bytes
-        Dataset 20211215154408961-131873 (NGSQSTTS019AW)
-                2013-05-07 03:57:15     testfile        1048576 Bytes
+Number of datasets found for identifier NGSQSTTS016A8 : 1
+# Dataset          NGSQSTTS016A8 (20211215154407692-131872)
+# Source           QSTTS016A8
+# Registration     2021-12-15T02:44:07Z
+# Size             2.10MB
+1.05MB  testfile1
+1.05MB  testfile2
+
+Number of datasets found for identifier NGSQSTTS019AW : 1
+# Dataset          NGSQSTTS019AW (20211215154408961-131875)
+# Source           QSTTS019AW
+# Registration     2021-12-15T02:44:09Z
+# Size             1.05MB
+1.05MB  testfile
+
 
 ```
 ##### Dataset vs. File
