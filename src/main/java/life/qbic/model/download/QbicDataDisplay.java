@@ -1,14 +1,11 @@
 package life.qbic.model.download;
 
-import static life.qbic.model.units.UnitConverterFactory.determineBestUnitType;
-
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import java.text.DecimalFormat;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -16,11 +13,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import life.qbic.model.units.UnitDisplay;
+import life.qbic.model.files.FileSize;
+import life.qbic.model.files.FileSizeFormatter;
 
 public class QbicDataDisplay {
-    private final IApplicationServerApi applicationServer;
-    private final IDataStoreServerApi dataStoreServer;
+
     String sessionToken;
 
     DateTimeFormatter utcDateTimeFormatterIso8601 = new DateTimeFormatterBuilder()
@@ -29,28 +26,28 @@ public class QbicDataDisplay {
         .toFormatter()
         .withZone(ZoneOffset.UTC);
 
-    DecimalFormat twoDigitsFormat = new DecimalFormat("#.00");
-
-    private QbicDataFinder qbicDataFinder;
+    private final QbicDataFinder qbicDataFinder;
 
     public QbicDataDisplay(
             String AppServerUri,
             String DataServerUri,
             String sessionToken) {
         this.sessionToken = sessionToken;
+        IApplicationServerApi applicationServer;
         if (!AppServerUri.isEmpty()) {
-            this.applicationServer =
+            applicationServer =
                     HttpInvokerUtils.createServiceStub(
                             IApplicationServerApi.class, AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
         } else {
-            this.applicationServer = null;
+            applicationServer = null;
         }
+        IDataStoreServerApi dataStoreServer;
         if (!DataServerUri.isEmpty()) {
-            this.dataStoreServer =
+            dataStoreServer =
                     HttpInvokerUtils.createStreamSupportingServiceStub(
                             IDataStoreServerApi.class, DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
         } else {
-            this.dataStoreServer = null;
+            dataStoreServer = null;
         }
         qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
     }
@@ -81,29 +78,26 @@ public class QbicDataDisplay {
                 }
 
                 long totalSize = dataSetFiles.stream().mapToLong(DataSetFile::getFileLength).sum();
-                UnitDisplay bestFittingUnit = determineBestUnitType(totalSize);
 
                 Sample analyte = searchAnalyteParent(entry.getKey());
                 Date registrationDate = dataSet.getRegistrationDate();
                 String iso_registrationDate = utcDateTimeFormatterIso8601.format(registrationDate.toInstant());
-                System.out.printf("# Dataset %s (%s)%n", dataSet.getSample().getCode(), dataSet.getPermId());
-                System.out.printf("# Source %s %n", analyte.getCode());
-                System.out.printf("# Registration %s %n", iso_registrationDate);
-                System.out.printf("# Size %s %s %n",
-                    twoDigitsFormat.format(bestFittingUnit.convertBytesToUnit(totalSize)),
-                    bestFittingUnit.getUnitType());
+                int columnWidth = 16;
+                System.out.printf("# %-" + columnWidth + "s %s (%s)%n", "Dataset",
+                    dataSet.getSample().getCode(),
+                    dataSet.getPermId());
+                System.out.printf("# %-" + columnWidth + "s %s%n", "Source", analyte.getCode());
+                System.out.printf("# %-" + columnWidth + "s %s%n", "Registration",
+                    iso_registrationDate);
+                System.out.printf("# %-" + columnWidth + "s %s%n", "Size",
+                    FileSizeFormatter.format(FileSize.of(totalSize)));
 
 
                 for (DataSetFile file : dataSetFiles) {
                     String filePath = file.getPermId().getFilePath();
                     String name = filePath.substring(filePath.lastIndexOf("/") + 1);
-                    long fileSize = file.getFileLength();
-                    // units used here have base 2
-                    UnitDisplay bestUnit = determineBestUnitType(fileSize);
-
-                    System.out.printf("%s\t%s %s%n", name,
-                        twoDigitsFormat.format(bestUnit.convertBytesToUnit(fileSize)),
-                        bestUnit.getUnitType());
+                    String fileSize = FileSizeFormatter.format(FileSize.of(file.getFileLength()),3);
+                    System.out.printf("%s\t%s%n", fileSize, name);
                 }
                 System.out.print("\n");
             }
