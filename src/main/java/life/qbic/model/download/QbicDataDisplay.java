@@ -9,10 +9,12 @@ import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import life.qbic.model.files.FileSize;
 import life.qbic.model.files.FileSizeFormatter;
 
@@ -92,8 +94,11 @@ public class QbicDataDisplay {
                 System.out.printf("# %-" + columnWidth + "s %s%n", "Size",
                     FileSizeFormatter.format(FileSize.of(totalSize)));
 
+                List<DataSetFile> sortedFiles = dataSetFiles.stream()
+                    .sorted(Comparator.comparing(QbicDataDisplay::getFileName))
+                    .collect(Collectors.toList());
 
-                for (DataSetFile file : dataSetFiles) {
+                for (DataSetFile file : sortedFiles) {
                     String filePath = file.getPermId().getFilePath();
                     String name = filePath.substring(filePath.lastIndexOf("/") + 1);
                     String fileSize = FileSizeFormatter.format(FileSize.of(file.getFileLength()),6);
@@ -102,6 +107,11 @@ public class QbicDataDisplay {
                 System.out.print("\n");
             }
         }
+    }
+
+    private static String getFileName(DataSetFile file) {
+        String filePath = file.getPermId().getFilePath();
+        return filePath.substring(filePath.lastIndexOf("/") + 1);
     }
 
     /**
