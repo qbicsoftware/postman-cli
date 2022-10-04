@@ -33,10 +33,9 @@ public class FileSizeFormatter {
 
     static Unit bestFor(FileSize fileSize) {
       return Arrays.stream(Unit.values())
-          .sorted(Comparator.comparing((Unit it) ->
-              it.divisor).reversed())
           .filter(it -> fileSize.bytes() >= it.divisor.longValueExact())
-          .findFirst()
+          .max(Comparator.comparing((Unit it) ->
+              it.divisor))
           .orElse(BYTE);
     }
 
