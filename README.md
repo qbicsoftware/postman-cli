@@ -67,21 +67,26 @@ Just execute postman with `java -jar postman-cli.jar` or `java -jar postman.jar 
 ```bash
 
 ~$ java -jar postman.jar     
-               
-Usage: Postman [-h] [-as=<as_url>] [-dss=<dss_url>] [-f=<filePath>] [-p=<passwordEnvVariable>] [-t=<datasetType>]
-               -u=<user> [SAMPLE_ID...] [COMMAND]
+Usage: postman-cli [-h] [-as=<as_url>] [-dss=<dss_url>] [-f=<filePath>]
+                   [-p=<passwordEnvVariable>] -u=<user> [-s=<suffix>[,
+                   <suffix>...]]... [SAMPLE_ID...] [COMMAND]
+
+Description:
+A client software for dataset downloads from QBiC\'s data management system openBIS.
 
 Parameters:
-      [SAMPLE_ID...]         one or more QBiC sample ids
+      [SAMPLE_ID...]      one or more QBiC sample ids
 
 Options:
-  -u,   --user=<user>                         openBIS user name
-  -p,   --env-password=<passwordEnvVariable>  provide the name of an environment variable to read in the password from
-  -as,  --as_url=<as_url>                     ApplicationServer URL
-  -dss, --dss_url=<dss_url>                   DataStoreServer URL
-  -f,   --file=<filePath>                     a file with line-separated list of QBiC sample ids
-  -h,   --help                                display a help message and exit
-  
+  -u, --user=<user>                         openBIS user name
+  -p, --env-password=<passwordEnvVariable>  provide the name of an environment variable to read
+                                              in the password from
+  -as, -as_url=<as_url>                     ApplicationServer URL
+  -dss, --dss_url=<dss_url>                 DataStoreServer URL
+  -f, --file=<filePath>                     a file with line-separated list of QBiC sample ids
+  -s, --suffix=<suffix>[,<suffix>...]       only include files ending with one of these suffixes
+  -h, --help                                display a help message and exit
+
 Commands:
   download  Download data from OpenBis
   list      List all available datasets for the given identifiers with additional metadata 
@@ -110,11 +115,29 @@ QTEST002BD
 
 postman will automatically iterate over the IDs.
 
+
+#### Filter for file suffix
+
+For example filter for fastq.gz files only:
+
+```
+java -jar postman.jar download -s fastq.gz -u <userid> QMFKD003AG  
+java -jar postman.jar list -s fastq.gz -u <userid> QMFKD003AG  
+```
+
+For example filter for fastq.gz and fastq files only:
+```
+java -jar postman.jar download -s fastq,fastq.gz -u <userid> QMFKD003AG  
+java -jar postman.jar list -s fastq,fastq.gz -u <userid> QMFKD003AG  
+```
+
 #### Provide your password with an environment variable
 If you do not want to provide your password manually every time, you can use the `-p` option instead.
 Set a new environment variable with your password as a value. Then, you can execute postman with `-p <VARIABLE_NAME>` and postman will automatically read in your password from the environment variable.
+
 ###### Setting environment variable
-###### - Windows  
+
+**Windows**  
 To set your environment variable for the current cmd session, you can use this command:
 ```bash  
 ~$ set VARIABLE_NAME=password 
@@ -122,7 +145,8 @@ To set your environment variable for the current cmd session, you can use this c
 Make sure to not put a space before and after the "=" sign.  
 This command will not define a permanent environment variable. It will only be accessible during the current cmd session.
 If you want to assign it permanently, you have to add it via the advanced settings of the Control Panel.   
-######- MacOs/Linux  
+
+**MacOs/Linux**  
   To set your environment variable for the current cmd session, you can use this command:
 ```bash  
 ~$ export VARIABLE_NAME=password 
@@ -208,14 +232,6 @@ When using the subcommand `download`, there are further options available:
  -c, --conserve             Conserve the file path structure during download
  -b, --buffer-size=<arg1>   Dataset download performance can be improved by increasing this value with a multiple of 1024 (default). 
                             Only change this if you know what you are doing.
- -s, --suffix=<arg2>        Returns all files of datasets containing the supplied suffix
-```
-###### Filter for file suffix
-
-For example filter for fastq files only:
-
-```
-java -jar postman.jar download -s fastq.gz -u <userid> QMFKD003AG  
 ```
 ###### Download all data of a project
 
@@ -239,4 +255,3 @@ They contain the computed and expected checksum as hex string plus the file path
 ```
 
 In addition, Postman writes the CRC32 checksum in an additional file `<file-name-of-checked-file>.crc32` and stores it in the working directory.
-

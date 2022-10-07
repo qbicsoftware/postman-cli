@@ -13,7 +13,9 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import life.qbic.model.files.FileSize;
 import life.qbic.model.files.FileSizeFormatter;
@@ -54,25 +56,35 @@ public class QbicDataDisplay {
         qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
     }
 
-    public void getInformation(List<String> ids){
+    public void getInformation(List<String> ids, List<String> suffixes){
         for (String ident : ids) {
             Map<Sample, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-            int fileCount = foundDataSets
+            int datasetCount = foundDataSets
                 .values().stream()
                 .mapToInt(List::size)
                 .sum();
             System.out.printf("Number of datasets found for identifier %s : %s %n", ident,
-                fileCount);
+                datasetCount);
             if (foundDataSets.size() > 0) {
-                printInformation(foundDataSets);
+                printInformation(foundDataSets, suffixes);
             }
         }
     }
 
-    private void printInformation(Map<Sample, List<DataSet>> sampleDataSets) {
+    private void printInformation(Map<Sample, List<DataSet>> sampleDataSets, List<String> suffixes) {
         for (Map.Entry<Sample, List<DataSet>> entry : sampleDataSets.entrySet()) {
             for (DataSet dataSet : entry.getValue()) {
-                List<DataSetFile> dataSetFiles = qbicDataFinder.getFiles(dataSet.getPermId());
+                Predicate<DataSetFile> fileFilter = it -> true;
+                if (Objects.nonNull(suffixes) && !suffixes.isEmpty()) {
+                    Predicate<DataSetFile> suffixFilter = file -> {
+                        String fileName = getFileName(file);
+                        return suffixes.stream()
+                            .map(String::trim)
+                            .anyMatch(fileName::endsWith);
+                    };
+                    fileFilter = fileFilter.and(suffixFilter);
+                }
+                List<DataSetFile> dataSetFiles = qbicDataFinder.getFiles(dataSet.getPermId(), fileFilter);
 
                 //skip if no files found
                 if (dataSetFiles.isEmpty()) {
