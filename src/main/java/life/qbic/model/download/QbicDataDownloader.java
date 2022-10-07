@@ -122,7 +122,6 @@ public class QbicDataDownloader {
             };
             fileFilter = fileFilter.and(suffixFilter);
           }
-          LOG.info("Initializing download ...");
           int datasetDownloadReturnCode = downloadDataset(foundDataSets, fileFilter);
           if (datasetDownloadReturnCode != 0) {
             LOG.error("Error while downloading dataset: " + ident);
@@ -159,6 +158,7 @@ public class QbicDataDownloader {
           LOG.info("Nothing to download for dataset " + sampleDataset.getPermId() + ".");
           continue;
         }
+
         final DownloadRequest downloadRequest = new DownloadRequest(files, sampleCode,
             DEFAULT_DOWNLOAD_ATTEMPTS);
         int filesDownloadedSuccessfully = downloadFiles(downloadRequest);
