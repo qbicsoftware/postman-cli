@@ -12,14 +12,11 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import life.qbic.util.StringUtil;
 
 public class QbicDataFinder {
 
@@ -61,20 +58,14 @@ public class QbicDataFinder {
     }
   }
 
-  public static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
-    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
-    return dataSetFiles.stream()
-        .filter(notADirectory)
-        .collect(Collectors.toList());
-  }
-
-  public List<DataSetFile> getFiles(DataSetPermId permID) {
+  public List<DataSetFile> getFiles(DataSetPermId permID, Predicate<DataSetFile> fileFilter) {
       DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
       criteria.withDataSet().withCode().thatEquals(permID.getPermId());
-      SearchResult<DataSetFile> result =
-          dataStoreServer.searchFiles(sessionToken, criteria,
-                      new DataSetFileFetchOptions());
-      return withoutDirectories(result.getObjects());
+    List<DataSetFile> files = dataStoreServer
+        .searchFiles(sessionToken, criteria, new DataSetFileFetchOptions())
+        .getObjects();
+    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
+    return files.stream().filter(notADirectory.and(fileFilter)).collect(Collectors.toList());
   }
 
   /**
@@ -107,65 +98,5 @@ public class QbicDataFinder {
       fillWithDescendantDatasets(sample, dataSetsBySample);
     }
     return dataSetsBySample;
-  }
-
-  /**
-   * Finds all IDs of files filtered by a suffix
-   *
-   * @param ident sample ID
-   * @param suffixes the suffixes to filter for
-   * @return a filtered list of sample, dataset file maps
-   */
-  public List<Map<Sample, List<DataSetFile>>> findAllSuffixFilteredIDs(String ident,
-      List<String> suffixes) {
-    Map<Sample, List<DataSet>> allDatasets = findAllDatasetsRecursive(ident);
-    List<Map<Sample, List<DataSetFile>>> filteredDatasets = new ArrayList<>();
-
-    for (Entry<Sample, List<DataSet>> entry : allDatasets.entrySet()) {
-      List<DataSet> sampleDataSets = entry.getValue();
-      List<DataSetFile> filteredFiles =
-          filterDataSetBySuffix(sampleDataSets, suffixes);
-      if (filteredFiles.isEmpty()) {
-        continue;
-      }
-      Sample sample = entry.getKey();
-      Map<Sample, List<DataSetFile>> result = new HashMap<>();
-      result.put(sample, filteredFiles);
-      filteredDatasets.add(result);
-    }
-
-    return filteredDatasets;
-  }
-
-  private List<DataSetFile> filterDataSetBySuffix(List<DataSet> datasets, List<String> suffixes) {
-    List<DataSetFile> filteredFiles = new ArrayList<>();
-    for (DataSet ds : datasets) {
-      // we cannot access the files directly of the datasets -> we need to query for the files first
-      // using the datasetID
-      DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
-      criteria.withDataSet().withCode().thatEquals(ds.getCode());
-      criteria.withDataSet().withSample();
-      SearchResult<DataSetFile> result =
-          dataStoreServer.searchFiles(sessionToken, criteria, new DataSetFileFetchOptions());
-      List<DataSetFile> files = result.getObjects();
-
-      filteredFiles.addAll(filterDataSetFilesBySuffix(files, suffixes));
-    }
-    return filteredFiles;
-  }
-
-  private List<DataSetFile> filterDataSetFilesBySuffix(List<DataSetFile> files,
-      List<String> suffixes) {
-    List<DataSetFile> filesFiltered = new ArrayList<>();
-    // remove everything that doesn't match the suffix -> only add if suffix matches
-    for (DataSetFile file : files) {
-      for (String suffix : suffixes) {
-        // We omit directories and check files for suffix pattern
-        if ((!file.isDirectory()) && StringUtil.endsWithIgnoreCase(file.getPath(), suffix)) {
-          filesFiltered.add(file);
-        }
-      }
-    }
-    return filesFiltered;
   }
 }

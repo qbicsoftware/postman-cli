@@ -29,55 +29,56 @@ import picocli.CommandLine.Parameters;
         footerHeading = "%n")
 
 public class PostmanCommandLineOptions {
-   //parameters to format the help message
+  //parameters to format the help message
   @Command(name = "download",
-          description = "Download data from OpenBis",
-          usageHelpAutoWidth = true,
-          sortOptions = false,
-          descriptionHeading = "%nDescription: ",
-          parameterListHeading = "%nParameters:%n",
-          optionListHeading = "%nOptions:%n",
-          footerHeading = "%n")
-    void download(
-          @Option(names = {"-c", "--conserve"},
-                  description = "Conserve the file path structure during download") boolean conservePath,
-          @Option(names = {"-b", "--buffer-size"}, defaultValue = "1",
-                  description = "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
-                          + " Only change this if you know what you are doing.") int bufferMultiplier,
-          @Option(names = {"-s", "--suffix"},
-                  description = "returns all files of datasets containing the supplied suffix") List<String> suffixes,
-          @Option(
-                  names = {"-o", "--out-dir"},
-                  description = "provide the path to a directory where you want to download your data to") String outputPath) throws IOException {
+      description = "Download data from OpenBis",
+      usageHelpAutoWidth = true,
+      sortOptions = false,
+      descriptionHeading = "%nDescription: ",
+      parameterListHeading = "%nParameters:%n",
+      optionListHeading = "%nOptions:%n",
+      footerHeading = "%n")
+  void download(
+      @Option(names = {"-c", "--conserve"},
+          description = "Conserve the file path structure during download") boolean conservePath,
+      @Option(names = {"-b", "--buffer-size"}, defaultValue = "1",
+          description =
+              "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
+                  + " Only change this if you know what you are doing.") int bufferMultiplier,
+      @Option(
+          names = {"-o", "--out-dir"},
+          description = "provide the path to a directory where you want to download your data to") String outputPath)
+      throws IOException {
+    Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
 
-        Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
-
-        QbicDataDownloader qbicDataDownloader =
-                  new QbicDataDownloader(
-                          as_url,
-                          dss_url,
-                          bufferMultiplier * 1024,
-                          conservePath,
-                          authentication.getSessionToken(),
-                          outputPath);
-        ids = verifyProvidedIdentifiers();
-        qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes);
+    QbicDataDownloader qbicDataDownloader =
+        new QbicDataDownloader(
+            as_url,
+            dss_url,
+            bufferMultiplier * 1024,
+            conservePath,
+            authentication.getSessionToken(),
+            outputPath);
+    ids = verifyProvidedIdentifiers();
+    qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes);
   }
 
   @Command(name = "list",
-          description = "lists all the datasets found for the given identifiers",
-          usageHelpAutoWidth = true,
-          sortOptions = false,
-          descriptionHeading = "%nDescription: ",
-          parameterListHeading = "%nParameters:%n",
-          optionListHeading = "%nOptions:%n",
-          footerHeading = "%n")
-    void listDatasets() throws IOException {
-      Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
-      QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url, dss_url, authentication.getSessionToken());
-      ids = verifyProvidedIdentifiers();
-      qbicDataDisplay.getInformation(ids);
-    }
+      description = "lists all the datasets found for the given identifiers",
+      usageHelpAutoWidth = true,
+      sortOptions = false,
+      descriptionHeading = "%nDescription: ",
+      parameterListHeading = "%nParameters:%n",
+      optionListHeading = "%nOptions:%n",
+      footerHeading = "%n")
+  void listDatasets()
+      throws IOException {
+    Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
+    QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url, dss_url,
+        authentication.getSessionToken());
+    ids = verifyProvidedIdentifiers();
+    qbicDataDisplay.getInformation(ids, suffixes);
+  }
 
   @Parameters(paramLabel = "SAMPLE_ID", description = "one or more QBiC sample ids", scope = CommandLine.ScopeType.INHERIT)
   public List<String> ids;
@@ -112,6 +113,14 @@ public class PostmanCommandLineOptions {
           description = "a file with line-separated list of QBiC sample ids",
           scope = CommandLine.ScopeType.INHERIT)
   public Path filePath;
+
+  @Option(names = {"-s", "--suffix"},
+      split = ",",
+      description= "only include files ending with one of these suffixes",
+      paramLabel = "<suffix>",
+      scope = CommandLine.ScopeType.INHERIT)
+  public List<String> suffixes;
+
 
   @Option(
           names = {"-h", "--help"},
