@@ -46,8 +46,8 @@ public class PostmanCommandLineOptions {
               "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
                   + " Only change this if you know what you are doing.") int bufferMultiplier,
       @Option(
-          names = {"-o", "--out-dir"},
-          description = "provide the path to a directory where you want to download your data to") String outputPath)
+          names = {"-o", "--output-dir"},
+          description = "provide the path to an existing directory where you want to download your data to") String outputPath)
       throws IOException {
     Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
 

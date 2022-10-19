@@ -230,8 +230,9 @@ QMFKD003AG_SRR099967_1.filt.fastq.gz                                 [###       
 When using the subcommand `download`, there are further options available:
 ```
  -c, --conserve             Conserve the file path structure during download
- -b, --buffer-size=<arg1>   Dataset download performance can be improved by increasing this value with a multiple of 1024 (default). 
+ -b, --buffer-size=<int>    Dataset download performance can be improved by increasing this value with a multiple of 1024 (default). 
                             Only change this if you know what you are doing.
+ -o,--output-dir=<path>     Provide an already existing path where you want your data to be downloaded to                
 ```
 ###### Download all data of a project
 
@@ -254,4 +255,4 @@ They contain the computed and expected checksum as hex string plus the file path
 <expected checksum> <computed checksum> <absolute file path>
 ```
 
-In addition, Postman writes the CRC32 checksum in an additional file `<file-name-of-checked-file>.crc32` and stores it in the working directory.
+In addition, Postman writes the CRC32 checksum in an additional file `<file-name-of-checked-file>.crc32` and stores it together with the according file.
