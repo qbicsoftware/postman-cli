@@ -36,7 +36,8 @@ public class OutputPathFinder {
         return finalPath;
     }
 
-    public static Path determineOutputDirectory(String outputPath, Path prefix, Path filePath){
+    public static Path determineOutputDirectory(String outputPath, Path prefix, DataSetFile file, boolean conservePaths){
+        Path filePath = determineFinalPathFromDataset(file, conservePaths);
         Path path;
         String newPath = File.separator + prefix.toString() + File.separator + filePath.toString();
         if (outputPath != null && !outputPath.isEmpty() && isPathValid(outputPath)) {

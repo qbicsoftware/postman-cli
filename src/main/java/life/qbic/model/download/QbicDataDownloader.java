@@ -44,7 +44,7 @@ public class QbicDataDownloader {
   private final String sessionToken;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private boolean invalidChecksumOccurred = false;
-  private String outputPath;
+  private final String outputPath;
 
   private final ChecksumReporter checksumReporter =
           new FileSystemWriter(
@@ -89,16 +89,6 @@ public class QbicDataDownloader {
       this.dataStoreServer = null;
     }
     qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
-  }
-
-  private static Path getTopDirectory(Path path) {
-    Path currentPath = Paths.get(path.toString());
-    Path parentPath;
-    while (currentPath.getParent() != null) {
-      parentPath = currentPath.getParent();
-      currentPath = parentPath;
-    }
-    return currentPath;
   }
 
   /**
@@ -188,7 +178,7 @@ public class QbicDataDownloader {
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
         final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(), conservePaths);
-        final Path newPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, filePath);
+        final Path newPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, file.getDataSetFile(), conservePaths);
         LOG.info("Output directory: " + newPath.getParent().toString());
         File newFile = new File(newPath.toString());
         if(!newFile.getParentFile().exists()) {
@@ -250,19 +240,6 @@ public class QbicDataDownloader {
     }
   }
 
-  private Path determineFinalPathFromDataset(DataSetFile file) {
-    Path finalPath;
-    if (conservePaths) {
-      finalPath = Paths.get(file.getPath());
-      // drop top parent directory name in the openBIS DSS (usually "/origin")
-      Path topDirectory = getTopDirectory(finalPath);
-      finalPath = topDirectory.relativize(finalPath);
-    } else {
-      finalPath = Paths.get(file.getPath()).getFileName();
-    }
-    return finalPath;
-  }
-
   private int downloadFiles(DownloadRequest request) throws DownloadException {
     String sampleCode = request.getSampleCode();
     LOG.info(String.format("Downloading file(s) for sample %s", sampleCode));
@@ -301,8 +278,7 @@ public class QbicDataDownloader {
 
   private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
 
-    final Path filePath = OutputPathFinder.determineFinalPathFromDataset(dataSetFile,conservePaths);
-    Path path = OutputPathFinder.determineOutputDirectory(outputPath, pathPrefix ,filePath);
+    Path path = OutputPathFinder.determineOutputDirectory(outputPath, pathPrefix ,dataSetFile, conservePaths);
 
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
