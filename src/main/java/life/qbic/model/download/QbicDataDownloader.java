@@ -44,6 +44,7 @@ public class QbicDataDownloader {
   private final String sessionToken;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private boolean invalidChecksumOccurred = false;
+  private final String outputPath;
 
   private final ChecksumReporter checksumReporter =
           new FileSystemWriter(
@@ -65,10 +66,12 @@ public class QbicDataDownloader {
           String DataServerUri,
           int bufferSize,
           boolean conservePaths,
-          String sessionToken) {
+          String sessionToken,
+          String outputPath) {
     this.defaultBufferSize = bufferSize;
     this.conservePaths = conservePaths;
     this.sessionToken = sessionToken;
+    this.outputPath = outputPath;
 
     IApplicationServerApi applicationServer;
     if (!AppServerUri.isEmpty()) {
@@ -86,16 +89,6 @@ public class QbicDataDownloader {
       this.dataStoreServer = null;
     }
     qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
-  }
-
-  private static Path getTopDirectory(Path path) {
-    Path currentPath = Paths.get(path.toString());
-    Path parentPath;
-    while (currentPath.getParent() != null) {
-      parentPath = currentPath.getParent();
-      currentPath = parentPath;
-    }
-    return currentPath;
   }
 
   /**
@@ -184,12 +177,10 @@ public class QbicDataDownloader {
       InputStream initialStream = file.getInputStream();
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
-        final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
-        File newFile =
-                new File(System.getProperty("user.dir") +
-                        File.separator +
-                        prefix.toString() + File.separator +
-                        filePath.toString());
+        final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(), conservePaths);
+        final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, file.getDataSetFile(), conservePaths);
+        LOG.info("Output directory: " + finalPath.toAbsolutePath().getParent().toString());
+        File newFile = new File(finalPath.toString());
         if(!newFile.getParentFile().exists()) {
           boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
           if (!successfullyCreatedDirectory) {
@@ -249,19 +240,6 @@ public class QbicDataDownloader {
     }
   }
 
-  private Path determineFinalPathFromDataset(DataSetFile file) {
-    Path finalPath;
-    if (conservePaths) {
-      finalPath = Paths.get(file.getPath());
-      // drop top parent directory name in the openBIS DSS (usually "/origin")
-      Path topDirectory = getTopDirectory(finalPath);
-      finalPath = topDirectory.relativize(finalPath);
-    } else {
-      finalPath = Paths.get(file.getPath()).getFileName();
-    }
-    return finalPath;
-  }
-
   private int downloadFiles(DownloadRequest request) throws DownloadException {
     String sampleCode = request.getSampleCode();
     LOG.info(String.format("Downloading file(s) for sample %s", sampleCode));
@@ -299,8 +277,9 @@ public class QbicDataDownloader {
   }
 
   private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
-    Path path = Paths.get(pathPrefix.toString(), File.separator,
-        determineFinalPathFromDataset(dataSetFile).toString());
+
+    Path path = OutputPathFinder.determineOutputDirectory(outputPath, pathPrefix ,dataSetFile, conservePaths);
+
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 

@@ -29,7 +29,6 @@ import picocli.CommandLine.Parameters;
         footerHeading = "%n")
 
 public class PostmanCommandLineOptions {
-
   //parameters to format the help message
   @Command(name = "download",
       description = "Download data from OpenBis",
@@ -45,7 +44,10 @@ public class PostmanCommandLineOptions {
       @Option(names = {"-b", "--buffer-size"}, defaultValue = "1",
           description =
               "dataset download performance can be improved by increasing this value with a multiple of 1024 (default)."
-                  + " Only change this if you know what you are doing.") int bufferMultiplier)
+                  + " Only change this if you know what you are doing.") int bufferMultiplier,
+      @Option(
+          names = {"-o", "--output-dir"},
+          description = "provide the path to an existing directory where you want to download your data to") String outputPath)
       throws IOException {
     Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
 
@@ -55,7 +57,8 @@ public class PostmanCommandLineOptions {
             dss_url,
             bufferMultiplier * 1024,
             conservePath,
-            authentication.getSessionToken());
+            authentication.getSessionToken(),
+            outputPath);
     ids = verifyProvidedIdentifiers();
     qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes);
   }
