@@ -5,8 +5,12 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class OutputPathFinder {
+
+    private static final Logger LOG = LogManager.getLogger(OutputPathFinder.class);
 
     private static Path getTopDirectory(Path path) {
       Path currentPath = Paths.get(path.toString());
@@ -28,7 +32,7 @@ public class OutputPathFinder {
         if (conservePaths) {
             finalPath = Paths.get(file.getPath());
             // drop top parent directory name in the openBIS DSS (usually "/origin")
-            Path topDirectory = OutputPathFinder.getTopDirectory(finalPath);
+            Path topDirectory = getTopDirectory(finalPath);
             finalPath = topDirectory.relativize(finalPath);
         } else {
             finalPath = Paths.get(file.getPath()).getFileName();
@@ -38,13 +42,18 @@ public class OutputPathFinder {
 
     public static Path determineOutputDirectory(String outputPath, Path prefix, DataSetFile file, boolean conservePaths){
         Path filePath = determineFinalPathFromDataset(file, conservePaths);
-        Path path;
-        String newPath = File.separator + prefix.toString() + File.separator + filePath.toString();
-        if (outputPath != null && !outputPath.isEmpty() && isPathValid(outputPath)) {
-            path = Paths.get(outputPath + newPath);
+        String path = File.separator + prefix.toString() + File.separator + filePath.toString();
+        Path finalPath = Paths.get("");
+        if (outputPath != null && !outputPath.isEmpty()) {
+            if(isPathValid(outputPath)) {
+                finalPath = Paths.get(outputPath + path);
+            } else{
+                LOG.error("The path you provided does not exist.");
+                System.exit(1);
+            }
         } else {
-            path = Paths.get(System.getProperty("user.dir") + newPath);
+            finalPath = Paths.get(System.getProperty("user.dir") + path);
         }
-        return path;
+        return finalPath;
     }
 }

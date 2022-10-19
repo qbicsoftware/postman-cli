@@ -178,9 +178,9 @@ public class QbicDataDownloader {
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
         final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(), conservePaths);
-        final Path newPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, file.getDataSetFile(), conservePaths);
-        LOG.info("Output directory: " + newPath.getParent().toString());
-        File newFile = new File(newPath.toString());
+        final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, file.getDataSetFile(), conservePaths);
+        LOG.info("Output directory: " + finalPath.toAbsolutePath().getParent().toString());
+        File newFile = new File(finalPath.toString());
         if(!newFile.getParentFile().exists()) {
           boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
           if (!successfullyCreatedDirectory) {
