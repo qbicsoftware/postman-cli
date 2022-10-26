@@ -53,7 +53,7 @@ public class QbicDataDownloader {
   private final QbicDataFinder qbicDataFinder;
 
   /**
-   * Constructor for a QBiCDataLoaderInstance
+   * Constructor for a QBiCDataDownloader instance
    *
    * @param AppServerUri  The openBIS application server URL (AS)
    * @param DataServerUri The openBIS datastore server URL (DSS)
@@ -177,7 +177,6 @@ public class QbicDataDownloader {
       InputStream initialStream = file.getInputStream();
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
-        final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(), conservePaths);
         final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, file.getDataSetFile(), conservePaths);
         LOG.info("Output directory: " + finalPath.toAbsolutePath().getParent().toString());
         File newFile = new File(finalPath.toString());
@@ -188,7 +187,7 @@ public class QbicDataDownloader {
           }
         }
         OutputStream os = Files.newOutputStream(newFile.toPath());
-        String fileName = filePath.getFileName().toString();
+        String fileName = getFileName(dataSetFile);
         ProgressBar progressBar =
                 new ProgressBar(
                         fileName, file.getDataSetFile().getFileLength());

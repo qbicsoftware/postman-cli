@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
 import life.qbic.model.files.FileSize;
 import life.qbic.model.files.FileSizeFormatter;
 
+/**
+ * Lists information about requested datasets and their files
+ */
 public class QbicDataDisplay {
 
     String sessionToken;
@@ -32,6 +35,13 @@ public class QbicDataDisplay {
 
     private final QbicDataFinder qbicDataFinder;
 
+    /**
+     * Constructor for a QbicDataDisplay instance
+     *
+     * @param AppServerUri The openBIS application server URL (AS)
+     * @param DataServerUri The openBIS datastore server URL (DSS)
+     * @param sessionToken The session token for the datastore & application servers
+     */
     public QbicDataDisplay(
             String AppServerUri,
             String DataServerUri,
