@@ -23,8 +23,7 @@ public class OpenBISPasswordParser {
    */
   public static Optional<String> readPasswordFromEnvVariable(String variableName) {
 
-    Optional<String> password = Optional.ofNullable(System.getenv(variableName));
-    return password;
+    return Optional.ofNullable(System.getenv(variableName));
 
   }
 
