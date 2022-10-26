@@ -1,17 +1,15 @@
 package life.qbic.model.download;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
-import ch.ethz.sis.openbis.generic.asapi.v3.dto.common.search.SearchResult;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.DataSet;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
+import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownload;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadReader;
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import java.io.File;
 import java.io.IOException;
@@ -21,13 +19,12 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import life.qbic.ChecksumReporter;
@@ -43,16 +40,17 @@ public class QbicDataDownloader {
   private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
   private final int defaultBufferSize;
   private final boolean conservePaths;
-  private final IApplicationServerApi applicationServer;
   private final IDataStoreServerApi dataStoreServer;
   private final String sessionToken;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private boolean invalidChecksumOccurred = false;
+  private final String outputPath;
 
   private final ChecksumReporter checksumReporter =
           new FileSystemWriter(
                   Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_valid_files.txt"),
                   Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_invalid_files.txt"));
+  private final QbicDataFinder qbicDataFinder;
 
   /**
    * Constructor for a QBiCDataLoaderInstance
@@ -68,17 +66,20 @@ public class QbicDataDownloader {
           String DataServerUri,
           int bufferSize,
           boolean conservePaths,
-          String sessionToken) {
+          String sessionToken,
+          String outputPath) {
     this.defaultBufferSize = bufferSize;
     this.conservePaths = conservePaths;
     this.sessionToken = sessionToken;
+    this.outputPath = outputPath;
 
+    IApplicationServerApi applicationServer;
     if (!AppServerUri.isEmpty()) {
-      this.applicationServer =
+      applicationServer =
           HttpInvokerUtils.createServiceStub(
               IApplicationServerApi.class, AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
     } else {
-      this.applicationServer = null;
+      applicationServer = null;
     }
     if (!DataServerUri.isEmpty()) {
       this.dataStoreServer =
@@ -87,75 +88,50 @@ public class QbicDataDownloader {
     } else {
       this.dataStoreServer = null;
     }
-  }
-
-  private static Path getTopDirectory(Path path) {
-    Path currentPath = Paths.get(path.toString());
-    Path parentPath;
-    while (currentPath.getParent() != null) {
-      parentPath = currentPath.getParent();
-      currentPath = parentPath;
-    }
-    return currentPath;
+    qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
   }
 
   /**
-   * Downloads the files that the user requested
-   * checks whether the filtering option suffix has been passed and applies filtering if needed
+   * Downloads the files that the user requested checks whether the filtering option suffix has been
+   * passed and applies filtering if needed
    */
-  public void downloadRequestedFilesOfDatasets(
-          List<String> ids, List<String> suffixes, QbicDataDownloader qbicDataDownloader) {
-    QbicDataFinder qbicDataFinder =
-        new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
-
+  public void downloadRequestedFilesOfDatasets(List<String> ids, List<String> suffixes) {
     LOG.info(
         String.format(
             "%s provided openBIS identifiers have been found: %s",
             ids.size(), ids));
 
-    // a suffix was provided -> only download files which contain the suffix string
-    if (suffixes!=null && !suffixes.isEmpty()) {
-      LOG.info(String.format("The suffix %s has been found", suffixes.toArray()));
-      for (String identifier : ids) {
-        LOG.info(String.format("Downloading filtered files for provided identifier %s", identifier));
-        List<Map<String, List<DataSetFile>>> foundSuffixFilteredIDs =
-            qbicDataFinder.findAllSuffixFilteredIDs(identifier, suffixes);
-
-        LOG.info(String.format("Number of files found: %s", countFiles(foundSuffixFilteredIDs)));
-
-        downloadFilesFilteredByIDs(identifier, foundSuffixFilteredIDs);
-      }
-    } else {
-      // no suffix was supplied -> download or print all datasets
-        for (String ident : ids) {
-          Map<String, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-          if (foundDataSets.size() > 0) {
-            LOG.info(String.format("Downloading files for identifier %s", ident));
-            LOG.info("Initialize download ...");
-            int datasetDownloadReturnCode = -1;
-            try {
-              // for the sample code and aggregates datasets per sample code
-              List<Map<String, List<DataSet>>> datasets = new ArrayList<>();
-              datasets.add(foundDataSets);
-              datasetDownloadReturnCode = qbicDataDownloader.downloadDataset(datasets);
-            } catch (NullPointerException e) {
-              LOG.error(
-                  "Datasets were found by the application server, but could not be found on the datastore server for "
-                      + ident
-                      + "."
-                      + " Try to supply the correct datastore server using a config file!");
-            }
-
-            if (datasetDownloadReturnCode != 0) {
-              LOG.error("Error while downloading dataset: " + ident);
-            } else if (!invalidChecksumOccurred) {
-              LOG.info("Download successfully finished.");
-            }
-          } else {
-            LOG.info("Nothing to download.");
+    for (String ident : ids) {
+      Map<Sample, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+      if (foundDataSets.size() > 0) {
+        LOG.info(String.format("Downloading files for identifier %s", ident));
+        try {
+          Predicate<DataSetFile> fileFilter = it -> true;
+          if (Objects.nonNull(suffixes) && !suffixes.isEmpty()) {
+            LOG.info("Applying suffix filter for suffixes: [" + String.join(" ", suffixes) + "] ...");
+            Predicate<DataSetFile> suffixFilter = file -> {
+              String fileName = getFileName(file);
+              return suffixes.stream().anyMatch(fileName::endsWith);
+            };
+            fileFilter = fileFilter.and(suffixFilter);
           }
+          int datasetDownloadReturnCode = downloadDataset(foundDataSets, fileFilter);
+          if (datasetDownloadReturnCode != 0) {
+            LOG.error("Error while downloading dataset: " + ident);
+          } else if (!invalidChecksumOccurred) {
+            LOG.info("Download successfully finished.");
+          }
+        } catch (NullPointerException e) {
+          LOG.error(
+              "Datasets were found by the application server, but could not be found on the datastore server for "
+                  + ident
+                  + "."
+                  + " Try to supply the correct datastore server using a config file!");
         }
+      } else {
+        LOG.info("Nothing to download.");
       }
+    }
   }
 
   private String getFileName(DataSetFile file) {
@@ -163,99 +139,28 @@ public class QbicDataDownloader {
     return filePath.substring(filePath.lastIndexOf("/") + 1);
   }
 
-  private Integer countFiles(List<Map<String, List<DataSetFile>>> filesPerSampleCode) {
-    int sum = 0;
-    for (Map<String, List<DataSetFile>> entry : filesPerSampleCode) {
-      for (String sampleCode : entry.keySet()) {
-        sum += entry.get(sampleCode).size();
-      }
-    }
-    return sum;
-  }
-
-  public static <T> int countFiles(Map<String, List<T>> datasetsPerSampleCode) {
-    return datasetsPerSampleCode.values().stream().mapToInt(List::size).sum();
-  }
-
-  /**
-   * Downloads all IDs which were previously filtered by suffixes
-   *
-   * @param ident Sample identifiers
-   * @param foundFilteredFiles already filtered data.
-   */
-  private void downloadFilesFilteredByIDs(String ident,
-      List<Map<String, List<DataSetFile>>> foundFilteredFiles) {
-
-    for (Map<String, List<DataSetFile>> filesPerSample : foundFilteredFiles) {
-      for (List<DataSetFile> files : filesPerSample.values()) {
-        if(files.isEmpty()){
-          LOG.info("Nothing to download.");
-        } else {
-          LOG.info("Initialize download ...");
-          int filesDownloadReturnCode = -1;
-          try {
-              for (String sampleCode : filesPerSample.keySet()) {
-                List<DataSetFile> filteredDataSetFiles = withoutDirectories(
-                        filesPerSample.get(sampleCode));
-                final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
-                        sampleCode);
-                filesDownloadReturnCode = downloadFiles(downloadRequest);
-              }
-          } catch (NullPointerException e) {
-            LOG.error(
-                    "Datasets were found by the application server, but could not be found on the datastore server for "
-                            + ident
-                            + "."
-                            + " Try to supply the correct datastore server using a config file!");
-          }
-          if (filesDownloadReturnCode != 0) {
-            LOG.error("Error while downloading dataset: " + ident);
-          } else if(!invalidChecksumOccurred) {
-            LOG.info("Download successfully finished");
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Download a given list of data sets
-   *
-   * @param dataSetList A list of data sets
-   * @return 0 if successful, 1 else
-   */
-  private int downloadDataset(List<Map<String, List<DataSet>>> dataSetList) {
-    for (Map<String, List<DataSet>> dataSetsPerSample : dataSetList) {
-      downloadDataset(dataSetsPerSample);
-    }
-    return 0;
-  }
-
-  private void downloadDataset(Map<String, List<DataSet>> dataSetsPerSample) {
-
-    for (Entry<String, List<DataSet>> entry : dataSetsPerSample.entrySet()) {
-      String sampleCode = entry.getKey();
+  private int downloadDataset(Map<Sample, List<DataSet>> dataSetsPerSample, Predicate<DataSetFile> fileFilter) {
+    int returnCode = 0;
+    for (Entry<Sample, List<DataSet>> entry : dataSetsPerSample.entrySet()) {
+      String sampleCode = entry.getKey().getCode();
       List<DataSet> sampleDatasets = entry.getValue();
       for (DataSet sampleDataset : sampleDatasets) {
         DataSetPermId permID = sampleDataset.getPermId();
-        DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
-        criteria.withDataSet().withCode().thatEquals(permID.getPermId());
-        SearchResult<DataSetFile> result =
-            this.dataStoreServer.searchFiles(sessionToken, criteria,
-                new DataSetFileFetchOptions());
-        List<DataSetFile> filteredDataSetFiles = withoutDirectories(result.getObjects());
-        final DownloadRequest downloadRequest = new DownloadRequest(filteredDataSetFiles,
-            sampleCode, DEFAULT_DOWNLOAD_ATTEMPTS);
-        downloadFiles(downloadRequest);
+        List<DataSetFile> files = qbicDataFinder.getFiles(permID, fileFilter);
+        if (files.isEmpty()) {
+          LOG.info("Nothing to download for dataset " + sampleDataset.getPermId() + ".");
+          continue;
+        }
+
+        final DownloadRequest downloadRequest = new DownloadRequest(files, sampleCode,
+            DEFAULT_DOWNLOAD_ATTEMPTS);
+        int filesDownloadedSuccessfully = downloadFiles(downloadRequest);
+        if (filesDownloadedSuccessfully != 0) {
+          returnCode += 1;
+        }
       }
     }
-  }
-
-  public static List<DataSetFile> withoutDirectories(List<DataSetFile> dataSetFiles) {
-    Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
-    return dataSetFiles.stream()
-        .filter(notADirectory)
-        .collect(Collectors.toList());
+    return returnCode;
   }
 
   private void downloadFile(DataSetFile dataSetFile, Path prefix) throws IOException {
@@ -272,15 +177,15 @@ public class QbicDataDownloader {
       InputStream initialStream = file.getInputStream();
       CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream, new CRC32());
       if (file.getDataSetFile().getFileLength() > 0) {
-        final Path filePath = determineFinalPathFromDataset(file.getDataSetFile());
-        File newFile =
-                new File(System.getProperty("user.dir") +
-                        File.separator +
-                        prefix.toString() + File.separator +
-                        filePath.toString());
-        boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
-        if (!successfullyCreatedDirectory) {
-          LOG.error("Could not create directory " + newFile.getParentFile());
+        final Path filePath = OutputPathFinder.determineFinalPathFromDataset(file.getDataSetFile(), conservePaths);
+        final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, file.getDataSetFile(), conservePaths);
+        LOG.info("Output directory: " + finalPath.toAbsolutePath().getParent().toString());
+        File newFile = new File(finalPath.toString());
+        if(!newFile.getParentFile().exists()) {
+          boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
+          if (!successfullyCreatedDirectory) {
+            LOG.error("Could not create directory " + newFile.getParentFile());
+          }
         }
         OutputStream os = Files.newOutputStream(newFile.toPath());
         String fileName = filePath.getFileName().toString();
@@ -335,56 +240,46 @@ public class QbicDataDownloader {
     }
   }
 
-  private Path determineFinalPathFromDataset(DataSetFile file) {
-    Path finalPath;
-    if (conservePaths) {
-      finalPath = Paths.get(file.getPath());
-      // drop top parent directory name in the openBIS DSS (usually "/origin")
-      Path topDirectory = getTopDirectory(finalPath);
-      finalPath = topDirectory.relativize(finalPath);
-    } else {
-      finalPath = Paths.get(file.getPath()).getFileName();
-    }
-    return finalPath;
-  }
-
   private int downloadFiles(DownloadRequest request) throws DownloadException {
     String sampleCode = request.getSampleCode();
     LOG.info(String.format("Downloading file(s) for sample %s", sampleCode));
     Path pathPrefix = Paths.get(sampleCode + File.separator);
-    request
-        .getDataSets()
-        .forEach(
-            dataSetFile -> {
-              try {
-                int downloadAttempt = 1;
-                while (downloadAttempt <= request.getMaxNumberOfAttempts()) {
-                  try {
-                    downloadFile(dataSetFile, pathPrefix);
-                    writeCRC32Checksum(dataSetFile, pathPrefix);
-                    return;
-                  } catch (Exception e) {
-                    LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
-                    LOG.error(String.format("Reason: %s", e.getMessage()), e);
-                    downloadAttempt++;
-                    if (downloadAttempt > request.getMaxNumberOfAttempts()) {
-                      throw new IOException("Maximum number of download attempts reached.");
-                    }
-                  }
-                }
-              } catch (IOException e) {
-                String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
-                LOG.error(e);
-                throw new DownloadException(
-                    "Dataset " + fileName + " could not have been downloaded.");
-              }
-            });
+    List<DataSetFile> dataSetFiles = request.getDataSets();
+    for (DataSetFile dataSetFile : dataSetFiles) {
+      attemptFileDownload(request, pathPrefix, dataSetFile);
+    }
     return 0;
   }
 
+  private void attemptFileDownload(DownloadRequest request, Path pathPrefix, DataSetFile dataSetFile) {
+    try {
+      int downloadAttempt = 1;
+      while (downloadAttempt <= request.getMaxNumberOfAttempts()) {
+        try {
+          downloadFile(dataSetFile, pathPrefix);
+          writeCRC32Checksum(dataSetFile, pathPrefix);
+          return;
+        } catch (Exception e) {
+          LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
+          LOG.error(String.format("Reason: %s", e.getMessage()), e);
+          downloadAttempt++;
+          if (downloadAttempt > request.getMaxNumberOfAttempts()) {
+            throw new IOException("Maximum number of download attempts reached.");
+          }
+        }
+      }
+    } catch (IOException e) {
+      String fileName = Paths.get(dataSetFile.getPath()).getFileName().toString();
+      LOG.error(e);
+      throw new DownloadException(
+          "File " + fileName + " download failed.");
+    }
+  }
+
   private void writeCRC32Checksum(DataSetFile dataSetFile, Path pathPrefix) {
-    Path path = Paths.get(pathPrefix.toString(), File.separator,
-        determineFinalPathFromDataset(dataSetFile).toString());
+
+    Path path = OutputPathFinder.determineOutputDirectory(outputPath, pathPrefix ,dataSetFile, conservePaths);
+
     checksumReporter.storeChecksum(path, Integer.toHexString(dataSetFile.getChecksumCRC32()));
   }
 

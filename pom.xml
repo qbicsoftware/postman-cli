@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>life.qbic</groupId>
     <artifactId>postman-cli</artifactId>
-    <version>0.6.1</version>
+    <version>1.1.0</version>
     <name>Postman cli</name>
     <url>http://github.com/qbicsoftware/postman-cli</url>
     <description>A client software written in Java for dataset downloads from QBiC's data management system openBIS </description>
