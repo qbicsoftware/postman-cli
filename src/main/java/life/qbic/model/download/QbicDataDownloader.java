@@ -43,7 +43,7 @@ public class QbicDataDownloader {
   private final IDataStoreServerApi dataStoreServer;
   private final String sessionToken;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
-  private boolean invalidChecksumOccurred = false;
+  private boolean invalidChecksumOccurredInDataset = false;
   private final String outputPath;
 
   private final ChecksumReporter checksumReporter =
@@ -116,9 +116,9 @@ public class QbicDataDownloader {
             fileFilter = fileFilter.and(suffixFilter);
           }
           int datasetDownloadReturnCode = downloadDataset(foundDataSets, fileFilter);
-          if (datasetDownloadReturnCode != 0) {
+          if (invalidChecksumOccurredInDataset || datasetDownloadReturnCode != 0) {
             LOG.error("Error while downloading dataset: " + ident);
-          } else if (!invalidChecksumOccurred) {
+          } else {
             LOG.info("Download successfully finished.");
           }
         } catch (NullPointerException e) {
@@ -140,6 +140,9 @@ public class QbicDataDownloader {
   }
 
   private int downloadDataset(Map<Sample, List<DataSet>> dataSetsPerSample, Predicate<DataSetFile> fileFilter) {
+    //reset for the validation
+    invalidChecksumOccurredInDataset = false;
+
     int returnCode = 0;
     for (Entry<Sample, List<DataSet>> entry : dataSetsPerSample.entrySet()) {
       String sampleCode = entry.getKey().getCode();
@@ -209,9 +212,10 @@ public class QbicDataDownloader {
         // flush OutputStream to write any buffered data to file
         os.flush();
         LOG.info(String.format("Download of %s has finished", fileName));
-        validateChecksum(
-                Long.toHexString(checkedInputStream.getChecksum().getValue()), dataSetFile);
-        if(invalidChecksumOccurred) {
+        ChecksumValidationResult checksumValidationResult = validateChecksum(
+            checkedInputStream.getChecksum().getValue(), dataSetFile);
+        reportValidation(checksumValidationResult);
+        if (checksumValidationResult.isInvalid()) {
           notifyUserOfInvalidChecksum(dataSetFile);
         }
         os.close();
@@ -219,25 +223,72 @@ public class QbicDataDownloader {
     }
   }
 
-  private void validateChecksum(String computedChecksumHex, DataSetFile dataSetFile) {
-    String expectedChecksum = Integer.toHexString(dataSetFile.getChecksumCRC32());
+  private static class ChecksumValidationResult {
+    private final String expectedChecksum;
+    private final String computedChecksum;
+    private final DataSetFile dataSetFile;
+
+
+    private ChecksumValidationResult(String expectedChecksum, String computedChecksum,
+        DataSetFile dataSetFile) {
+      Objects.requireNonNull(expectedChecksum);
+      Objects.requireNonNull(computedChecksum);
+      Objects.requireNonNull(dataSetFile);
+
+      this.expectedChecksum = expectedChecksum;
+      this.computedChecksum = computedChecksum;
+      this.dataSetFile = dataSetFile;
+    }
+
+    public String expectedChecksum() {
+      return expectedChecksum;
+    }
+
+    public String computedChecksum() {
+      return computedChecksum;
+    }
+
+    public DataSetFile dataSetFile() {
+      return dataSetFile;
+    }
+
+    public boolean isValid() {
+      return computedChecksum.equals(expectedChecksum);
+    }
+
+    public boolean isInvalid() {
+      return !isValid();
+    }
+  }
+
+
+  private void reportValidation(ChecksumValidationResult validation) {
     try {
-      if (computedChecksumHex.equals(expectedChecksum)) {
+      if (validation.isValid()) {
         checksumReporter.reportMatchingChecksum(
-            expectedChecksum,
-            computedChecksumHex,
-            Paths.get(dataSetFile.getPath()).toUri().toURL());
+            validation.expectedChecksum(),
+            validation.computedChecksum(),
+            Paths.get(validation.dataSetFile().getPath()).toUri().toURL());
       } else {
         checksumReporter.reportMismatchingChecksum(
-            expectedChecksum,
-            computedChecksumHex,
-            Paths.get(dataSetFile.getPath()).toUri().toURL());
-        invalidChecksumOccurred = true;
+            validation.expectedChecksum(),
+            validation.computedChecksum(),
+            Paths.get(validation.dataSetFile().getPath()).toUri().toURL());
       }
-
     } catch (MalformedURLException e) {
       LOG.error(e);
     }
+  }
+
+  private ChecksumValidationResult validateChecksum(long computedChecksum, DataSetFile dataSetFile) {
+    String expectedChecksumHex = Integer.toHexString(dataSetFile.getChecksumCRC32());
+    String computedChecksumHex = Long.toHexString(computedChecksum);
+    ChecksumValidationResult checksumValidationResult = new ChecksumValidationResult(
+        expectedChecksumHex, computedChecksumHex, dataSetFile);
+    if (checksumValidationResult.isInvalid()) {
+      invalidChecksumOccurredInDataset = true;
+    }
+    return checksumValidationResult;
   }
 
   private int downloadFiles(DownloadRequest request) throws DownloadException {
