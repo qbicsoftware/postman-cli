@@ -14,74 +14,29 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile
  */
 class DownloadRequest {
 
-  final private Map<String, DataSetFile> dataSetByPermId
+  private final String datasetSampleCode;
 
-  private String sampleCode
+  private final List<DataSetFile> dataSetFiles;
 
-  private int retries
+  private final int retries
 
-  DownloadRequest() {
-    this.dataSetByPermId = new HashMap<>()
-    this.sampleCode = ""
-    this.retries = 1
-  }
-
-  /**
-   * Download request constructor with a provided list of data set files.
-   *
-   * @param dataSetFiles
-   */
-  DownloadRequest(List<DataSetFile> dataSetFiles, String sampleCode) {
-    this()
-    this.sampleCode = sampleCode
-    dataSetFiles.each { dsFile ->
-      addDataSet(dsFile.getPermId().toString(), dsFile)
-    }
-    this.retries = 1
-  }
 
   /**
    * Download request constructor with a provided list of data set files and a configured
    * number of retries on failure.
    *
-   * @param dataSetFiles
-   * @param sampleCode
+   * @param datasetSampleCode the code of the sample to which the dataset was attached
+   * @param dataSetFiles the files to download
    * @param numberRetries The number of retries. Must be >=1, else it will be set to 1
    */
-  DownloadRequest(List<DataSetFile> dataSetFiles, String sampleCode, int numberRetries) {
-    this()
-    this.sampleCode = sampleCode
-    dataSetFiles.each { dsFile ->
-      addDataSet(dsFile.getPermId().toString(), dsFile)
-    }
-    this.retries = numberRetries >= 1 ? numberRetries : 1
-  }
+  DownloadRequest(String datasetSampleCode, List<DataSetFile> dataSetFiles, int numberRetries) {
+    Objects.requireNonNull(datasetSampleCode, "sample code of dataset must not be null")
+    Objects.requireNonNull(dataSetFiles, "dataset files must not be null")
 
-  /**
-   * Adds a data set file to the download request.
-   *
-   * @param permId The openBIS permId.
-   * @param dataSetFile A data set file that shall be downloaded.
-   */
-  void addDataSet(String permId, DataSetFile dataSetFile) {
-    if (dataSetByPermId.containsKey(permId)) {
-      def list = dataSetByPermId[permId]
-      list << dataSetFile
-    } else {
-      dataSetByPermId[permId] = dataSetFile
-    }
-  }
-  /**
-   * Returns the CRC32 checksum for a data set with the provided permID.
-   *
-   * @param permId An openBIS data set file permId for which the checksum shall be returned.
-   * @return The associated CRC32 checksum from the openBIS data base.
-   */
-  int getCRC32sum(String permId) {
-    if (!dataSetByPermId[permId].checksumCRC32) {
-      new IllegalArgumentException("The provided argument does not represent a known ID.")
-    }
-    return dataSetByPermId[permId].checksumCRC32
+    this.dataSetFiles = new ArrayList<>()
+    this.dataSetFiles.addAll(dataSetFiles)
+    this.retries = numberRetries >= 1 ? numberRetries : 1
+    this.datasetSampleCode = datasetSampleCode
   }
 
   /**
@@ -96,12 +51,11 @@ class DownloadRequest {
    * Returns a shallow copy of the data set file list from the download request.
    * @return A list of all requested data set files.
    */
-  List<DataSetFile> getDataSets() {
-    dataSetByPermId.values().collect()
+  List<DataSetFile> getFiles() {
+    dataSetFiles.asUnmodifiable()
   }
 
-  String getSampleCode() {
-    sampleCode
+  String getDatasetSampleCode() {
+    return datasetSampleCode
   }
-
 }

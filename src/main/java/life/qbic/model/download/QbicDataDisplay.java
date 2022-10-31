@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import life.qbic.model.files.FileSize;
@@ -93,7 +92,7 @@ public class QbicDataDisplay {
 
                 long totalSize = dataSetFiles.stream().mapToLong(DataSetFile::getFileLength).sum();
 
-                Sample analyte = searchAnalyteParent(entry.getKey());
+                Sample analyte = qbicDataFinder.searchAnalyteParent(entry.getKey());
                 Date registrationDate = dataSet.getRegistrationDate();
                 String iso_registrationDate = utcDateTimeFormatterIso8601.format(registrationDate.toInstant());
                 int columnWidth = 16;
@@ -123,20 +122,6 @@ public class QbicDataDisplay {
     private static String getFileName(DataSetFile file) {
         String filePath = file.getPermId().getFilePath();
         return filePath.substring(filePath.lastIndexOf("/") + 1);
-    }
-
-    /**
-     * Searches the parents for a Q_TEST_SAMPLE assuming at most one Q_TEST_SAMPLE exists in the parent samples.
-     * If not Q_TEST_SAMPLE was found, the original sample is returned.
-     * @param sample the sample to which a dataset is attached to
-     * @return the Q_TEST_SAMPLE parent if exists, the sample itself otherwise.
-     */
-    private Sample searchAnalyteParent(Sample sample) {
-        Optional<Sample> firstTestSample = sample.getParents().stream()
-            .filter(
-                it -> it.getType().getCode().equals("Q_TEST_SAMPLE"))
-            .findFirst();
-        return firstTestSample.orElse(sample);
     }
 
 

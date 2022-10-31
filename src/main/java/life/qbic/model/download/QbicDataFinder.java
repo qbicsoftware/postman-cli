@@ -15,6 +15,7 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileS
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -98,5 +99,20 @@ public class QbicDataFinder {
       fillWithDescendantDatasets(sample, dataSetsBySample);
     }
     return dataSetsBySample;
+  }
+
+  /**
+   * Searches the parents for a Q_TEST_SAMPLE assuming at most one Q_TEST_SAMPLE exists in the parent
+   * samples. If not Q_TEST_SAMPLE was found, the original sample is returned.
+   *
+   * @param sample the sample to which a dataset is attached to
+   * @return the Q_TEST_SAMPLE parent if exists, the sample itself otherwise.
+   */
+  public Sample searchAnalyteParent(Sample sample) {
+      Optional<Sample> firstTestSample = sample.getParents().stream()
+          .filter(
+              it -> it.getType().getCode().equals("Q_TEST_SAMPLE"))
+          .findFirst();
+      return firstTestSample.orElse(sample);
   }
 }
