@@ -2,6 +2,8 @@ package life.qbic
 
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile
 
+import java.nio.file.Path
+
 /**
  * Contains information about a download request for openBIS
  * data set files.
@@ -13,11 +15,8 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile
  * @since 0.4.0
  */
 class DownloadRequest {
-
-  private final String datasetSampleCode;
-
   private final List<DataSetFile> dataSetFiles;
-
+  private final Path prefix
   private final int retries
 
 
@@ -29,14 +28,14 @@ class DownloadRequest {
    * @param dataSetFiles the files to download
    * @param numberRetries The number of retries. Must be >=1, else it will be set to 1
    */
-  DownloadRequest(String datasetSampleCode, List<DataSetFile> dataSetFiles, int numberRetries) {
-    Objects.requireNonNull(datasetSampleCode, "sample code of dataset must not be null")
-    Objects.requireNonNull(dataSetFiles, "dataset files must not be null")
+  DownloadRequest(Path prefix, List<DataSetFile> dataSetFiles, int numberRetries) {
+    Objects.requireNonNull(prefix, "prefix must not be null")
+    Objects.requireNonNull(dataSetFiles, "files must not be null")
 
     this.dataSetFiles = new ArrayList<>()
     this.dataSetFiles.addAll(dataSetFiles)
     this.retries = numberRetries >= 1 ? numberRetries : 1
-    this.datasetSampleCode = datasetSampleCode
+    this.prefix = prefix
   }
 
   /**
@@ -55,7 +54,7 @@ class DownloadRequest {
     dataSetFiles.asUnmodifiable()
   }
 
-  String getDatasetSampleCode() {
-    return datasetSampleCode
+  Path getPrefix() {
+    return prefix
   }
 }

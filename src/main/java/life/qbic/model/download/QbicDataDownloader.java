@@ -136,7 +136,10 @@ public class QbicDataDownloader {
           }
         }
 
-        for (Entry<Sample, List<DataSet>> analyteDatasets : datasetsPerAnalyte.entrySet()) {
+        for (Entry<Sample, List<DataSet>> analyteDatasets : datasetsPerAnalyte.entrySet().stream()
+            .sorted(Comparator.comparing(o -> o.getKey().getCode()))
+            .collect(Collectors.toList())) {
+
           Sample analyte = analyteDatasets.getKey();
           List<DataSet> dataSets = analyteDatasets.getValue();
           try {
@@ -177,8 +180,10 @@ public class QbicDataDownloader {
         LOG.info("Nothing to download for dataset " + datasetSample + " (" + permID + ")" + ".");
         continue;
       }
-      final DownloadRequest downloadRequest = new DownloadRequest(datasetSample, files, DEFAULT_DOWNLOAD_ATTEMPTS
-      );
+      final DownloadRequest downloadRequest = new DownloadRequest(
+          Paths.get(datasetSample + File.separator), files, DEFAULT_DOWNLOAD_ATTEMPTS);
+      LOG.info(
+          "Downloading " + files.size() + " file" + (files.size() != 1 ? "s" : "") + " for dataset " + datasetSample);
       downloadFiles(downloadRequest);
     }
   }
@@ -197,7 +202,6 @@ public class QbicDataDownloader {
         final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix,
             file.getDataSetFile(), conservePaths);
         String absoluteOutputPath = finalPath.toAbsolutePath().getParent().toString();
-        LOG.debug("Output directory: " + absoluteOutputPath);
         File newFile = new File(finalPath.toString());
         if (!newFile.getParentFile().exists()) {
           boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
@@ -235,12 +239,12 @@ public class QbicDataDownloader {
         } catch (IOException e) {
           throw new DownloadException(e);
         }
-        fooBar(dataSetFile, finalPath, computedChecksum);
+        doChecksumLogic(dataSetFile, finalPath, computedChecksum);
       }
     }
   }
 
-  private void fooBar(DataSetFile dataSetFile, Path filePath, long computedChecksum) {
+  private void doChecksumLogic(DataSetFile dataSetFile, Path filePath, long computedChecksum) {
     ChecksumValidationResult checksumValidationResult = validateChecksum(computedChecksum,
         dataSetFile);
     reportValidation(checksumValidationResult);
@@ -325,15 +329,11 @@ public class QbicDataDownloader {
     List<DataSetFile> dataSetFiles = request.getFiles().stream()
         .sorted(Comparator.comparing(this::getFileName))
         .collect(Collectors.toList());
-
-    LOG.info(
-        "Downloading " + dataSetFiles.size() + " file" + (dataSetFiles.size() != 1 ? "s" : "" + " for dataset " + request.getDatasetSampleCode()));
     List<DataSetFile> filesNotDownloaded = new ArrayList<>();
     for (DataSetFile dataSetFile : dataSetFiles) {
       try {
 
-        attemptFileDownload(Paths.get(request.getDatasetSampleCode() + File.separator)
-            , dataSetFile, request.getMaxNumberOfAttempts());
+        attemptFileDownload(request.getPrefix(),dataSetFile, request.getMaxNumberOfAttempts());
       } catch (DownloadException e) {
         filesNotDownloaded.add(dataSetFile);
       }
