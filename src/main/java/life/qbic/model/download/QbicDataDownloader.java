@@ -47,7 +47,6 @@ public class QbicDataDownloader {
   private final IDataStoreServerApi dataStoreServer;
   private final String sessionToken;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
-  private boolean invalidChecksumOccurredInDataset = false;
   private final String outputPath;
 
   private final ChecksumReporter checksumReporter =
@@ -183,7 +182,8 @@ public class QbicDataDownloader {
       final DownloadRequest downloadRequest = new DownloadRequest(
           Paths.get(datasetSample + File.separator), files, DEFAULT_DOWNLOAD_ATTEMPTS);
       LOG.info(
-          "Downloading " + files.size() + " file" + (files.size() != 1 ? "s" : "") + " for dataset " + datasetSample);
+          "Downloading " + files.size() + " file" + (files.size() != 1 ? "s" : "") + " for dataset "
+              + datasetSample + " (" + permID + ")");
       downloadFiles(downloadRequest);
     }
   }
@@ -201,7 +201,6 @@ public class QbicDataDownloader {
       if (file.getDataSetFile().getFileLength() > 0) {
         final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix,
             file.getDataSetFile(), conservePaths);
-        String absoluteOutputPath = finalPath.toAbsolutePath().getParent().toString();
         File newFile = new File(finalPath.toString());
         if (!newFile.getParentFile().exists()) {
           boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
@@ -240,6 +239,8 @@ public class QbicDataDownloader {
           throw new DownloadException(e);
         }
         doChecksumLogic(dataSetFile, finalPath, computedChecksum);
+      } else {
+        LOG.info("Skipped empty file " + file.getDataSetFile().getPath());
       }
     }
   }
@@ -317,12 +318,8 @@ public class QbicDataDownloader {
   private ChecksumValidationResult validateChecksum(long computedChecksum, DataSetFile dataSetFile) {
     String expectedChecksumHex = Integer.toHexString(dataSetFile.getChecksumCRC32());
     String computedChecksumHex = Long.toHexString(computedChecksum);
-    ChecksumValidationResult checksumValidationResult = new ChecksumValidationResult(
+    return new ChecksumValidationResult(
         expectedChecksumHex, computedChecksumHex, dataSetFile);
-    if (checksumValidationResult.isInvalid()) {
-      invalidChecksumOccurredInDataset = true;
-    }
-    return checksumValidationResult;
   }
 
   private void downloadFiles(DownloadRequest request) throws DownloadException {
