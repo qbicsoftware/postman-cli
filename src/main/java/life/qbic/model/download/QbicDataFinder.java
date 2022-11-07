@@ -103,7 +103,7 @@ public class QbicDataFinder {
 
   /**
    * Searches the parents for a Q_TEST_SAMPLE assuming at most one Q_TEST_SAMPLE exists in the parent
-   * samples. If not Q_TEST_SAMPLE was found, the original sample is returned.
+   * samples. If no Q_TEST_SAMPLE was found, the original sample is returned.
    *
    * @param sample the sample to which a dataset is attached to
    * @return the Q_TEST_SAMPLE parent if exists, the sample itself otherwise.
