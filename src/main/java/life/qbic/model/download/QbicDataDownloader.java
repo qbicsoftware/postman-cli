@@ -256,8 +256,14 @@ public class QbicDataDownloader {
       int downloadAttempt = 1;
       while (downloadAttempt <= request.getMaxNumberOfAttempts()) {
         try {
-          downloadFile(dataSetFile, pathPrefix);
-          writeCRC32Checksum(dataSetFile, pathPrefix);
+          if (dataSetFile.getFileLength() > 0) {
+            downloadFile(dataSetFile, pathPrefix);
+            writeCRC32Checksum(dataSetFile, pathPrefix);
+          } else {
+            LOG.warn("Skipped empty file " + dataSetFile.getPath()
+                .substring(dataSetFile.getPath().lastIndexOf("original/") + 9));
+          }
+
           return;
         } catch (Exception e) {
           LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
