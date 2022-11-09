@@ -118,27 +118,15 @@ public class QbicDataDownloader {
       Map<Sample, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
 
       if (foundDataSets.size() > 0) {
-        List<Sample> analyteSamples = foundDataSets.entrySet().stream()
-            .filter(it -> it.getValue().size() > 0)
-            .map(Entry::getKey)
-            .map(qbicDataFinder::searchAnalyteParent)
-            .distinct()
+        Map<Sample, List<DataSet>> datasetsPerAnalyte = associateDatasetsWithAnalyte(foundDataSets);
+
+        // ensures the order of download is the same always
+        List<Entry<Sample, List<DataSet>>> sortedEntries = datasetsPerAnalyte
+            .entrySet().stream()
+            .sorted(Comparator.comparing(entry -> entry.getKey().getCode()))
             .collect(Collectors.toList());
-        Map<Sample, List<DataSet>> datasetsPerAnalyte = new HashMap<>();
-        for (Sample analyteSample : analyteSamples) {
-          datasetsPerAnalyte.put(analyteSample, new ArrayList<>());
-        }
-        for (Entry<Sample, List<DataSet>> sampleListEntry : foundDataSets.entrySet()) {
-          Sample analyte = qbicDataFinder.searchAnalyteParent(sampleListEntry.getKey());
-          if (datasetsPerAnalyte.containsKey(analyte)) {
-            datasetsPerAnalyte.get(analyte).addAll(sampleListEntry.getValue());
-          }
-        }
 
-        for (Entry<Sample, List<DataSet>> analyteDatasets : datasetsPerAnalyte.entrySet().stream()
-            .sorted(Comparator.comparing(o -> o.getKey().getCode()))
-            .collect(Collectors.toList())) {
-
+        for (Entry<Sample, List<DataSet>> analyteDatasets : sortedEntries) {
           Sample analyte = analyteDatasets.getKey();
           List<DataSet> dataSets = analyteDatasets.getValue();
           try {
@@ -156,6 +144,16 @@ public class QbicDataDownloader {
         LOG.info("Nothing to download for " + ident+".");
       }
     }
+  }
+
+  private Map<Sample, List<DataSet>> associateDatasetsWithAnalyte(Map<Sample, List<DataSet>> foundDataSets) {
+    Map<Sample, List<DataSet>> datasetsPerAnalyte = new HashMap<>();
+    for (Entry<Sample, List<DataSet>> sampleListEntry : foundDataSets.entrySet()) {
+      Sample analyte = qbicDataFinder.searchAnalyteParent(sampleListEntry.getKey());
+      datasetsPerAnalyte.putIfAbsent(analyte, new ArrayList<>());
+      datasetsPerAnalyte.get(analyte).addAll(sampleListEntry.getValue());
+    }
+    return datasetsPerAnalyte;
   }
 
   private String getFileName(DataSetFile file) {
@@ -329,7 +327,6 @@ public class QbicDataDownloader {
     List<DataSetFile> filesNotDownloaded = new ArrayList<>();
     for (DataSetFile dataSetFile : dataSetFiles) {
       try {
-
         attemptFileDownload(request.getPrefix(),dataSetFile, request.getMaxNumberOfAttempts());
       } catch (DownloadException e) {
         filesNotDownloaded.add(dataSetFile);
