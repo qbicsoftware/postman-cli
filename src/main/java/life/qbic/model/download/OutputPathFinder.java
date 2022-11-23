@@ -27,7 +27,7 @@ public class OutputPathFinder {
         return Files.isDirectory(path);
     }
 
-    public static Path determineFinalPathFromDataset(DataSetFile file, Boolean conservePaths ) {
+    private static Path determineFinalPathFromDataset(DataSetFile file, Boolean conservePaths ) {
         Path finalPath;
         if (conservePaths) {
             finalPath = Paths.get(file.getPath());
