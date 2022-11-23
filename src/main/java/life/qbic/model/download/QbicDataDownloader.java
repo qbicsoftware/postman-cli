@@ -236,23 +236,19 @@ public class QbicDataDownloader {
         } catch (IOException e) {
           throw new DownloadException(e);
         }
-        doChecksumLogic(dataSetFile, finalPath, computedChecksum);
+        ChecksumValidationResult checksumValidationResult = validateChecksum(computedChecksum,
+            dataSetFile);
+        if (checksumValidationResult.isValid()) {
+          LOG.info("Download successful for " + finalPath.toAbsolutePath());
+        } else if (checksumValidationResult.isInvalid()) {
+          LOG.warn(String.format(
+              "Checksum mismatches were detected for file %s.%nFor more Information check the logs/summary_invalid_files.txt log file.",
+              finalPath.toAbsolutePath()));
+        }
+        reportValidation(checksumValidationResult);
       } else {
         LOG.info("Skipped empty file " + file.getDataSetFile().getPath());
       }
-    }
-  }
-
-  private void doChecksumLogic(DataSetFile dataSetFile, Path filePath, long computedChecksum) {
-    ChecksumValidationResult checksumValidationResult = validateChecksum(computedChecksum,
-        dataSetFile);
-    reportValidation(checksumValidationResult);
-    if (checksumValidationResult.isValid()) {
-      LOG.info("Download successful for " + filePath.toAbsolutePath());
-    } else if (checksumValidationResult.isInvalid()) {
-      LOG.warn(String.format(
-          "Checksum mismatches were detected for file %s.%nFor more Information check the logs/summary_invalid_files.txt log file.",
-          filePath.toAbsolutePath()));
     }
   }
 
