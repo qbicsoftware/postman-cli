@@ -19,9 +19,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import jline.internal.Log;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class QbicDataFinder {
+
+  private static final Logger log = LogManager.getLogger(QbicDataFinder.class);
 
   private final IApplicationServerApi applicationServer;
 
@@ -71,10 +74,10 @@ public class QbicDataFinder {
           .searchFiles(sessionToken, criteria, new DataSetFileFetchOptions())
           .getObjects();
       if (filesOnDataStoreServer.isEmpty()) {
-        Log.debug(
+        log.debug(
             String.format("No files found in dataset %s on dss %s%n", permID, dataStoreServer));
       } else {
-        Log.debug(String.format("%s files found in dataset %s on dss %s%n",
+        log.debug(String.format("%s files found in dataset %s on dss %s%n",
             filesOnDataStoreServer.size(), permID, dataStoreServer));
       }
       files.addAll(filesOnDataStoreServer);
