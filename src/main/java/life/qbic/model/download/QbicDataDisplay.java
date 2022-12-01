@@ -33,7 +33,7 @@ public class QbicDataDisplay {
 
     public QbicDataDisplay(
             String AppServerUri,
-            String DataServerUri,
+            List<String> dataServerUris,
             String sessionToken) {
         this.sessionToken = sessionToken;
         IApplicationServerApi applicationServer;
@@ -44,15 +44,14 @@ public class QbicDataDisplay {
         } else {
             applicationServer = null;
         }
-        IDataStoreServerApi dataStoreServer;
-        if (!DataServerUri.isEmpty()) {
-            dataStoreServer =
-                    HttpInvokerUtils.createStreamSupportingServiceStub(
-                            IDataStoreServerApi.class, DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
-        } else {
-            dataStoreServer = null;
-        }
-        qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
+        List<IDataStoreServerApi> dataStoreServerApis = dataServerUris.stream()
+            .filter(dataStoreServerUri -> !dataStoreServerUri.isEmpty())
+            .map(dataStoreServerUri ->
+                HttpInvokerUtils.createStreamSupportingServiceStub(
+                    IDataStoreServerApi.class, dataStoreServerUri + IDataStoreServerApi.SERVICE_URL,
+                    10000))
+            .collect(Collectors.toList());
+        qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServerApis, sessionToken);
     }
 
     public void getInformation(List<String> ids, List<String> suffixes){

@@ -5,6 +5,7 @@ import static java.util.Objects.nonNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import life.qbic.App;
 import life.qbic.io.parser.IdentifierParser;
@@ -54,7 +55,7 @@ public class PostmanCommandLineOptions {
     QbicDataDownloader qbicDataDownloader =
         new QbicDataDownloader(
             as_url,
-            dss_url,
+            dss_urls,
             bufferMultiplier * 1024,
             conservePath,
             authentication.getSessionToken(),
@@ -74,7 +75,8 @@ public class PostmanCommandLineOptions {
   void listDatasets()
       throws IOException {
     Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
-    QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url, dss_url,
+    QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url,
+        dss_urls,
         authentication.getSessionToken());
     ids = verifyProvidedIdentifiers();
     qbicDataDisplay.getInformation(ids, suffixes);
@@ -103,10 +105,15 @@ public class PostmanCommandLineOptions {
   public String as_url = "https://qbis.qbic.uni-tuebingen.de/openbis/openbis";
 
   @Option(
-          names = {"-dss", "--dss_url"},
-          description = "DataStoreServer URL",
-          scope = CommandLine.ScopeType.INHERIT)
-  public String dss_url = "https://qbis.qbic.uni-tuebingen.de/datastore_server";
+      names = {"-dss", "--dss_url"},
+      split = ",",
+      paramLabel = "<url>",
+      description = "DataStoreServer URLs. Specifies the data store servers where data can be found.",
+      scope = CommandLine.ScopeType.INHERIT)
+  public List<String> dss_urls = new ArrayList<String>(){{
+    add("https://qbis.qbic.uni-tuebingen.de/datastore_server");
+    add("https://qbis.qbic.uni-tuebingen.de/datastore_server2");
+  }};
 
   @Option(
           names = {"-f", "--file"},

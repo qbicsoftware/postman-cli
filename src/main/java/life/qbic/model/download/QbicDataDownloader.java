@@ -9,9 +9,9 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownload;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadReader;
-import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.IDataSetFileId;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -44,7 +44,7 @@ public class QbicDataDownloader {
   private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
   private final int defaultBufferSize;
   private final boolean conservePaths;
-  private final IDataStoreServerApi dataStoreServer;
+  private final List<IDataStoreServerApi> dataStoreServers;
   private final String sessionToken;
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private final String outputPath;
@@ -59,14 +59,14 @@ public class QbicDataDownloader {
    * Constructor for a QBiCDataLoaderInstance
    *
    * @param AppServerUri  The openBIS application server URL (AS)
-   * @param DataServerUri The openBIS datastore server URL (DSS)
+   * @param dataServerUris The openBIS datastore server URLs (DSS)
    * @param bufferSize    The buffer size for the InputStream reader
    * @param conservePaths Flag to conserve the file path structure during download
    * @param sessionToken The session token for the datastore & application servers
    */
   public QbicDataDownloader(
           String AppServerUri,
-          String DataServerUri,
+          List<String> dataServerUris,
           int bufferSize,
           boolean conservePaths,
           String sessionToken,
@@ -84,14 +84,14 @@ public class QbicDataDownloader {
     } else {
       applicationServer = null;
     }
-    if (!DataServerUri.isEmpty()) {
-      this.dataStoreServer =
-          HttpInvokerUtils.createStreamSupportingServiceStub(
-              IDataStoreServerApi.class, DataServerUri + IDataStoreServerApi.SERVICE_URL, 10000);
-    } else {
-      this.dataStoreServer = null;
-    }
-    qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServer, sessionToken);
+    this.dataStoreServers = dataServerUris.stream()
+        .filter(dataStoreServerUri -> !dataStoreServerUri.isEmpty())
+        .map(dataStoreServerUri ->
+            HttpInvokerUtils.createStreamSupportingServiceStub(
+                IDataStoreServerApi.class, dataStoreServerUri + IDataStoreServerApi.SERVICE_URL,
+                10000))
+        .collect(Collectors.toList());
+    qbicDataFinder = new QbicDataFinder(applicationServer, dataStoreServers, sessionToken);
   }
 
   /**
@@ -187,15 +187,37 @@ public class QbicDataDownloader {
   }
 
   private void downloadFile(DataSetFile dataSetFile, Path prefix) throws DownloadException {
+    for (IDataStoreServerApi dataStoreServer : dataStoreServers) {
+      try {
+        downloadFileFromDataStoreServer(dataSetFile, prefix, dataStoreServer);
+        break;
+      } catch (FileNotFoundException fileNotFoundException) {
+        // log and try the next data store server
+        LOG.debug("Download attempt failed on " + dataStoreServer, fileNotFoundException);
+        continue;
+      }
+    }
+  }
+
+  /**
+   * @throws FileNotFoundException if the file was not found on the data store server.
+   */
+  private void downloadFileFromDataStoreServer(DataSetFile dataSetFile, Path prefix,
+      IDataStoreServerApi dataStoreServerApi) throws FileNotFoundException {
+
     DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
     options.setRecursive(false);
-    IDataSetFileId fileId = dataSetFile.getPermId();
+
     // note: DataSetFileDownloadReader closes the input stream after it finished reading it
-    InputStream stream = this.dataStoreServer.downloadFiles(sessionToken,
-        Collections.singletonList(fileId), options);
-    DataSetFileDownloadReader reader = new DataSetFileDownloadReader(stream);
-    DataSetFileDownload file;
-    while ((file = reader.read()) != null) {
+    DataSetFileDownloadReader reader = new DataSetFileDownloadReader(
+        dataStoreServerApi.downloadFiles(sessionToken,
+            Collections.singletonList(dataSetFile.getPermId()), options));
+    try {
+      // we expect exactly one file
+      DataSetFileDownload file = reader.read();
+      if (Objects.isNull(file)) {
+        throw new FileNotFoundException("No file " + dataSetFile.getPermId() + " found");
+      }
       if (file.getDataSetFile().getFileLength() > 0) {
         final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix,
             file.getDataSetFile(), conservePaths);
@@ -218,7 +240,6 @@ public class QbicDataDownloader {
                 : defaultBufferSize;
         byte[] buffer = new byte[bufferSize];
         int bytesRead;
-        LOG.debug(String.format("Download of %s is starting", fileName));
         try (InputStream initialStream = file.getInputStream();
             OutputStream os = Files.newOutputStream(newFile.toPath());
             CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream,
@@ -231,7 +252,6 @@ public class QbicDataDownloader {
           }
           // flush OutputStream to write any buffered data to file
           os.flush();
-          LOG.debug(String.format("Download of %s has finished", fileName));
           computedChecksum = checkedInputStream.getChecksum().getValue();
         } catch (IOException e) {
           throw new DownloadException(e);
@@ -249,6 +269,14 @@ public class QbicDataDownloader {
       } else {
         LOG.info("Skipped empty file " + file.getDataSetFile().getPath());
       }
+
+      // consume the rest of the stream
+      while (Objects.nonNull(file = reader.read())) {
+        // we only expected exactly one file
+        LOG.debug("Ignored file " + file.getDataSetFile().getPath() + "; Expected one file exactly");
+      }
+    } finally {
+      reader.close();
     }
   }
 
@@ -343,8 +371,9 @@ public class QbicDataDownloader {
           downloadFile(dataSetFile, pathPrefix);
           writeCRC32Checksum(dataSetFile, pathPrefix);
         } else {
+          String prefix = "original/";
           LOG.warn("Skipped empty file " + dataSetFile.getPath()
-              .substring(dataSetFile.getPath().lastIndexOf("original/") + 9));
+              .substring(dataSetFile.getPath().lastIndexOf(prefix) + prefix.length()));
         }
         return;
       } catch (Exception e) {
