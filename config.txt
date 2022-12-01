@@ -7,4 +7,4 @@
 -as https://openbis1605test.am10.uni-tuebingen.de/openbis/openbis
 
 # Set the DSS_URL (DataStoreServerURL) to the value defined below
--dss https://qbis.qbic.uni-tuebingen.de:444/datastore_server,https://qbis.qbic.uni-tuebingen.de:444/datastore_server2
+-dss https://qbis.qbic.uni-tuebingen.de/datastore_server,https://qbis.qbic.uni-tuebingen.de/datastore_server2
