@@ -49,16 +49,16 @@ To use our openBIS URL we write the following lines in the config file:
 
 # The following config file options are currently supported:    
 # AS_URL (Application Server URL)       
--as [URL]
+-as <URL>
 # DSS_URL (DataStore Server URL)     
--dss [URL]
+-dss <URL>[,<URL>...]
 
 ```
 A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided, postman uses the default values set in the PostmanCommandLineOptions class.
 
 If no config file or commandline option is provided, Postman will resort to the defaults set here: [Defaults](https://github.com/qbicsoftware/postman-cli/blob/development/src/main/java/life/qbic/io/commandline/PostmanCommandLineOptions.java).    
 Hence, the default AS is set to: `https://qbis.qbic.uni-tuebingen.de/openbis/openbis`  
-and the DSS defaults to: `https://qbis.qbic.uni-tuebingen.de/datastore_server`
+and the DSS defaults to: `https://qbis.qbic.uni-tuebingen.de/datastore_server` and `https://qbis.qbic.uni-tuebingen.de/datastore_server2`
 
 ## How to use
 
@@ -82,7 +82,8 @@ Options:
   -p, --env-password=<passwordEnvVariable>  provide the name of an environment variable to read
                                               in the password from
   -as, -as_url=<as_url>                     ApplicationServer URL
-  -dss, --dss_url=<dss_url>                 DataStoreServer URL
+  -dss, --dss_url=<url>[,<url>...]          DataStoreServer URLs. Specifies the 
+                                              data store servers where data can be found.
   -f, --file=<filePath>                     a file with line-separated list of QBiC sample ids
   -s, --suffix=<suffix>[,<suffix>...]       only include files ending with one of these suffixes
   -h, --help                                display a help message and exit
