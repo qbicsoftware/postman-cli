@@ -144,6 +144,7 @@ public class QbicDataDownloader {
         LOG.info("Nothing to download for " + ident+".");
       }
     }
+    LOG.info("Done");
   }
 
   private Map<Sample, List<DataSet>> associateDatasetsWithAnalyte(Map<Sample, List<DataSet>> foundDataSets) {
@@ -166,6 +167,10 @@ public class QbicDataDownloader {
     List<DataSet> sortedDatasets = dataSets.stream()
         .sorted(Comparator.comparing(it -> it.getSample().getCode()))
         .collect(Collectors.toList());
+
+    if (sortedDatasets.size() == 0) {
+      return;
+    }
 
     LOG.info(String.format("Found " + sortedDatasets.size() + " dataset(s) for sample %s",
         analyte.getCode()));
