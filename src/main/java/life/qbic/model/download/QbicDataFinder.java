@@ -75,9 +75,9 @@ public class QbicDataFinder {
           .getObjects();
       if (filesOnDataStoreServer.isEmpty()) {
         log.debug(
-            String.format("No files found in dataset %s on dss %s%n", permID, dataStoreServer));
+            String.format("No files found in dataset %s on dss %s", permID, dataStoreServer));
       } else {
-        log.debug(String.format("%s files found in dataset %s on dss %s%n",
+        log.debug(String.format("%s files and directories found in dataset %s on dss %s",
             filesOnDataStoreServer.size(), permID, dataStoreServer));
       }
       files.addAll(filesOnDataStoreServer);
