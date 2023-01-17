@@ -227,6 +227,35 @@ public class QbicDataDownloader {
         final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix,
             file.getDataSetFile(), conservePaths);
         File newFile = new File(finalPath.toString());
+
+        if (newFile.exists()) {
+          try (
+              CheckedInputStream existingFileReader = new CheckedInputStream(
+                  Files.newInputStream(newFile.toPath()), new CRC32())) {
+
+            int bufferSize =
+                (newFile.length() < defaultBufferSize)
+                    ? (int) file.getDataSetFile().getFileLength()
+                    : defaultBufferSize;
+            byte[] buffer = new byte[bufferSize];
+            while (existingFileReader.read(buffer) != -1) {
+              // reading
+            }
+
+            ChecksumValidationResult checksumValidationResult = validateChecksum(
+                existingFileReader.getChecksum().getValue(), dataSetFile);
+            if (checksumValidationResult.isValid()) {
+              LOG.info("Found existing file with the identical content. Skipping "
+                  + finalPath.toAbsolutePath());
+              return;
+            } else {
+              LOG.info("Updating existing file " + finalPath.toAbsolutePath());
+            }
+          } catch (IOException e) {
+            throw new RuntimeException("Existing file could not be processed", e);
+          }
+        }
+
         if (!newFile.getParentFile().exists()) {
           boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
           if (!successfullyCreatedDirectory) {
@@ -245,6 +274,7 @@ public class QbicDataDownloader {
                 : defaultBufferSize;
         byte[] buffer = new byte[bufferSize];
         int bytesRead;
+        progressBar.draw();
         try (InputStream initialStream = file.getInputStream();
             OutputStream os = Files.newOutputStream(newFile.toPath());
             CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream,
