@@ -234,9 +234,7 @@ public class QbicDataDownloader {
                   Files.newInputStream(newFile.toPath()), new CRC32())) {
 
             int bufferSize =
-                (newFile.length() < defaultBufferSize)
-                    ? (int) file.getDataSetFile().getFileLength()
-                    : defaultBufferSize;
+                adjustedBufferSize(newFile.length(), file);
             byte[] buffer = new byte[bufferSize];
             while (existingFileReader.read(buffer) != -1) {
               // reading
@@ -245,7 +243,7 @@ public class QbicDataDownloader {
             ChecksumValidationResult checksumValidationResult = validateChecksum(
                 existingFileReader.getChecksum().getValue(), dataSetFile);
             if (checksumValidationResult.isValid()) {
-              LOG.info("Found existing file with the identical content. Skipping "
+              LOG.info("Found existing file with identical content. Skipping "
                   + finalPath.toAbsolutePath());
               return;
             } else {
@@ -269,9 +267,7 @@ public class QbicDataDownloader {
             new ProgressBar(
                 fileName, file.getDataSetFile().getFileLength());
         int bufferSize =
-            (file.getDataSetFile().getFileLength() < defaultBufferSize)
-                ? (int) file.getDataSetFile().getFileLength()
-                : defaultBufferSize;
+            adjustedBufferSize(file.getDataSetFile().getFileLength(), file);
         byte[] buffer = new byte[bufferSize];
         int bytesRead;
         progressBar.draw();
@@ -313,6 +309,12 @@ public class QbicDataDownloader {
     } finally {
       reader.close();
     }
+  }
+
+  private int adjustedBufferSize(long newFile, DataSetFileDownload file) {
+    return (newFile < defaultBufferSize)
+        ? (int) file.getDataSetFile().getFileLength()
+        : defaultBufferSize;
   }
 
   private static class ChecksumValidationResult {
