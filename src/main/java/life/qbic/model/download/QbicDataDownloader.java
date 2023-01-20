@@ -229,24 +229,15 @@ public class QbicDataDownloader {
     // skip if same content exists already
     if (localFile.exists()) {
       System.out.print("Found existing file. Checking content...");
-      try (CheckedInputStream existingFileReader = new CheckedInputStream(
-          Files.newInputStream(localFile.toPath()), new CRC32())) {
-        int bufferSize = adjustedBufferSize(fileLength, dataSetFile);
-        byte[] buffer = new byte[bufferSize];
-        while (existingFileReader.read(buffer) != -1) {
-          // reading
-        }
-        ChecksumValidationResult checksumValidationResult = validateChecksum(
-            existingFileReader.getChecksum().getValue(), dataSetFile);
-        if (checksumValidationResult.isValid()) {
-          System.out.println("\rFound existing file with identical content. Skipping " + localFile.getAbsolutePath());
-          LOG.debug(checksumValidationResult.computedChecksum + " " + localFile.getName() + " exists locally.");
-          return;
-        } else {
-          System.out.println("\rUpdating existing file " + localFile.getAbsolutePath());
-        }
-      } catch (IOException e) {
-        throw new RuntimeException("Existing file could not be processed", e);
+      ChecksumValidationResult checksumValidationResult = checksumForFile(dataSetFile, localFile);
+      if (checksumValidationResult.isValid()) {
+        System.out.println("\rFound existing file with identical content. Skipping "
+            + localFile.getAbsolutePath());
+        LOG.debug(checksumValidationResult.computedChecksum + " " + localFile.getName()
+            + " exists locally.");
+        return;
+      } else {
+        System.out.println("\rUpdating existing file " + localFile.getAbsolutePath());
       }
     }
 
@@ -261,7 +252,7 @@ public class QbicDataDownloader {
     long computedChecksum;
     String fileName = localFilePath.getFileName().toString();
     ProgressBar progressBar = new ProgressBar(fileName, fileLength);
-    int bufferSize = adjustedBufferSize(fileLength, dataSetFile);
+    int bufferSize = adjustedBufferSize(fileLength);
 
     DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
     options.setRecursive(false);
@@ -312,10 +303,23 @@ public class QbicDataDownloader {
     }
   }
 
-  private int adjustedBufferSize(long newFile, DataSetFile file) {
-    return (newFile < defaultBufferSize)
-        ? (int) file.getFileLength()
-        : defaultBufferSize;
+  private ChecksumValidationResult checksumForFile(DataSetFile dataSetFile, File localFile) {
+    try (CheckedInputStream existingFileReader = new CheckedInputStream(
+        Files.newInputStream(localFile.toPath()), new CRC32())) {
+      int bufferSize = adjustedBufferSize(dataSetFile.getFileLength());
+      byte[] buffer = new byte[bufferSize];
+      while (existingFileReader.read(buffer) != -1) {
+        // reading
+      }
+      return validateChecksum(
+          existingFileReader.getChecksum().getValue(), dataSetFile);
+    } catch (IOException e) {
+      throw new RuntimeException("Existing file could not be processed", e);
+    }
+  }
+
+  private int adjustedBufferSize(long fileLength) {
+    return (fileLength < defaultBufferSize) ? (int) fileLength : defaultBufferSize;
   }
 
   private static class ChecksumValidationResult {
