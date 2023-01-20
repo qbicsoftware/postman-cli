@@ -241,13 +241,7 @@ public class QbicDataDownloader {
       }
     }
 
-    // try to create parent directory if not present
-    if (!localFile.getParentFile().exists()) {
-      boolean successfullyCreatedDirectory = localFile.getParentFile().mkdirs();
-      if (!successfullyCreatedDirectory) {
-        LOG.error("Could not create directory " + localFile.getParentFile());
-      }
-    }
+    createParentDirectoryIfNotExists(localFile);
 
     long computedChecksum;
     String fileName = localFilePath.getFileName().toString();
@@ -269,13 +263,12 @@ public class QbicDataDownloader {
         throw new FileNotFoundException("No file " + dataSetFile.getPermId() + " found");
       }
 
-      // read the file
+      // write the file
       try (
           InputStream initialStream = fileDownload.getInputStream();
           OutputStream os = Files.newOutputStream(localFilePath);
           CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream,
               new CRC32())) {
-        // read from is to buffer
         while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
           progressBar.updateProgress(bufferSize);
           progressBar.draw();
@@ -299,6 +292,15 @@ public class QbicDataDownloader {
         }
       } catch (IOException e) {
         throw new DownloadException(e);
+      }
+    }
+  }
+
+  private static void createParentDirectoryIfNotExists(File localFile) {
+    if (!localFile.getParentFile().exists()) {
+      boolean successfullyCreatedDirectory = localFile.getParentFile().mkdirs();
+      if (!successfullyCreatedDirectory) {
+        LOG.error("Could not create directory " + localFile.getParentFile());
       }
     }
   }
