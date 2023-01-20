@@ -49,10 +49,10 @@ public class QbicDataDownloader {
   private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private final String outputPath;
 
-  private final ChecksumReporter checksumReporter =
-          new FileSystemWriter(
-                  Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_valid_files.txt"),
-                  Paths.get(System.getProperty("user.dir") + File.separator + "logs" + File.separator + "summary_invalid_files.txt"));
+  private final Path logDirectory = Paths.get(System.getProperty("user.dir"),"logs");
+  private final ChecksumReporter checksumReporter = new FileSystemWriter(
+      Paths.get(logDirectory + "summary_valid_files.txt"),
+      Paths.get(logDirectory + "summary_invalid_files.txt"));
   private final QbicDataFinder qbicDataFinder;
 
   /**
@@ -95,8 +95,7 @@ public class QbicDataDownloader {
   }
 
   /**
-   * Downloads the files that the user requested checks whether the filtering option suffix has been
-   * passed and applies filtering if needed
+   * Filters the files as specified by the user and downloads them.
    */
   public void downloadRequestedFilesOfDatasets(List<String> ids, List<String> suffixes) {
     LOG.info(
@@ -195,125 +194,127 @@ public class QbicDataDownloader {
     for (IDataStoreServerApi dataStoreServer : dataStoreServers) {
       try {
         downloadFileFromDataStoreServer(dataSetFile, prefix, dataStoreServer);
-        break;
+        return;
       } catch (FileNotFoundException fileNotFoundException) {
         // log and try the next data store server
         LOG.debug("Download attempt failed on " + dataStoreServer, fileNotFoundException);
-        continue;
       }
+    }
+  }
+
+  // note: DataSetFileDownloadReader closes the input stream after it finished reading it.
+  private static class AutoClosableDataSetFileDownloadReader extends DataSetFileDownloadReader implements AutoCloseable {
+    public AutoClosableDataSetFileDownloadReader(InputStream in) {
+      super(in);
     }
   }
 
   /**
-   * @throws FileNotFoundException if the file was not found on the data store server.
+   * @throws FileNotFoundException if the file was not on the data store server.
    */
   private void downloadFileFromDataStoreServer(DataSetFile dataSetFile, Path prefix,
       IDataStoreServerApi dataStoreServerApi) throws FileNotFoundException {
 
+    long fileLength = dataSetFile.getFileLength();
+    // skip if file is empty
+    if (fileLength < 1) {
+      LOG.info("Skipped empty file " + dataSetFile.getPath());
+      return;
+    }
+
+    Path localFilePath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, dataSetFile,
+        conservePaths);
+    File localFile = localFilePath.toFile();
+
+    // skip if same content exists already
+    if (localFile.exists()) {
+      System.out.print("Found existing file. Checking content...");
+      try (CheckedInputStream existingFileReader = new CheckedInputStream(
+          Files.newInputStream(localFile.toPath()), new CRC32())) {
+        int bufferSize = adjustedBufferSize(fileLength, dataSetFile);
+        byte[] buffer = new byte[bufferSize];
+        while (existingFileReader.read(buffer) != -1) {
+          // reading
+        }
+        ChecksumValidationResult checksumValidationResult = validateChecksum(
+            existingFileReader.getChecksum().getValue(), dataSetFile);
+        if (checksumValidationResult.isValid()) {
+          System.out.println("\rFound existing file with identical content. Skipping " + localFile.getAbsolutePath());
+          LOG.debug(checksumValidationResult.computedChecksum + " " + localFile.getName() + " exists locally.");
+          return;
+        } else {
+          System.out.println("\rUpdating existing file " + localFile.getAbsolutePath());
+        }
+      } catch (IOException e) {
+        throw new RuntimeException("Existing file could not be processed", e);
+      }
+    }
+
+    // try to create parent directory if not present
+    if (!localFile.getParentFile().exists()) {
+      boolean successfullyCreatedDirectory = localFile.getParentFile().mkdirs();
+      if (!successfullyCreatedDirectory) {
+        LOG.error("Could not create directory " + localFile.getParentFile());
+      }
+    }
+
+    long computedChecksum;
+    String fileName = localFilePath.getFileName().toString();
+    ProgressBar progressBar = new ProgressBar(fileName, fileLength);
+    int bufferSize = adjustedBufferSize(fileLength, dataSetFile);
+
     DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
     options.setRecursive(false);
+    byte[] buffer = new byte[bufferSize];
+    int bytesRead;
 
-    // note: DataSetFileDownloadReader closes the input stream after it finished reading it
-    DataSetFileDownloadReader reader = new DataSetFileDownloadReader(
+    try (AutoClosableDataSetFileDownloadReader reader = new AutoClosableDataSetFileDownloadReader(
         dataStoreServerApi.downloadFiles(sessionToken,
-            Collections.singletonList(dataSetFile.getPermId()), options));
-    try {
-      // we expect exactly one file
-      DataSetFileDownload file = reader.read();
-      if (Objects.isNull(file)) {
+            Collections.singletonList(dataSetFile.getPermId()), options))) {
+
+      DataSetFileDownload fileDownload = reader.read();
+      // there is no file in the input stream
+      if (Objects.isNull(fileDownload)) {
         throw new FileNotFoundException("No file " + dataSetFile.getPermId() + " found");
       }
-      if (file.getDataSetFile().getFileLength() > 0) {
-        final Path finalPath = OutputPathFinder.determineOutputDirectory(outputPath, prefix,
-            file.getDataSetFile(), conservePaths);
-        File newFile = new File(finalPath.toString());
 
-        if (newFile.exists()) {
-          try (
-              CheckedInputStream existingFileReader = new CheckedInputStream(
-                  Files.newInputStream(newFile.toPath()), new CRC32())) {
-
-            int bufferSize =
-                adjustedBufferSize(newFile.length(), file);
-            byte[] buffer = new byte[bufferSize];
-            while (existingFileReader.read(buffer) != -1) {
-              // reading
-            }
-
-            ChecksumValidationResult checksumValidationResult = validateChecksum(
-                existingFileReader.getChecksum().getValue(), dataSetFile);
-            if (checksumValidationResult.isValid()) {
-              LOG.info("Found existing file with identical content. Skipping "
-                  + finalPath.toAbsolutePath());
-              return;
-            } else {
-              LOG.info("Updating existing file " + finalPath.toAbsolutePath());
-            }
-          } catch (IOException e) {
-            throw new RuntimeException("Existing file could not be processed", e);
-          }
-        }
-
-        if (!newFile.getParentFile().exists()) {
-          boolean successfullyCreatedDirectory = newFile.getParentFile().mkdirs();
-          if (!successfullyCreatedDirectory) {
-            LOG.error("Could not create directory " + newFile.getParentFile());
-          }
-        }
-        long computedChecksum;
-
-        String fileName = finalPath.getFileName().toString();
-        ProgressBar progressBar =
-            new ProgressBar(
-                fileName, file.getDataSetFile().getFileLength());
-        int bufferSize =
-            adjustedBufferSize(file.getDataSetFile().getFileLength(), file);
-        byte[] buffer = new byte[bufferSize];
-        int bytesRead;
-        progressBar.draw();
-        try (InputStream initialStream = file.getInputStream();
-            OutputStream os = Files.newOutputStream(newFile.toPath());
-            CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream,
-                new CRC32())) {
-          // read from is to buffer
-          while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
-            progressBar.updateProgress(bufferSize);
-            os.write(buffer, 0, bytesRead);
-            os.flush();
-          }
-          // flush OutputStream to write any buffered data to file
+      // read the file
+      try (
+          InputStream initialStream = fileDownload.getInputStream();
+          OutputStream os = Files.newOutputStream(localFilePath);
+          CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream,
+              new CRC32())) {
+        // read from is to buffer
+        while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
+          progressBar.updateProgress(bufferSize);
+          progressBar.draw();
+          os.write(buffer, 0, bytesRead);
           os.flush();
-          computedChecksum = checkedInputStream.getChecksum().getValue();
-        } catch (IOException e) {
-          throw new DownloadException(e);
         }
+        // flush OutputStream to write any buffered data to file
+        os.flush();
+
+        // validate written file
+        computedChecksum = checkedInputStream.getChecksum().getValue();
         ChecksumValidationResult checksumValidationResult = validateChecksum(computedChecksum,
             dataSetFile);
+        reportValidation(checksumValidationResult);
         if (checksumValidationResult.isValid()) {
-          LOG.info("Download successful for " + finalPath.toAbsolutePath());
+          LOG.info("Download successful for " + localFile.getAbsolutePath());
         } else if (checksumValidationResult.isInvalid()) {
           LOG.warn(String.format(
               "Checksum mismatches were detected for file %s.%nFor more Information check the logs/summary_invalid_files.txt log file.",
-              finalPath.toAbsolutePath()));
+              localFile.getAbsolutePath()));
         }
-        reportValidation(checksumValidationResult);
-      } else {
-        LOG.info("Skipped empty file " + file.getDataSetFile().getPath());
+      } catch (IOException e) {
+        throw new DownloadException(e);
       }
-
-      // consume the rest of the stream
-      while (Objects.nonNull(file = reader.read())) {
-        // we only expected exactly one file
-        LOG.debug("Ignored file " + file.getDataSetFile().getPath() + "; Expected one file exactly");
-      }
-    } finally {
-      reader.close();
     }
   }
 
-  private int adjustedBufferSize(long newFile, DataSetFileDownload file) {
+  private int adjustedBufferSize(long newFile, DataSetFile file) {
     return (newFile < defaultBufferSize)
-        ? (int) file.getDataSetFile().getFileLength()
+        ? (int) file.getFileLength()
         : defaultBufferSize;
   }
 
