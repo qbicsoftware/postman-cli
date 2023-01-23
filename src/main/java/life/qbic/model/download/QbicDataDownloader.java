@@ -51,8 +51,8 @@ public class QbicDataDownloader {
 
   private final Path logDirectory = Paths.get(System.getProperty("user.dir"),"logs");
   private final ChecksumReporter checksumReporter = new FileSystemWriter(
-      Paths.get(logDirectory + "summary_valid_files.txt"),
-      Paths.get(logDirectory + "summary_invalid_files.txt"));
+      Paths.get(logDirectory.toString(), "summary_valid_files.txt"),
+      Paths.get(logDirectory.toString(), "summary_invalid_files.txt"));
   private final QbicDataFinder qbicDataFinder;
 
   /**
@@ -97,7 +97,7 @@ public class QbicDataDownloader {
   /**
    * Filters the files as specified by the user and downloads them.
    */
-  public void downloadRequestedFilesOfDatasets(List<String> ids, List<String> suffixes) {
+  public DownloadResponse downloadForIds(List<String> ids, List<String> suffixes) {
     LOG.info(
         String.format(
             "%s provided openBIS identifiers have been found: %s",
@@ -113,37 +113,42 @@ public class QbicDataDownloader {
       fileFilter = fileFilter.and(suffixFilter);
     }
 
+    DownloadResponse downloadResponse = DownloadResponse.create();
     for (String ident : ids) {
-      Map<Sample, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
-
-      if (foundDataSets.size() > 0) {
-        Map<Sample, List<DataSet>> datasetsPerAnalyte = associateDatasetsWithAnalyte(foundDataSets);
-
-        // ensures the order of download is the same always
-        List<Entry<Sample, List<DataSet>>> sortedEntries = datasetsPerAnalyte
-            .entrySet().stream()
-            .sorted(Comparator.comparing(entry -> entry.getKey().getCode()))
-            .collect(Collectors.toList());
-
-        for (Entry<Sample, List<DataSet>> analyteDatasets : sortedEntries) {
-          Sample analyte = analyteDatasets.getKey();
-          List<DataSet> dataSets = analyteDatasets.getValue();
-          try {
-            downloadDatasets(analyte, dataSets, fileFilter);
-          } catch (NullPointerException e) {
-            LOG.error(
-                "Datasets were found by the application server, but could not be found on the datastore server for "
-                    + ident
-                    + "."
-                    + " Try to supply the correct datastore server using a config file!");
-            e.printStackTrace();
-          }
-        }
-      } else {
-        LOG.info("Nothing to download for " + ident+".");
-      }
+      downloadResponse.merge(downloadForId(fileFilter, ident));
     }
-    LOG.info("Done");
+    return downloadResponse;
+  }
+
+  private DownloadResponse downloadForId(Predicate<DataSetFile> fileFilter, String ident) {
+    Map<Sample, List<DataSet>> foundDataSets = qbicDataFinder.findAllDatasetsRecursive(ident);
+
+    if (foundDataSets.size() > 0) {
+      Map<Sample, List<DataSet>> datasetsPerAnalyte = associateDatasetsWithAnalyte(foundDataSets);
+
+      // ensures the order of download is the same always
+      List<Entry<Sample, List<DataSet>>> sortedEntries = datasetsPerAnalyte
+          .entrySet().stream()
+          .sorted(Comparator.comparing(entry -> entry.getKey().getCode()))
+          .collect(Collectors.toList());
+
+      DownloadResponse response = DownloadResponse.create();
+      for (Entry<Sample, List<DataSet>> analyteDatasets : sortedEntries) {
+        response.merge(downloadForAnalyte(fileFilter, analyteDatasets));
+      }
+      return response;
+    } else {
+      LOG.info("Nothing to download for " + ident + ".");
+      return DownloadResponse.create();
+    }
+  }
+
+  private DownloadResponse downloadForAnalyte(Predicate<DataSetFile> fileFilter,
+      Entry<Sample, List<DataSet>> analyteDatasets) {
+
+    Sample analyte = analyteDatasets.getKey();
+    List<DataSet> dataSets = analyteDatasets.getValue();
+    return downloadDatasets(analyte, dataSets, fileFilter);
   }
 
   private Map<Sample, List<DataSet>> associateDatasetsWithAnalyte(Map<Sample, List<DataSet>> foundDataSets) {
@@ -161,18 +166,20 @@ public class QbicDataDownloader {
     return filePath.substring(filePath.lastIndexOf("/") + 1);
   }
 
-  private void downloadDatasets(Sample analyte, List<DataSet> dataSets,
+  private DownloadResponse downloadDatasets(Sample analyte, List<DataSet> dataSets,
       Predicate<DataSetFile> fileFilter) {
+
+    if (dataSets.isEmpty()) {
+      return DownloadResponse.create();
+    }
+
     List<DataSet> sortedDatasets = dataSets.stream()
         .sorted(Comparator.comparing(it -> it.getSample().getCode()))
         .collect(Collectors.toList());
 
-    if (sortedDatasets.size() == 0) {
-      return;
-    }
-
     LOG.info(String.format("Found " + sortedDatasets.size() + " dataset(s) for sample %s",
         analyte.getCode()));
+    DownloadResponse downloadResponse = DownloadResponse.create();
     for (DataSet dataSet : sortedDatasets) {
       DataSetPermId permID = dataSet.getPermId();
       List<DataSetFile> files = qbicDataFinder.getFiles(permID, fileFilter);
@@ -186,20 +193,21 @@ public class QbicDataDownloader {
       LOG.info(
           "Downloading " + files.size() + " file" + (files.size() != 1 ? "s" : "") + " for dataset "
               + datasetSample + " (" + permID + ")");
-      downloadFiles(downloadRequest);
+      downloadResponse.merge(downloadFiles(downloadRequest));
     }
+    return downloadResponse;
   }
 
-  private void downloadFile(DataSetFile dataSetFile, Path prefix) throws DownloadException {
+  private FileDownloadResponse downloadFile(DataSetFile dataSetFile, Path prefix) throws DownloadException {
     for (IDataStoreServerApi dataStoreServer : dataStoreServers) {
       try {
-        downloadFileFromDataStoreServer(dataSetFile, prefix, dataStoreServer);
-        return;
+        return downloadFileFromDataStoreServer(dataSetFile, prefix, dataStoreServer);
       } catch (FileNotFoundException fileNotFoundException) {
         // log and try the next data store server
         LOG.debug("Download attempt failed on " + dataStoreServer, fileNotFoundException);
       }
     }
+    return FileDownloadResponse.failure();
   }
 
   // note: DataSetFileDownloadReader closes the input stream after it finished reading it.
@@ -209,17 +217,41 @@ public class QbicDataDownloader {
     }
   }
 
+  public static class FileDownloadResponse {
+    private final boolean success;
+
+    private FileDownloadResponse(boolean success) {
+      this.success = success;
+    }
+
+    public static FileDownloadResponse success() {
+      return new FileDownloadResponse(true);
+    }
+
+    private static FileDownloadResponse failure() {
+      return new FileDownloadResponse(false);
+    }
+
+    public boolean isSuccess() {
+      return success;
+    }
+
+    public boolean isFailure() {
+      return !success;
+    }
+  }
+
+
   /**
    * @throws FileNotFoundException if the file was not on the data store server.
    */
-  private void downloadFileFromDataStoreServer(DataSetFile dataSetFile, Path prefix,
+  private FileDownloadResponse downloadFileFromDataStoreServer(DataSetFile dataSetFile, Path prefix,
       IDataStoreServerApi dataStoreServerApi) throws FileNotFoundException {
 
-    long fileLength = dataSetFile.getFileLength();
     // skip if file is empty
-    if (fileLength < 1) {
+    if (dataSetFile.getFileLength() < 1) {
       LOG.info("Skipped empty file " + dataSetFile.getPath());
-      return;
+      return FileDownloadResponse.success();
     }
 
     Path localFilePath = OutputPathFinder.determineOutputDirectory(outputPath, prefix, dataSetFile,
@@ -229,13 +261,11 @@ public class QbicDataDownloader {
     // skip if same content exists already
     if (localFile.exists()) {
       System.out.print("Found existing file. Checking content...");
-      ChecksumValidationResult checksumValidationResult = checksumForFile(dataSetFile, localFile);
-      if (checksumValidationResult.isValid()) {
+
+      if (localFileWithSameContent(dataSetFile, localFile)) {
         System.out.println("\rFound existing file with identical content. Skipping "
             + localFile.getAbsolutePath());
-        LOG.debug(checksumValidationResult.computedChecksum + " " + localFile.getName()
-            + " exists locally.");
-        return;
+        return FileDownloadResponse.success();
       } else {
         System.out.println("\rUpdating existing file " + localFile.getAbsolutePath());
       }
@@ -243,16 +273,29 @@ public class QbicDataDownloader {
 
     createParentDirectoryIfNotExists(localFile);
 
-    long computedChecksum;
-    String fileName = localFilePath.getFileName().toString();
-    ProgressBar progressBar = new ProgressBar(fileName, fileLength);
-    int bufferSize = adjustedBufferSize(fileLength);
+    long computedChecksum = writeFileToDisk(dataSetFile, dataStoreServerApi, localFilePath);
+    // validate written file
+    ChecksumValidationResult checksumValidationResult = validateChecksum(computedChecksum,
+        dataSetFile);
+    reportValidation(checksumValidationResult);
+    if (checksumValidationResult.isValid()) {
+      LOG.info("Download successful for " + localFile.getAbsolutePath());
+      return FileDownloadResponse.success();
+    } else {
+      LOG.warn(String.format(
+          "Checksum mismatches were detected for file %s.%nFor more Information check the logs/summary_invalid_files.txt log file.",
+          localFile.getAbsolutePath()));
+      throw new DownloadException();
+//      return FileDownloadResponse.failure();
+    }
+  }
 
+  private long writeFileToDisk(DataSetFile dataSetFile, IDataStoreServerApi dataStoreServerApi,
+      Path localFilePath) throws FileNotFoundException {
+
+    long computedChecksum;
     DataSetFileDownloadOptions options = new DataSetFileDownloadOptions();
     options.setRecursive(false);
-    byte[] buffer = new byte[bufferSize];
-    int bytesRead;
-
     try (AutoClosableDataSetFileDownloadReader reader = new AutoClosableDataSetFileDownloadReader(
         dataStoreServerApi.downloadFiles(sessionToken,
             Collections.singletonList(dataSetFile.getPermId()), options))) {
@@ -269,6 +312,14 @@ public class QbicDataDownloader {
           OutputStream os = Files.newOutputStream(localFilePath);
           CheckedInputStream checkedInputStream = new CheckedInputStream(initialStream,
               new CRC32())) {
+
+        long fileLength = dataSetFile.getFileLength();
+        String fileName = localFilePath.getFileName().toString();
+        ProgressBar progressBar = new ProgressBar(fileName, fileLength);
+        int bufferSize = adjustedBufferSize(fileLength);
+
+        byte[] buffer = new byte[bufferSize];
+        int bytesRead;
         while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
           progressBar.updateProgress(bufferSize);
           progressBar.draw();
@@ -278,29 +329,29 @@ public class QbicDataDownloader {
         // flush OutputStream to write any buffered data to file
         os.flush();
 
-        // validate written file
         computedChecksum = checkedInputStream.getChecksum().getValue();
-        ChecksumValidationResult checksumValidationResult = validateChecksum(computedChecksum,
-            dataSetFile);
-        reportValidation(checksumValidationResult);
-        if (checksumValidationResult.isValid()) {
-          LOG.info("Download successful for " + localFile.getAbsolutePath());
-        } else if (checksumValidationResult.isInvalid()) {
-          LOG.warn(String.format(
-              "Checksum mismatches were detected for file %s.%nFor more Information check the logs/summary_invalid_files.txt log file.",
-              localFile.getAbsolutePath()));
-        }
       } catch (IOException e) {
         throw new DownloadException(e);
       }
     }
+    return computedChecksum;
+  }
+
+  private boolean localFileWithSameContent(DataSetFile dataSetFile, File localFile) {
+    ChecksumValidationResult checksumValidationResult = checksumForFile(dataSetFile, localFile);
+    if (checksumValidationResult.isValid()) {
+      LOG.debug(checksumValidationResult.computedChecksum + " " + localFile.getName()
+          + " exists locally.");
+      return true;
+    }
+    return false;
   }
 
   private static void createParentDirectoryIfNotExists(File localFile) {
     if (!localFile.getParentFile().exists()) {
       boolean successfullyCreatedDirectory = localFile.getParentFile().mkdirs();
       if (!successfullyCreatedDirectory) {
-        LOG.error("Could not create directory " + localFile.getParentFile());
+        throw new DownloadException("Could not create directory " + localFile.getParentFile());
       }
     }
   }
@@ -388,46 +439,83 @@ public class QbicDataDownloader {
         expectedChecksumHex, computedChecksumHex, dataSetFile);
   }
 
-  private void downloadFiles(DownloadRequest request) throws DownloadException {
+  public static class DownloadResponse {
+
+    private final List<FileDownloadResponse> responses;
+
+    private DownloadResponse() {
+      responses = new ArrayList<>();
+    }
+
+    public static DownloadResponse create() {
+      return new DownloadResponse();
+    }
+
+    public void add(FileDownloadResponse response) {
+      responses.add(response);
+    }
+
+    public DownloadResponse merge(DownloadResponse response) {
+      responses.addAll(response.responses);
+      return this;
+    }
+
+    public boolean containsFailure() {
+      return responses.stream().anyMatch(FileDownloadResponse::isFailure);
+    }
+
+    public long failureCount() {
+      return responses.stream().filter(FileDownloadResponse::isFailure).count();
+    }
+
+    public long fileCount() {
+      return responses.size();
+    }
+
+  }
+  private DownloadResponse downloadFiles(DownloadRequest request) throws DownloadException {
     List<DataSetFile> dataSetFiles = request.getFiles().stream()
         .sorted(Comparator.comparing(this::getFileName))
         .collect(Collectors.toList());
-    List<DataSetFile> filesNotDownloaded = new ArrayList<>();
+    DownloadResponse downloadResponse = DownloadResponse.create();
     for (DataSetFile dataSetFile : dataSetFiles) {
-      try {
-        attemptFileDownload(request.getPrefix(),dataSetFile, request.getMaxNumberOfAttempts());
-      } catch (DownloadException e) {
-        filesNotDownloaded.add(dataSetFile);
-      }
+      FileDownloadResponse fileDownloadResponse = attemptFileDownload(request.getPrefix(),
+          dataSetFile, request.getMaxNumberOfAttempts());
+      downloadResponse.add(fileDownloadResponse);
     }
-    if (filesNotDownloaded.size() > 0) {
-      LOG.warn(String.format("Failed to download %s out of %s files", filesNotDownloaded.size(),
-          dataSetFiles.size()));
+
+    assert dataSetFiles.size() == downloadResponse.fileCount() : "each file gave a response";
+
+    if (downloadResponse.containsFailure()) {
+      LOG.warn(String.format("Failed to download %s out of %s files",
+          downloadResponse.failureCount(), dataSetFiles.size()));
     }
+    return downloadResponse;
   }
 
-  private void attemptFileDownload(Path pathPrefix,
+  private FileDownloadResponse attemptFileDownload(Path pathPrefix,
       DataSetFile dataSetFile, int maxNumberOfAttempts) throws DownloadException {
     int downloadAttempt = 1;
-    while (downloadAttempt <= maxNumberOfAttempts) {
+    assert maxNumberOfAttempts >= 1 : "max download attempts are at least 1";
+    while (true) {
+      if (downloadAttempt > maxNumberOfAttempts) {
+        LOG.error("Maximum number of download attempts reached.");
+        return FileDownloadResponse.failure();
+      }
       try {
-        if (dataSetFile.getFileLength() > 0) {
-          downloadFile(dataSetFile, pathPrefix);
-          writeCRC32Checksum(dataSetFile, pathPrefix);
-        } else {
-          String prefix = "original/";
-          LOG.warn("Skipped empty file " + dataSetFile.getPath()
-              .substring(dataSetFile.getPath().lastIndexOf(prefix) + prefix.length()));
+        FileDownloadResponse fileDownloadResponse = downloadFile(dataSetFile, pathPrefix);
+        writeCRC32Checksum(dataSetFile, pathPrefix);
+        if (fileDownloadResponse.isFailure()) {
+          LOG.error("Download attempt " + downloadAttempt + " failed.");
+          downloadAttempt++;
+          continue;
         }
-        return;
+        return fileDownloadResponse;
       } catch (Exception e) {
         LOG.error(String.format("Download attempt %d failed.", downloadAttempt));
         LOG.error(String.format("Reason: %s", e.getMessage()));
         LOG.debug(e);
         downloadAttempt++;
-        if (downloadAttempt > maxNumberOfAttempts) {
-          throw new DownloadException("Maximum number of download attempts reached.");
-        }
       }
     }
   }
