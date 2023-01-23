@@ -285,8 +285,7 @@ public class QbicDataDownloader {
       LOG.warn(String.format(
           "Checksum mismatches were detected for file %s.%nFor more Information check the logs/summary_invalid_files.txt log file.",
           localFile.getAbsolutePath()));
-      throw new DownloadException();
-//      return FileDownloadResponse.failure();
+      return FileDownloadResponse.failure();
     }
   }
 
