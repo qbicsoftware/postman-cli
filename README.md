@@ -202,7 +202,7 @@ The structure of samples can sometimes seem a little confusing. To clarify the d
 
 Another thing to think of is that samples as well as datasets can be empty.
 
-### `Download`
+### `download`
 The other available subcommand is `download`.
 With this command, existing files will be downloaded for the provided sample IDs.
 
