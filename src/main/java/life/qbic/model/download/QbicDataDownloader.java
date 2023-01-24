@@ -10,34 +10,26 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFil
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.download.DataSetFileDownloadReader;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.zip.CRC32;
-import java.util.zip.CheckedInputStream;
 import life.qbic.ChecksumReporter;
 import life.qbic.DownloadException;
 import life.qbic.DownloadRequest;
 import life.qbic.FileSystemWriter;
+import life.qbic.model.Configuration;
 import life.qbic.util.ProgressBar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.*;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.zip.CRC32;
+import java.util.zip.CheckedInputStream;
 
 public class QbicDataDownloader {
 
@@ -46,13 +38,11 @@ public class QbicDataDownloader {
   private final boolean conservePaths;
   private final List<IDataStoreServerApi> dataStoreServers;
   private final String sessionToken;
-  private static final int DEFAULT_DOWNLOAD_ATTEMPTS = 3;
   private final String outputPath;
 
-  private final Path logDirectory = Paths.get(System.getProperty("user.dir"),"logs");
   private final ChecksumReporter checksumReporter = new FileSystemWriter(
-      Paths.get(logDirectory.toString(), "summary_valid_files.txt"),
-      Paths.get(logDirectory.toString(), "summary_invalid_files.txt"));
+      Paths.get(Configuration.LOG_PATH.toString(), "summary_valid_files.txt"),
+      Paths.get(Configuration.LOG_PATH.toString(), "summary_invalid_files.txt"));
   private final QbicDataFinder qbicDataFinder;
 
   /**
@@ -189,7 +179,7 @@ public class QbicDataDownloader {
         continue;
       }
       final DownloadRequest downloadRequest = new DownloadRequest(
-          Paths.get(datasetSample + File.separator), files, DEFAULT_DOWNLOAD_ATTEMPTS);
+          Paths.get(datasetSample + File.separator), files, Configuration.MAX_DOWNLOAD_ATTEMPTS);
       LOG.info(
           "Downloading " + files.size() + " file" + (files.size() != 1 ? "s" : "") + " for dataset "
               + datasetSample + " (" + permID + ")");
@@ -493,7 +483,7 @@ public class QbicDataDownloader {
   }
 
   private FileDownloadResponse attemptFileDownload(Path pathPrefix,
-      DataSetFile dataSetFile, int maxNumberOfAttempts) throws DownloadException {
+      DataSetFile dataSetFile, long maxNumberOfAttempts) throws DownloadException {
     int downloadAttempt = 1;
     assert maxNumberOfAttempts >= 1 : "max download attempts are at least 1";
     while (true) {
