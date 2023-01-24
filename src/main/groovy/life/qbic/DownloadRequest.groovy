@@ -15,9 +15,9 @@ import java.nio.file.Path
  * @since 0.4.0
  */
 class DownloadRequest {
-  private final List<DataSetFile> dataSetFiles;
+  private final List<DataSetFile> dataSetFiles
   private final Path prefix
-  private final int retries
+  private final long retries
 
 
   /**
@@ -28,7 +28,7 @@ class DownloadRequest {
    * @param dataSetFiles the files to download
    * @param numberRetries The number of retries. Must be >=1, else it will be set to 1
    */
-  DownloadRequest(Path prefix, List<DataSetFile> dataSetFiles, int numberRetries) {
+  DownloadRequest(Path prefix, List<DataSetFile> dataSetFiles, long numberRetries) {
     Objects.requireNonNull(prefix, "prefix must not be null")
     Objects.requireNonNull(dataSetFiles, "files must not be null")
 
@@ -42,7 +42,7 @@ class DownloadRequest {
    * Returns the max number of attempts for the download request.
    * @return The number of attempts to perform, if the download fails
    */
-  int getMaxNumberOfAttempts() {
+  long getMaxNumberOfAttempts() {
     return retries
   }
 
