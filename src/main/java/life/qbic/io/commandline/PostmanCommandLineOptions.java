@@ -12,6 +12,9 @@ import life.qbic.io.parser.IdentifierParser;
 import life.qbic.model.download.Authentication;
 import life.qbic.model.download.QbicDataDisplay;
 import life.qbic.model.download.QbicDataDownloader;
+import life.qbic.model.download.QbicDataDownloader.DownloadResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -30,6 +33,9 @@ import picocli.CommandLine.Parameters;
         footerHeading = "%n")
 
 public class PostmanCommandLineOptions {
+  private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
+
+
   //parameters to format the help message
   @Command(name = "download",
       description = "Download data from OpenBis",
@@ -61,7 +67,13 @@ public class PostmanCommandLineOptions {
             authentication.getSessionToken(),
             outputPath);
     ids = verifyProvidedIdentifiers();
-    qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes);
+    DownloadResponse downloadResponse = qbicDataDownloader.downloadForIds(ids, suffixes);
+    LOG.info("Done");
+    if (downloadResponse.containsFailure()) {
+      LOG.warn(String.format("Failed to download %s out of %s files",
+          downloadResponse.failureCount(), downloadResponse.fileCount()));
+      System.exit(1);
+    }
   }
 
   @Command(name = "list",
