@@ -311,10 +311,10 @@ public class QbicDataDownloader {
         int bytesRead;
         while ((bytesRead = checkedInputStream.read(buffer)) != -1) {
           progressBar.updateProgress(bufferSize);
-          progressBar.draw();
           os.write(buffer, 0, bytesRead);
           os.flush();
         }
+        progressBar.remove();
         // flush OutputStream to write any buffered data to file
         os.flush();
 
