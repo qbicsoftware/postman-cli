@@ -12,26 +12,32 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.fetchoptions.DataSetFileFetchOptions;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.search.DataSetFileSearchCriteria;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class QbicDataFinder {
 
+  private static final Logger log = LogManager.getLogger(QbicDataFinder.class);
+
   private final IApplicationServerApi applicationServer;
 
-  private final IDataStoreServerApi dataStoreServer;
+  private final List<IDataStoreServerApi> dataStoreServers;
 
   private final String sessionToken;
 
   public QbicDataFinder(
       IApplicationServerApi applicationServer,
-      IDataStoreServerApi dataStoreServer,
+      List<IDataStoreServerApi> dataStoreServers,
       String sessionToken) {
     this.applicationServer = applicationServer;
-    this.dataStoreServer = dataStoreServer;
+    this.dataStoreServers = dataStoreServers;
     this.sessionToken = sessionToken;
   }
 
@@ -61,9 +67,22 @@ public class QbicDataFinder {
   public List<DataSetFile> getFiles(DataSetPermId permID, Predicate<DataSetFile> fileFilter) {
       DataSetFileSearchCriteria criteria = new DataSetFileSearchCriteria();
       criteria.withDataSet().withCode().thatEquals(permID.getPermId());
-    List<DataSetFile> files = dataStoreServer
-        .searchFiles(sessionToken, criteria, new DataSetFileFetchOptions())
-        .getObjects();
+    List<DataSetFile> files = new ArrayList<>();
+    // add files from all data store servers
+    for (IDataStoreServerApi dataStoreServer : dataStoreServers) {
+      List<DataSetFile> filesOnDataStoreServer = dataStoreServer
+          .searchFiles(sessionToken, criteria, new DataSetFileFetchOptions())
+          .getObjects();
+      if (filesOnDataStoreServer.isEmpty()) {
+        log.debug(
+            String.format("No files found in dataset %s on dss %s", permID, dataStoreServer));
+      } else {
+        log.debug(String.format("%s files and directories found in dataset %s on dss %s",
+            filesOnDataStoreServer.size(), permID, dataStoreServer));
+      }
+      files.addAll(filesOnDataStoreServer);
+    }
+
     Predicate<DataSetFile> notADirectory = dataSetFile -> !dataSetFile.isDirectory();
     return files.stream().filter(notADirectory.and(fileFilter)).collect(Collectors.toList());
   }
@@ -98,5 +117,20 @@ public class QbicDataFinder {
       fillWithDescendantDatasets(sample, dataSetsBySample);
     }
     return dataSetsBySample;
+  }
+
+  /**
+   * Searches the parents for a Q_TEST_SAMPLE assuming at most one Q_TEST_SAMPLE exists in the parent
+   * samples. If no Q_TEST_SAMPLE was found, the original sample is returned.
+   *
+   * @param sample the sample to which a dataset is attached to
+   * @return the Q_TEST_SAMPLE parent if exists, the sample itself otherwise.
+   */
+  public Sample searchAnalyteParent(Sample sample) {
+      Optional<Sample> firstTestSample = sample.getParents().stream()
+          .filter(
+              it -> it.getType().getCode().equals("Q_TEST_SAMPLE"))
+          .findFirst();
+      return firstTestSample.orElse(sample);
   }
 }

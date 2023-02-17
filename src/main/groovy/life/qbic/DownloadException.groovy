@@ -21,4 +21,8 @@ class DownloadException extends RuntimeException {
     super(m)
   }
 
+  DownloadException(Throwable cause) {
+    super(cause)
+  }
+
 }

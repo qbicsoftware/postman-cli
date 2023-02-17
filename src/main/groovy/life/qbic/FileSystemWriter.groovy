@@ -59,6 +59,12 @@ class FileSystemWriter implements ChecksumReporter {
   @Override
   void storeChecksum(Path filePath, String checksum) {
     def newFile = new File(filePath.toString() + ".crc32")
+    if (!newFile.createNewFile()) {
+      //file exists or could not be created
+      if (!newFile.exists()) {
+        throw new IOException("The file " + newFile.getAbsoluteFile() + " could not be created.")
+      }
+    }
     newFile.withWriter {
       it.write(checksum + "\t" + filePath.getFileName())
     }

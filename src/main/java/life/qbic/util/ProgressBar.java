@@ -51,6 +51,10 @@ public class ProgressBar {
     }
   }
 
+  public void draw() {
+    drawProgress();
+  }
+
   private void drawProgress() {
     System.out.printf("%-" + computeLeftPadding() + "s %s\r", this.fileName, buildProgressBar());
   }

@@ -44,7 +44,7 @@ public class OutputPathFinder {
      * @param conservePaths if true, directory structure will be conserved
      * @return final path to file itself
      */
-    private static Path determineFinalPathFromFile(DataSetFile file, Boolean conservePaths) {
+    private static Path determineFinalPathFromDataset(DataSetFile file, Boolean conservePaths ) {
         Path finalPath;
         if (conservePaths) {
             finalPath = Paths.get(file.getPath());
