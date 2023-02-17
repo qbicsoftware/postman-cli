@@ -1,12 +1,5 @@
 package life.qbic.io.commandline;
 
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import life.qbic.App;
 import life.qbic.io.parser.IdentifierParser;
 import life.qbic.model.download.Authentication;
@@ -20,8 +13,17 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 // main command with format specifiers for the usage help message
 @Command(name = "postman-cli",
+        versionProvider = ManifestVersionProvider.class,
         footer = "Optional: specify a config file by running postman with '@/path/to/config.txt'. Details can be found in the README.",
         description = "A client software for dataset downloads from QBiC's data management system openBIS.",
         usageHelpAutoWidth = true,
@@ -30,15 +32,21 @@ import picocli.CommandLine.Parameters;
         parameterListHeading = "%nParameters:%n",
         optionListHeading = "%nOptions:%n",
         commandListHeading = "%nCommands:%n",
-        footerHeading = "%n",
-        versionProvider = VersionProvider.class)
+        footerHeading = "%n")
 
 public class PostmanCommandLineOptions {
   private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
 
+  @Option(names = {"-V", "--version"},
+          versionHelp = true,
+          description = "print version information",
+          scope = CommandLine.ScopeType.INHERIT)
+  boolean versionRequested;
+
 
   //parameters to format the help message
   @Command(name = "download",
+      versionProvider = ManifestVersionProvider.class,
       description = "Download data from OpenBis",
       usageHelpAutoWidth = true,
       sortOptions = false,
@@ -148,11 +156,6 @@ public class PostmanCommandLineOptions {
           description = "display a help message and exit",
           scope = CommandLine.ScopeType.INHERIT)
   public boolean helpRequested = false;
-
-  @Option(names = {"-V", "--version"},
-          versionHelp = true,
-          description = "display version info")
-  public boolean versionInfoRequested;
 
   private List<String> verifyProvidedIdentifiers() throws IOException {
     if ((isNull(ids) || ids.isEmpty()) && isNull(filePath)) {
