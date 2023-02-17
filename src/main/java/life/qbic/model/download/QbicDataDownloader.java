@@ -46,7 +46,7 @@ public class QbicDataDownloader {
   private final QbicDataFinder qbicDataFinder;
 
   /**
-   * Constructor for a QBiCDataLoaderInstance
+   * Constructor for a QBiCDataDownloader instance
    *
    * @param AppServerUri  The openBIS application server URL (AS)
    * @param dataServerUris The openBIS datastore server URLs (DSS)

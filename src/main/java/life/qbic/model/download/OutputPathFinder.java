@@ -8,10 +8,18 @@ import java.nio.file.Paths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Methods to determine the final path for the output directory.
+ * The requested data will be downloaded into this directory.
+ */
 public class OutputPathFinder {
 
     private static final Logger LOG = LogManager.getLogger(OutputPathFinder.class);
 
+    /**
+     * @param path to be shortened
+     * @return path that has no parents (top directory)
+     */
     private static Path getTopDirectory(Path path) {
       Path currentPath = Paths.get(path.toString());
       Path parentPath;
@@ -22,11 +30,20 @@ public class OutputPathFinder {
       return currentPath;
     }
 
+    /**
+     * @param possiblePath: string that could be an existing Path to a directory
+     * @return true if path exists, false otherwise
+     */
     private static boolean isPathValid(String possiblePath){
         Path path = Paths.get(possiblePath);
         return Files.isDirectory(path);
     }
 
+    /**
+     * @param file to download
+     * @param conservePaths if true, directory structure will be conserved
+     * @return final path to file itself
+     */
     private static Path determineFinalPathFromDataset(DataSetFile file, Boolean conservePaths ) {
         Path finalPath;
         if (conservePaths) {
@@ -40,6 +57,13 @@ public class OutputPathFinder {
         return finalPath;
     }
 
+    /**
+     * @param outputPath provided by user
+     * @param prefix sample code
+     * @param file to download
+     * @param conservePaths provided by user
+     * @return output directory path
+     */
     public static Path determineOutputDirectory(String outputPath, Path prefix, DataSetFile file, boolean conservePaths){
         Path filePath = determineFinalPathFromDataset(file, conservePaths);
         String path = File.separator + prefix.toString() + File.separator + filePath.toString();

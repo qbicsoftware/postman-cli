@@ -157,6 +157,10 @@ public class PostmanCommandLineOptions {
           scope = CommandLine.ScopeType.INHERIT)
   public boolean helpRequested = false;
 
+  /**
+   * @return sample identifiers
+   * @throws IOException if no ids or command line argument ids & file were provided
+   */
   private List<String> verifyProvidedIdentifiers() throws IOException {
     if ((isNull(ids) || ids.isEmpty()) && isNull(filePath)) {
       System.err.println(
