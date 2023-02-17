@@ -65,7 +65,7 @@ public class OutputPathFinder {
      * @return output directory path
      */
     public static Path determineOutputDirectory(String outputPath, Path prefix, DataSetFile file, boolean conservePaths){
-        Path filePath = determineFinalPathFromFile(file, conservePaths);
+        Path filePath = determineFinalPathFromDataset(file, conservePaths);
         String path = File.separator + prefix.toString() + File.separator + filePath.toString();
         Path finalPath = Paths.get("");
         if (outputPath != null && !outputPath.isEmpty()) {
