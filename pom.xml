@@ -98,6 +98,13 @@
       <artifactId>httpclient</artifactId>
       <version>4.5.13</version>
     </dependency>
+    <!--Fix https://devhub.checkmarx.com/cve-details/Cxeb68d52e-5509-->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>[1.13,)</version>
+    </dependency>
+
 
     <dependency>
       <groupId>life.qbic</groupId>
