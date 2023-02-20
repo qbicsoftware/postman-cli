@@ -6,24 +6,24 @@ import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import life.qbic.model.files.FileSize;
 import life.qbic.model.files.FileSizeFormatter;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+/**
+ * Lists information about requested datasets and their files
+ */
 public class QbicDataDisplay {
 
-    String sessionToken;
+    final String sessionToken;
 
-    DateTimeFormatter utcDateTimeFormatterIso8601 = new DateTimeFormatterBuilder()
+    private final static DateTimeFormatter utcDateTimeFormatterIso8601 = new DateTimeFormatterBuilder()
         .appendPattern("yyyy-MM-dd'T'hh:mm:ss")
         .appendZoneId()
         .toFormatter()
@@ -31,6 +31,13 @@ public class QbicDataDisplay {
 
     private final QbicDataFinder qbicDataFinder;
 
+    /**
+     * Constructor for a QbicDataDisplay instance
+     *
+     * @param AppServerUri The openBIS application server URL (AS)
+     * @param dataServerUris The openBIS datastore server URLs (DSS)
+     * @param sessionToken The session token for the datastore & application servers
+     */
     public QbicDataDisplay(
             String AppServerUri,
             List<String> dataServerUris,

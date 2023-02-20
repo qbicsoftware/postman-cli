@@ -30,7 +30,7 @@ public class Authentication {
     /**
      * Login method for openBIS authentication
      *
-     * returns 0 if successful, 1 else
+     * @throws AuthenticationException in case the authentication failed
      */
     public void login() throws ConnectionException, AuthenticationException {
         try {

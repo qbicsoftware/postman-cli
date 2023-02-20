@@ -1,16 +1,18 @@
 package life.qbic;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Optional;
 import life.qbic.io.commandline.OpenBISPasswordParser;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
+import life.qbic.model.Configuration;
 import life.qbic.model.download.Authentication;
 import life.qbic.model.download.AuthenticationException;
 import life.qbic.model.download.ConnectionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * postman for staging data from openBIS
@@ -19,12 +21,11 @@ public class App {
 
   private static final Logger LOG = LogManager.getLogger(App.class);
 
-  public static void main(String[] args) throws IOException {
-
+  public static void main(String[] args) {
+    LOG.debug("command line arguments: " + Arrays.deepToString(args));
     CommandLine cmd = new CommandLine(new PostmanCommandLineOptions());
     int exitCode = cmd.execute(args);
     System.exit(exitCode);
-
   }
 
   /**
@@ -67,7 +68,15 @@ public class App {
     }
 
     // Ensure 'logs' folder is created
-    new File(System.getProperty("user.dir") + File.separator + "logs").mkdirs();
+    File logFolder = new File(Configuration.LOG_PATH.toAbsolutePath().toString());
+    if (!logFolder.exists()) {
+      boolean logFolderCreated = logFolder.mkdirs();
+      if (!logFolderCreated) {
+        LOG.error("Could not create log folder '" + logFolder.getAbsolutePath() + "'");
+        System.exit(1);
+      }
+    }
+
     Authentication authentication =
             new Authentication(
                     user,

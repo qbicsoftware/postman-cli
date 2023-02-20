@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
         xmlns="http://maven.apache.org/POM/4.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>life.qbic</groupId>
     <artifactId>postman-cli</artifactId>
     <version>1.3.0</version>
     <name>Postman cli</name>
-    <url>http://github.com/qbicsoftware/postman-cli</url>
+    <url>https://github.com/qbicsoftware/postman-cli</url>
     <description>A client software written in Java for dataset downloads from QBiC's data management system openBIS </description>
     <packaging>jar</packaging>
 
@@ -15,7 +15,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <groovy.version>3.0.8</groovy.version>
+    <groovy.version>3.0.15</groovy.version>
     <log4j.version>2.17.1</log4j.version>
   </properties>
 
@@ -98,6 +98,13 @@
       <artifactId>httpclient</artifactId>
       <version>4.5.13</version>
     </dependency>
+    <!--Fix https://devhub.checkmarx.com/cve-details/Cxeb68d52e-5509-->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>[1.13,)</version>
+    </dependency>
+
 
     <dependency>
       <groupId>life.qbic</groupId>
@@ -127,6 +134,7 @@
               <archive>
                 <manifest>
                   <mainClass>life.qbic.App</mainClass>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                 </manifest>
               </archive>
               <descriptorRefs>

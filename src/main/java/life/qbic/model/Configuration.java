@@ -8,6 +8,6 @@ import java.nio.file.Paths;
  */
 public class Configuration {
 
-    public static long MAX_DOWNLOAD_ATTEMPTS = 3;
-    public static Path LOG_PATH = Paths.get(System.getProperty("user.dir"),"logs");
+    public static final long MAX_DOWNLOAD_ATTEMPTS = 3;
+    public static final Path LOG_PATH = Paths.get(System.getProperty("user.dir"),"logs");
 }
