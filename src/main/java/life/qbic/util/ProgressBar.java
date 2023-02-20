@@ -47,7 +47,7 @@ public class ProgressBar {
       drawProgress();
     }
     // update periodically
-    if (lastUpdateToOld()) {
+    if (isLastUpdateOutdated()) {
       drawProgress();
     }
   }
@@ -56,7 +56,7 @@ public class ProgressBar {
     return this.downloadedSize > this.nextProgressJump;
   }
 
-  private boolean lastUpdateToOld() {
+  private boolean isLastUpdateOutdated() {
     long timePassedSinceLastUpdate = System.currentTimeMillis() - lastUpdated;
     return timePassedSinceLastUpdate >= updateInterval;
   }
@@ -77,7 +77,7 @@ public class ProgressBar {
   }
 
   public void remove() {
-    System.out.print("\r\\033[2K"); //clear whole line
+    System.out.printf("\r %"+TerminalFactory.get().getWidth()+"s\r", " "); //clear whole line
   }
 
   private int computeLeftPadding() {
