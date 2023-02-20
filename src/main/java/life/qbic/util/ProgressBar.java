@@ -14,13 +14,13 @@ public class ProgressBar {
 
   private final int BARSIZE = TerminalFactory.get().getWidth() / 3;
   private final int MAXFILENAMESIZE = TerminalFactory.get().getWidth() / 3;
+  private static final long UPDATE_INTERVAL = 1000;
   private float nextProgressJump;
   private final float stepSize;
   private final String fileName;
   private final Long totalFileSize;
   private Long downloadedSize;
   private final long start;
-  private final long updateInterval = 1000;
   private long lastUpdated;
 
   public ProgressBar(String fileName, long totalFileSize) {
@@ -58,7 +58,7 @@ public class ProgressBar {
 
   private boolean isLastUpdateOutdated() {
     long timePassedSinceLastUpdate = System.currentTimeMillis() - lastUpdated;
-    return timePassedSinceLastUpdate >= updateInterval;
+    return timePassedSinceLastUpdate >= UPDATE_INTERVAL;
   }
 
   private String shortenFileName(String fullFileName) {
