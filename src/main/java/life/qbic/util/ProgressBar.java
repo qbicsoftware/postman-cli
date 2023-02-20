@@ -30,7 +30,7 @@ public class ProgressBar {
     this.stepSize = (float) totalFileSize / (float) BARSIZE;
     this.nextProgressJump = this.stepSize;
     this.start = System.currentTimeMillis();
-    lastUpdated = start + updateInterval;
+    lastUpdated = 0;
   }
 
   public void updateProgress(int addDownloadedSize) {
