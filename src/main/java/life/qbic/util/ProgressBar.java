@@ -77,7 +77,7 @@ public class ProgressBar {
   }
 
   public void remove() {
-    System.out.printf("\r %"+TerminalFactory.get().getWidth()+"s\r", " "); //clear whole line
+    System.out.printf("\r%"+TerminalFactory.get().getWidth()+"s\r", ""); //clear whole line
   }
 
   private int computeLeftPadding() {
