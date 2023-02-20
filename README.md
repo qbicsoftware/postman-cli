@@ -78,6 +78,7 @@ Parameters:
       [SAMPLE_ID...]      one or more QBiC sample ids
 
 Options:
+  -V, --version                             print version information
   -u, --user=<user>                         openBIS user name
   -p, --env-password=<passwordEnvVariable>  provide the name of an environment variable to read
                                               in the password from
