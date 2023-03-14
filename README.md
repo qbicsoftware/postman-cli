@@ -35,7 +35,7 @@ You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at lea
 Postman uses picocli file arguments. Therefore, a config file has to be passed with the '@' prefix to its path:    
 Example:
 ```bash
-java -jar postman.jar -u <user> <sample> @path/to/config.txt 
+java -jar postman.jar list -u <user> <sample> @path/to/config.txt 
 ```
 The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
 For example: To set the ApplicationServerURL to another URL we have to use: <code>-as [URL]</code>
@@ -240,7 +240,7 @@ When using the subcommand `download`, there are further options available:
 
 If you want to download all datasets for a given project id, you can use the wildcard symbol `*` and have to specify the project code inside of quotation marks:
 ```bash
-~$ java -jar postman.jar -u <your_qbic_username> "<QBiC Project ID>*"
+~$ java -jar postman.jar download -u <your_qbic_username> "<QBiC Project ID>*"
 ```
 
 ##### File integrity check
