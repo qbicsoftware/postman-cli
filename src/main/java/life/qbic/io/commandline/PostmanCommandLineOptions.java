@@ -1,5 +1,12 @@
 package life.qbic.io.commandline;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import life.qbic.App;
 import life.qbic.io.parser.IdentifierParser;
 import life.qbic.model.download.Authentication;
@@ -10,16 +17,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 // main command with format specifiers for the usage help message
 @Command(name = "postman-cli",
@@ -93,12 +93,15 @@ public class PostmanCommandLineOptions {
       parameterListHeading = "%nParameters:%n",
       optionListHeading = "%nOptions:%n",
       footerHeading = "%n")
-  void listDatasets()
+  void listDatasets(
+      @Option(names = "--with-checksum", defaultValue = "false", description = "print the crc32 checksum as second column.", showDefaultValue = Visibility.ALWAYS)
+      boolean withChecksum)
       throws IOException {
+
     Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
     QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url,
         dss_urls,
-        authentication.getSessionToken());
+        authentication.getSessionToken(), withChecksum);
     ids = verifyProvidedIdentifiers();
     qbicDataDisplay.getInformation(ids, suffixes);
   }
