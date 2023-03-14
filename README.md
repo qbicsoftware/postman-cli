@@ -191,9 +191,35 @@ Number of datasets found for identifier NGSQSTTS019AW : 1
 # Registration     2021-12-15T02:44:09Z
 # Size             1.05MB
 1.05MB  testfile
-
-
 ```
+
+
+##### Options
+When using the subcommand `list`, there are further options available:
+```
+      --with-checksum     print the crc32 checksum as second column.
+                            Default: false
+```
+```bash
+[bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar list --with-checksum -u bbbfs01 NGSQSTTS016A8 NGSQSTTS019AW                                                                                          
+Provide password for user 'bbbfs01':     
+
+Number of datasets found for identifier NGSQSTTS016A8 : 1
+# Dataset          NGSQSTTS016A8 (20211215154407692-131872)
+# Source           QSTTS016A8
+# Registration     2021-12-15T02:44:07Z
+# Size             2.10MB
+1.05MB  83d57075  testfile1
+1.05MB  dff8e2e2  testfile2
+
+Number of datasets found for identifier NGSQSTTS019AW : 1
+# Dataset          NGSQSTTS019AW (20211215154408961-131875)
+# Source           QSTTS019AW
+# Registration     2021-12-15T02:44:09Z
+# Size             1.05MB
+1.05MB  0a84cf87  testfile
+```
+                           
 ##### Dataset vs. File
 The structure of samples can sometimes seem a little confusing. To clarify the difference of a dataset and a file, you can take a look at the example result above.
 - A sample can contain several datasets. 

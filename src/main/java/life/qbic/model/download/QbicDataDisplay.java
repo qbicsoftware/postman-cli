@@ -6,15 +6,18 @@ import ch.ethz.sis.openbis.generic.asapi.v3.dto.sample.Sample;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.systemsx.cisd.common.spring.HttpInvokerUtils;
-import life.qbic.model.files.FileSize;
-import life.qbic.model.files.FileSizeFormatter;
-
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import life.qbic.model.files.FileSize;
+import life.qbic.model.files.FileSizeFormatter;
 
 /**
  * Lists information about requested datasets and their files
@@ -31,23 +34,28 @@ public class QbicDataDisplay {
 
     private final QbicDataFinder qbicDataFinder;
 
+    private final boolean printWithChecksums;
+
     /**
      * Constructor for a QbicDataDisplay instance
      *
-     * @param AppServerUri The openBIS application server URL (AS)
+     * @param AppServerUri   The openBIS application server URL (AS)
      * @param dataServerUris The openBIS datastore server URLs (DSS)
-     * @param sessionToken The session token for the datastore & application servers
+     * @param sessionToken   The session token for the datastore & application servers
      */
     public QbicDataDisplay(
-            String AppServerUri,
-            List<String> dataServerUris,
-            String sessionToken) {
+        String AppServerUri,
+        List<String> dataServerUris,
+        String sessionToken,
+        boolean printWithChecksums) {
+        this.printWithChecksums = printWithChecksums;
         this.sessionToken = sessionToken;
         IApplicationServerApi applicationServer;
         if (!AppServerUri.isEmpty()) {
             applicationServer =
-                    HttpInvokerUtils.createServiceStub(
-                            IApplicationServerApi.class, AppServerUri + IApplicationServerApi.SERVICE_URL, 10000);
+                HttpInvokerUtils.createServiceStub(
+                    IApplicationServerApi.class, AppServerUri + IApplicationServerApi.SERVICE_URL,
+                    10000);
         } else {
             applicationServer = null;
         }
@@ -118,7 +126,12 @@ public class QbicDataDisplay {
                 for (DataSetFile file : sortedFiles) {
                     String name = getFileName(file);
                     String fileSize = FileSizeFormatter.format(FileSize.of(file.getFileLength()),6);
-                    System.out.printf("%s\t%s%n", fileSize, name);
+                    int crc32 = file.getChecksumCRC32();
+                    if (printWithChecksums) {
+                        System.out.printf("%s\t%08x\t%s%n", fileSize, crc32, name);
+                    } else {
+                        System.out.printf("%s\t%s%n", fileSize, name);
+                    }
                 }
                 System.out.print("\n");
             }
