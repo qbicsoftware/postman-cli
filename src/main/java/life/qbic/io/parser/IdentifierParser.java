@@ -12,7 +12,7 @@ public class IdentifierParser {
    * Retrieve the identifiers from provided file
    *
    * @return Identifiers for which datasets will be retrieved
-   * @throws IOException
+   * @throws IOException if the file could not be read successfully
    */
   public static List<String> readProvidedIdentifiers(File file) throws IOException {
     List<String> identifiers = new ArrayList<>();

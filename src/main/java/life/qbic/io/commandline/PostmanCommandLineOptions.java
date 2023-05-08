@@ -5,19 +5,25 @@ import static java.util.Objects.nonNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import life.qbic.App;
 import life.qbic.io.parser.IdentifierParser;
 import life.qbic.model.download.Authentication;
 import life.qbic.model.download.QbicDataDisplay;
 import life.qbic.model.download.QbicDataDownloader;
+import life.qbic.model.download.QbicDataDownloader.DownloadResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 // main command with format specifiers for the usage help message
 @Command(name = "postman-cli",
+        versionProvider = ManifestVersionProvider.class,
         footer = "Optional: specify a config file by running postman with '@/path/to/config.txt'. Details can be found in the README.",
         description = "A client software for dataset downloads from QBiC's data management system openBIS.",
         usageHelpAutoWidth = true,
@@ -29,8 +35,18 @@ import picocli.CommandLine.Parameters;
         footerHeading = "%n")
 
 public class PostmanCommandLineOptions {
+  private static final Logger LOG = LogManager.getLogger(QbicDataDownloader.class);
+
+  @Option(names = {"-V", "--version"},
+          versionHelp = true,
+          description = "print version information",
+          scope = CommandLine.ScopeType.INHERIT)
+  boolean versionRequested;
+
+
   //parameters to format the help message
   @Command(name = "download",
+      versionProvider = ManifestVersionProvider.class,
       description = "Download data from OpenBis",
       usageHelpAutoWidth = true,
       sortOptions = false,
@@ -54,13 +70,19 @@ public class PostmanCommandLineOptions {
     QbicDataDownloader qbicDataDownloader =
         new QbicDataDownloader(
             as_url,
-            dss_url,
+            dss_urls,
             bufferMultiplier * 1024,
             conservePath,
             authentication.getSessionToken(),
             outputPath);
     ids = verifyProvidedIdentifiers();
-    qbicDataDownloader.downloadRequestedFilesOfDatasets(ids, suffixes);
+    DownloadResponse downloadResponse = qbicDataDownloader.downloadForIds(ids, suffixes);
+    LOG.info("Done");
+    if (downloadResponse.containsFailure()) {
+      LOG.warn(String.format("Failed to download %s out of %s files",
+          downloadResponse.failureCount(), downloadResponse.fileCount()));
+      System.exit(1);
+    }
   }
 
   @Command(name = "list",
@@ -71,11 +93,15 @@ public class PostmanCommandLineOptions {
       parameterListHeading = "%nParameters:%n",
       optionListHeading = "%nOptions:%n",
       footerHeading = "%n")
-  void listDatasets()
+  void listDatasets(
+      @Option(names = "--with-checksum", defaultValue = "false", description = "print the crc32 checksum as second column.", showDefaultValue = Visibility.ALWAYS)
+      boolean withChecksum)
       throws IOException {
+
     Authentication authentication = App.loginToOpenBIS(passwordEnvVariable, user, as_url);
-    QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url, dss_url,
-        authentication.getSessionToken());
+    QbicDataDisplay qbicDataDisplay = new QbicDataDisplay(as_url,
+        dss_urls,
+        authentication.getSessionToken(), withChecksum);
     ids = verifyProvidedIdentifiers();
     qbicDataDisplay.getInformation(ids, suffixes);
   }
@@ -103,10 +129,15 @@ public class PostmanCommandLineOptions {
   public String as_url = "https://qbis.qbic.uni-tuebingen.de/openbis/openbis";
 
   @Option(
-          names = {"-dss", "--dss_url"},
-          description = "DataStoreServer URL",
-          scope = CommandLine.ScopeType.INHERIT)
-  public String dss_url = "https://qbis.qbic.uni-tuebingen.de/datastore_server";
+      names = {"-dss", "--dss_url"},
+      split = ",",
+      paramLabel = "<url>",
+      description = "DataStoreServer URLs. Specifies the data store servers where data can be found.",
+      scope = CommandLine.ScopeType.INHERIT)
+  public List<String> dss_urls = new ArrayList<String>(){{
+    add("https://qbis.qbic.uni-tuebingen.de/datastore_server");
+    add("https://qbis.qbic.uni-tuebingen.de/datastore_server2");
+  }};
 
   @Option(
           names = {"-f", "--file"},
@@ -129,6 +160,10 @@ public class PostmanCommandLineOptions {
           scope = CommandLine.ScopeType.INHERIT)
   public boolean helpRequested = false;
 
+  /**
+   * @return sample identifiers
+   * @throws IOException if no ids or command line argument ids & file were provided
+   */
   private List<String> verifyProvidedIdentifiers() throws IOException {
     if ((isNull(ids) || ids.isEmpty()) && isNull(filePath)) {
       System.err.println(

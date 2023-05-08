@@ -1,24 +1,27 @@
 package life.qbic.util;
 
+import jline.TerminalFactory;
+import life.qbic.model.files.FileSize;
+import life.qbic.model.files.FileSizeFormatter;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import jline.TerminalFactory;
-import life.qbic.model.files.FileSize;
-import life.qbic.model.files.FileSizeFormatter;
 
 
 public class ProgressBar {
 
   private final int BARSIZE = TerminalFactory.get().getWidth() / 3;
   private final int MAXFILENAMESIZE = TerminalFactory.get().getWidth() / 3;
+  private static final long UPDATE_INTERVAL = 1000;
   private float nextProgressJump;
   private final float stepSize;
   private final String fileName;
   private final Long totalFileSize;
   private Long downloadedSize;
   private final long start;
+  private long lastUpdated;
 
   public ProgressBar(String fileName, long totalFileSize) {
     this.fileName = shortenFileName(fileName);
@@ -27,11 +30,35 @@ public class ProgressBar {
     this.stepSize = (float) totalFileSize / (float) BARSIZE;
     this.nextProgressJump = this.stepSize;
     this.start = System.currentTimeMillis();
+    lastUpdated = 0;
   }
 
   public void updateProgress(int addDownloadedSize) {
     this.downloadedSize += (long) addDownloadedSize;
-    checkForJump();
+    update();
+  }
+
+  /**
+   * Updates the progress bar if an update is applicable.
+   */
+  public void update() {
+    if (progressStepsChanged()) {
+      this.nextProgressJump += this.stepSize;
+      drawProgress();
+    }
+    // update periodically
+    if (isLastUpdateOutdated()) {
+      drawProgress();
+    }
+  }
+
+  private boolean progressStepsChanged() {
+    return this.downloadedSize > this.nextProgressJump;
+  }
+
+  private boolean isLastUpdateOutdated() {
+    long timePassedSinceLastUpdate = System.currentTimeMillis() - lastUpdated;
+    return timePassedSinceLastUpdate >= UPDATE_INTERVAL;
   }
 
   private String shortenFileName(String fullFileName) {
@@ -44,15 +71,13 @@ public class ProgressBar {
     return shortName;
   }
 
-  private void checkForJump() {
-    if (this.downloadedSize > this.nextProgressJump) {
-      this.nextProgressJump += this.stepSize;
-      drawProgress();
-    }
+  private void drawProgress() {
+    System.out.printf("\r%-" + computeLeftPadding() + "s %s", this.fileName, buildProgressBar());
+    lastUpdated = System.currentTimeMillis();
   }
 
-  private void drawProgress() {
-    System.out.printf("%-" + computeLeftPadding() + "s %s\r", this.fileName, buildProgressBar());
+  public void remove() {
+    System.out.printf("\r%"+TerminalFactory.get().getWidth()+"s\r", ""); //clear whole line
   }
 
   private int computeLeftPadding() {

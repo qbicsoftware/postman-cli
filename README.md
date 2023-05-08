@@ -35,7 +35,7 @@ You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at lea
 Postman uses picocli file arguments. Therefore, a config file has to be passed with the '@' prefix to its path:    
 Example:
 ```bash
-java -jar postman.jar -u <user> <sample> @path/to/config.txt 
+java -jar postman.jar list -u <user> <sample> @path/to/config.txt 
 ```
 The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
 For example: To set the ApplicationServerURL to another URL we have to use: <code>-as [URL]</code>
@@ -49,16 +49,16 @@ To use our openBIS URL we write the following lines in the config file:
 
 # The following config file options are currently supported:    
 # AS_URL (Application Server URL)       
--as [URL]
+-as <URL>
 # DSS_URL (DataStore Server URL)     
--dss [URL]
+-dss <URL>[,<URL>...]
 
 ```
 A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt). If no config file is provided, postman uses the default values set in the PostmanCommandLineOptions class.
 
 If no config file or commandline option is provided, Postman will resort to the defaults set here: [Defaults](https://github.com/qbicsoftware/postman-cli/blob/development/src/main/java/life/qbic/io/commandline/PostmanCommandLineOptions.java).    
 Hence, the default AS is set to: `https://qbis.qbic.uni-tuebingen.de/openbis/openbis`  
-and the DSS defaults to: `https://qbis.qbic.uni-tuebingen.de/datastore_server`
+and the DSS defaults to: `https://qbis.qbic.uni-tuebingen.de/datastore_server` and `https://qbis.qbic.uni-tuebingen.de/datastore_server2`
 
 ## How to use
 
@@ -78,11 +78,13 @@ Parameters:
       [SAMPLE_ID...]      one or more QBiC sample ids
 
 Options:
+  -V, --version                             print version information
   -u, --user=<user>                         openBIS user name
   -p, --env-password=<passwordEnvVariable>  provide the name of an environment variable to read
                                               in the password from
   -as, -as_url=<as_url>                     ApplicationServer URL
-  -dss, --dss_url=<dss_url>                 DataStoreServer URL
+  -dss, --dss_url=<url>[,<url>...]          DataStoreServer URLs. Specifies the 
+                                              data store servers where data can be found.
   -f, --file=<filePath>                     a file with line-separated list of QBiC sample ids
   -s, --suffix=<suffix>[,<suffix>...]       only include files ending with one of these suffixes
   -h, --help                                display a help message and exit
@@ -189,9 +191,35 @@ Number of datasets found for identifier NGSQSTTS019AW : 1
 # Registration     2021-12-15T02:44:09Z
 # Size             1.05MB
 1.05MB  testfile
-
-
 ```
+
+
+##### Options
+When using the subcommand `list`, there are further options available:
+```
+      --with-checksum     print the crc32 checksum as second column.
+                            Default: false
+```
+```bash
+[bbbfs01@u-003-ncmu03 ~]$ java -jar postman.jar list --with-checksum -u bbbfs01 NGSQSTTS016A8 NGSQSTTS019AW                                                                                          
+Provide password for user 'bbbfs01':     
+
+Number of datasets found for identifier NGSQSTTS016A8 : 1
+# Dataset          NGSQSTTS016A8 (20211215154407692-131872)
+# Source           QSTTS016A8
+# Registration     2021-12-15T02:44:07Z
+# Size             2.10MB
+1.05MB  83d57075  testfile1
+1.05MB  dff8e2e2  testfile2
+
+Number of datasets found for identifier NGSQSTTS019AW : 1
+# Dataset          NGSQSTTS019AW (20211215154408961-131875)
+# Source           QSTTS019AW
+# Registration     2021-12-15T02:44:09Z
+# Size             1.05MB
+1.05MB  0a84cf87  testfile
+```
+                           
 ##### Dataset vs. File
 The structure of samples can sometimes seem a little confusing. To clarify the difference of a dataset and a file, you can take a look at the example result above.
 - A sample can contain several datasets. 
@@ -201,7 +229,7 @@ The structure of samples can sometimes seem a little confusing. To clarify the d
 
 Another thing to think of is that samples as well as datasets can be empty.
 
-### `Download`
+### `download`
 The other available subcommand is `download`.
 With this command, existing files will be downloaded for the provided sample IDs.
 
@@ -238,7 +266,7 @@ When using the subcommand `download`, there are further options available:
 
 If you want to download all datasets for a given project id, you can use the wildcard symbol `*` and have to specify the project code inside of quotation marks:
 ```bash
-~$ java -jar postman.jar -u <your_qbic_username> "<QBiC Project ID>*"
+~$ java -jar postman.jar download -u <your_qbic_username> "<QBiC Project ID>*"
 ```
 
 ##### File integrity check
