@@ -86,7 +86,7 @@ jobs:
         run: git push
 
       - name: Open PR with version bump
-        uses: actions/github-script@v6
+        uses: actions/github-script@v4.2.0
         with:
           github-token: ${{secrets.JOHNNY_Q5_REPORTS_TOKEN}}
           script: |
