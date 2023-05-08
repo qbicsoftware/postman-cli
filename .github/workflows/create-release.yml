@@ -61,7 +61,7 @@ jobs:
         with:
           github-token: ${{secrets.JOHNNY_Q5_REPORTS_TOKEN}}
           script: |
-            await github.rest.request(`POST /repos/${{ github.repository }}/releases`, {
+            await github.request(`POST /repos/${{ github.repository }}/releases`, {
               tag_name: "${{ github.event.inputs.versionTag }}",
               generate_release_notes: true,
               prerelease: true
