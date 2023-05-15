@@ -147,7 +147,7 @@ public class PostmanCommandLineOptions {
 
   @Option(names = {"-s", "--suffix"},
       split = ",",
-      description= "only include files ending with one of these suffixes",
+      description= "only include files ending with one of these (case-insensitive) suffixes",
       paramLabel = "<suffix>",
       scope = CommandLine.ScopeType.INHERIT)
   public List<String> suffixes;
