@@ -92,8 +92,8 @@ public class QbicDataDisplay {
                     Predicate<DataSetFile> suffixFilter = file -> {
                         String fileName = getFileName(file);
                         return suffixes.stream()
-                            .map(String::trim)
-                            .anyMatch(fileName::endsWith);
+                            .map(String::trim).map(String::toLowerCase)
+                            .anyMatch(fileName.toLowerCase()::endsWith);
                     };
                     fileFilter = fileFilter.and(suffixFilter);
                 }
