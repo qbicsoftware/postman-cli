@@ -12,11 +12,11 @@
     <packaging>jar</packaging>
 
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.17</maven.compiler.source>
+    <maven.compiler.target>1.17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <groovy.version>3.0.15</groovy.version>
-    <log4j.version>2.17.1</log4j.version>
+    <groovy.version>4.0.12</groovy.version>
+    <log4j.version>2.20.0</log4j.version>
   </properties>
 
   <!-- we only need to tell maven where to find our parent pom and other QBiC dependencies -->
@@ -87,10 +87,9 @@
 
 
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
       <version>${groovy.version}</version>
-      <classifier>indy</classifier>
     </dependency>
 
     <dependency>
