@@ -1,6 +1,6 @@
 package life.qbic;
 
-import life.qbic.io.commandline.OpenBISPasswordParser;
+import life.qbic.io.commandline.PasswordProvider;
 import life.qbic.io.commandline.PostmanCommandLineOptions;
 import life.qbic.model.Configuration;
 import life.qbic.model.download.Authentication;
@@ -46,7 +46,7 @@ public class App {
 
     String password;
     if (isNotNullOrEmpty(passwordEnvVariable)) {
-      Optional<String> envPassword = OpenBISPasswordParser.readPasswordFromEnvVariable(
+      Optional<String> envPassword = PasswordProvider.readPasswordFromEnvVariable(
           passwordEnvVariable);
       if (!envPassword.isPresent()) {
         System.out.println(
@@ -55,11 +55,11 @@ public class App {
         LOG.info(
             String.format("Please provide a password for user '%s':", user));
       }
-      password = envPassword.orElseGet(OpenBISPasswordParser::readPasswordFromConsole);
+      password = envPassword.orElseGet(PasswordProvider::readPasswordFromConsole);
     } else {
       LOG.info(
           String.format("Please provide a password for user '%s':", user));
-      password = OpenBISPasswordParser.readPasswordFromConsole();
+      password = PasswordProvider.readPasswordFromConsole();
     }
 
     if (password.isEmpty()) {

@@ -1,6 +1,6 @@
 package life.qbic.util;
 
-public class StringUtil {
+public class StringUtils {
 
   public static boolean endsWithIgnoreCase(String input, String suffix) {
     int suffixLength = suffix.length();

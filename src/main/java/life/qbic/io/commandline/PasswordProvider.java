@@ -3,7 +3,7 @@ package life.qbic.io.commandline;
 import java.io.Console;
 import java.util.Optional;
 
-public class OpenBISPasswordParser {
+public class PasswordProvider {
 
 
   /**
@@ -22,7 +22,9 @@ public class OpenBISPasswordParser {
    * @return the password read from the environment variable
    */
   public static Optional<String> readPasswordFromEnvVariable(String variableName) {
-
+    if (variableName == null || variableName.isBlank()) {
+      return Optional.empty();
+    }
     return Optional.ofNullable(System.getenv(variableName));
 
   }
