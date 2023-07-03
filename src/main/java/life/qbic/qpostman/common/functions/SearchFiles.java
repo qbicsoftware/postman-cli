@@ -63,8 +63,7 @@ public class SearchFiles implements Function<Collection<DataSetWrapper>, Collect
             .map(DataSetFileQuery::new);
         Stream<DataSetFile> dataSetFiles = dataSetFileQueries
             .peek(it -> updateListener.dataSetQueried())
-            .map(this::queryDataStoresForFiles)
-            .flatMap(it -> it);
+            .flatMap(this::queryDataStoresForFiles);
         Stream<DataFile> dataFiles = dataSetFiles
             .map(dataSetFile -> {
                 DataSetPermId dataSetPermId = dataSetFile.getDataSetPermId();

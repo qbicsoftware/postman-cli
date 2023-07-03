@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import life.qbic.qpostman.common.AuthenticationException;
+import life.qbic.qpostman.common.FileSizeFormatter;
 import life.qbic.qpostman.common.functions.FileFilter;
 import life.qbic.qpostman.common.functions.FindSourceSample;
 import life.qbic.qpostman.common.functions.SearchDataSets;
@@ -21,6 +22,7 @@ import life.qbic.qpostman.common.options.SampleIdentifierOptions;
 import life.qbic.qpostman.common.options.ServerOptions;
 import life.qbic.qpostman.common.structures.DataFile;
 import life.qbic.qpostman.common.structures.DataSetWrapper;
+import life.qbic.qpostman.common.structures.FileSize;
 import life.qbic.qpostman.openbis.ConnectionException;
 import life.qbic.qpostman.openbis.OpenBisSessionProvider;
 import life.qbic.qpostman.openbis.ServerFactory;
@@ -62,7 +64,12 @@ public class ListCommand implements Runnable {
             boolean withHeader = !listOptions.withoutHeader;
             String tsvContent = functions.dataFileFormatter()
                 .formatAsTable(processedFiles, "\t", withHeader);
-            log.info("Output:\n" + tsvContent);
+            long totalBytes = processedFiles.stream()
+                .map(DataFile::fileSize)
+                .mapToLong(FileSize::bytes)
+                .sum();
+            log.info("Output: " + processedFiles.size() + " files (" + FileSizeFormatter.format(
+                FileSize.of(totalBytes), 6) + ")\n" + tsvContent);
         } catch (RemoteAccessException remoteAccessException) {
             log.error(
                 "Failed to connect to OpenBis: " + remoteAccessException.getCause().getMessage());
