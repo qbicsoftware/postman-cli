@@ -20,11 +20,4 @@ public class App {
     System.exit(exitCode);
   }
 
-  /**
-   * checks if the commandline parameter for reading out the password from the environment variable
-   * is correctly provided
-   */
-  private static Boolean isNotNullOrEmpty(String envVariableCommandLineParameter) {
-    return envVariableCommandLineParameter != null && !envVariableCommandLineParameter.isEmpty();
-  }
 }

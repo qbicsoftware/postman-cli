@@ -4,7 +4,6 @@ import life.qbic.qpostman.common.ProgressBar;
 
 /**
  * The DownloadProgressListener class provides methods to track the progress of a file download.
- *
  * It uses a ProgressBar object to display the download progress.
  */
 public class DownloadProgressListener implements WriteProgressListener {
