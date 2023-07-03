@@ -37,7 +37,10 @@ Example:
 ```bash
 java -jar postman.jar list -u <user> <sample> @path/to/config.txt 
 ```
-The structure of the configuration file is:       <code>[-cliOption] [value]</code>   
+The structure of the configuration file is:
+```text
+[-cliOption] [value]
+```
 For example: To set the ApplicationServerURL to another URL we have to use: <code>-as [URL]</code>
 
 To use our openBIS URL we write the following lines in the config file:  

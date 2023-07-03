@@ -67,7 +67,7 @@ public class WriteUtils {
       return Optional.empty();
     }
 
-    try (BufferedReader reader = Files.newBufferedReader(crc32FileName);) {
+    try (BufferedReader reader = Files.newBufferedReader(crc32FileName)) {
       String firstLine = reader.readLine();
       return Optional.ofNullable(firstLine)
           .map(line -> Long.parseLong(line.split("\\s+")[0], 16));

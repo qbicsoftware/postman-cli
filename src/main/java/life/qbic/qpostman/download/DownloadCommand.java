@@ -65,7 +65,7 @@ public class DownloadCommand implements Runnable {
             log.info(
                 "Downloading %s files (%s)".formatted(sortedFiles.size(), FileSizeFormatter.format(
                     FileSize.of(sortedFiles.stream().mapToLong(file -> file.fileSize().bytes()
-                    ).sum())), 6));
+                    ).sum()), 6)));
             int counter = 0;
             List<DownloadReport> downloadReports = sortedFiles.stream()
                 .map(functions.writeFileToDisk())
@@ -106,7 +106,7 @@ public class DownloadCommand implements Runnable {
         OpenBisSessionProvider.init(applicationServerApi, authenticationOptions.user, new String(authenticationOptions.getPassword()));
         SearchDataSets searchDataSets = new SearchDataSets(applicationServerApi);
         Collection<IDataStoreServerApi> dataStoreServerApis = ServerFactory.dataStoreServers(serverOptions.dss_urls, serverOptions.timeoutInMillis);
-        SearchFiles searchFiles = new SearchFiles(applicationServerApi, dataStoreServerApis);
+        SearchFiles searchFiles = new SearchFiles(dataStoreServerApis);
         FileFilter myAwesomeFileFilter = FileFilter.create().withSuffixes(filterOptions.suffixes);
         WriteFileToDisk writeFileToDisk = new WriteFileToDisk(dataStoreServerApis.toArray(IDataStoreServerApi[]::new)[0],
             downloadOptions.bufferSize, Path.of(downloadOptions.outputPath), downloadOptions.successiveDownloadAttempts);

@@ -95,7 +95,7 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
         return downloadReport;
     }
 
-    record DownloadReport(long expectedCrc32, long actualCrc32, Path outputPath) {
+    public record DownloadReport(long expectedCrc32, long actualCrc32, Path outputPath) {
         public boolean isSuccess() {
             return expectedCrc32 == actualCrc32;
         }

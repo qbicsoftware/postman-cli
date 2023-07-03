@@ -1,5 +1,5 @@
 import spock.lang.Ignore
-import spock.lang.Specification;
+import spock.lang.Specification
 
 /**
  * Use this test to see whether maven executes Spock tests or not.
@@ -8,6 +8,6 @@ import spock.lang.Specification;
 class FailingSpockTest extends Specification {
     def "this test always fails"() {
       expect:
-      1 == 2;
+      1 == 2
     }
 }

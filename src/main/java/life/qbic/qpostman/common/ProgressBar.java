@@ -97,12 +97,8 @@ public class ProgressBar {
     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     String remainingTime = dateFormat.format(new Date(remainingDownloadTime));
 
-    for (int i = 0; i < numberProgressStrings; i++) {
-      progressBar.append("#");
-    }
-    for (int i = numberProgressStrings; i < BARSIZE; i++) {
-      progressBar.append(" ");
-    }
+    progressBar.append("#".repeat(Math.max(0, numberProgressStrings)));
+    progressBar.append(" ".repeat(Math.max(0, BARSIZE - numberProgressStrings)));
 
     progressBar.append("]\t");
     FileSize downloadedSize = FileSize.of(this.downloadedSize);

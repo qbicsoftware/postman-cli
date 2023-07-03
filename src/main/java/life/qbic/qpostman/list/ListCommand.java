@@ -96,7 +96,7 @@ public class ListCommand implements Runnable {
         SearchDataSets searchDataSets = new SearchDataSets(applicationServerApi);
         FileFilter myAwesomeFileFilter = FileFilter.create()
             .withSuffixes(filterOptions.suffixes);
-        SearchFiles searchFiles = new SearchFiles(applicationServerApi, dataStoreServerApis);
+        SearchFiles searchFiles = new SearchFiles(dataStoreServerApis);
         FindSourceSample findSourceSample = new FindSourceSample(serverOptions.sourceSampleType);
         DataFileFormatter dataFileFormatter = new DataFileFormatter(listOptions.exactFilesize);
         SortFiles sortFiles = new SortFiles();

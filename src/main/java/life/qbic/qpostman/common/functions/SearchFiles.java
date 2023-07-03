@@ -2,7 +2,6 @@ package life.qbic.qpostman.common.functions;
 
 import static java.util.Objects.requireNonNull;
 
-import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.asapi.v3.dto.dataset.id.DataSetPermId;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
@@ -24,7 +23,7 @@ public class SearchFiles implements Function<Collection<DataSetWrapper>, Collect
 
     private final Collection<IDataStoreServerApi> dataStoreServerApis;
 
-    public SearchFiles(IApplicationServerApi applicationServerApi, Collection<IDataStoreServerApi> dataStoreServerApis) {
+    public SearchFiles(Collection<IDataStoreServerApi> dataStoreServerApis) {
         this.dataStoreServerApis = dataStoreServerApis;
     }
 
