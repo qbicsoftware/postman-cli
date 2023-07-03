@@ -1,4 +1,4 @@
-package life.qbic.io.commandline;
+package life.qbic.qpostman.common;
 
 import picocli.CommandLine;
 

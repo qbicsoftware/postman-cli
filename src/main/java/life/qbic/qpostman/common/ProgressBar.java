@@ -1,19 +1,18 @@
-package life.qbic.util;
-
-import jline.TerminalFactory;
-import life.qbic.model.files.FileSize;
-import life.qbic.model.files.FileSizeFormatter;
+package life.qbic.qpostman.common;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import life.qbic.model.files.FileSize;
+import life.qbic.model.files.FileSizeFormatter;
 
 
 public class ProgressBar {
 
-  private final int BARSIZE = TerminalFactory.get().getWidth() / 3;
-  private final int MAXFILENAMESIZE = TerminalFactory.get().getWidth() / 3;
+  private static final int TERMINAL_WIDTH = 80;
+  private final int BARSIZE = TERMINAL_WIDTH / 3;
+  private final int MAXFILENAMESIZE = TERMINAL_WIDTH / 3;
   private static final long UPDATE_INTERVAL = 1000;
   private float nextProgressJump;
   private final float stepSize;
@@ -33,8 +32,8 @@ public class ProgressBar {
     lastUpdated = 0;
   }
 
-  public void updateProgress(int addDownloadedSize) {
-    this.downloadedSize += (long) addDownloadedSize;
+  public void updateProgress(long addDownloadedSize) {
+    this.downloadedSize += addDownloadedSize;
     update();
   }
 
@@ -77,7 +76,7 @@ public class ProgressBar {
   }
 
   public void remove() {
-    System.out.printf("\r%"+TerminalFactory.get().getWidth()+"s\r", ""); //clear whole line
+    System.out.printf("\r%"+TERMINAL_WIDTH+"s\r", ""); //clear whole line
   }
 
   private int computeLeftPadding() {

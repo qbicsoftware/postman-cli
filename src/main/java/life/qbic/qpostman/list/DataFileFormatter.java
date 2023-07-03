@@ -1,0 +1,74 @@
+package life.qbic.qpostman.list;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
+
+import java.util.List;
+import java.util.function.Function;
+import life.qbic.model.files.FileSizeFormatter;
+import life.qbic.qpostman.common.structures.DataFile;
+
+/**
+ * TODO!
+ * <b>short description</b>
+ *
+ * <p>detailed description</p>
+ *
+ * @since <version tag>
+ */
+public class DataFileFormatter {
+
+  private final List<Column<String>> columns;
+
+  public DataFileFormatter(boolean exactFileSize) {
+    columns = List.of(
+        Column.create("Dataset",
+            file -> file.dataSet().sampleCode() + " (" + file.dataSet().dataSetPermId().getPermId()
+                + ")"),
+        Column.create("Source", file -> file.dataSet().sourceSample().getCode()),
+        Column.create("Registration", file -> file.dataSet().registrationTime().toString()),
+        Column.create("Size", file -> exactFileSize
+            ? String.valueOf(file.fileSize().bytes())
+            : FileSizeFormatter.format(file.fileSize(), 6)),
+        Column.create("CRC32", file -> Long.toHexString(file.crc32())),
+        Column.create("File", DataFile::filePath));
+  }
+
+  public String formatAsTable(List<DataFile> files, String delimiter, boolean withHeader) {
+    StringBuilder result = new StringBuilder();
+    if (withHeader) {
+      List<String> columnNames = columns.stream()
+          .map(Column::name)
+          .toList();
+      String headerRow = String.join(delimiter, columnNames) + "\n";
+      result.append(headerRow);
+    }
+    files.stream()
+        .map(file -> toRow(file, delimiter))
+        .forEach(result::append);
+    return result.toString();
+  }
+
+  private String toRow(DataFile file, String delimiter) {
+    List<String> values = columns.stream().map(c -> c.toValue(file)).toList();
+    return String.join(delimiter, values) + "\n";
+  }
+
+  private record Column<T>(String name, Function<DataFile, T> valueProvider) {
+
+    Column {
+      requireNonNull(valueProvider, "valueProvider must not be null");
+      if (isNull(name)) {
+        name = "";
+      }
+    }
+
+    public static Column<String> create(String name, Function<DataFile, String> valueProvider) {
+      return new Column<>(name, valueProvider);
+    }
+
+    public T toValue(DataFile dataFile) {
+      return valueProvider.apply(dataFile);
+    }
+  }
+}
