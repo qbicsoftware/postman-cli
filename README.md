@@ -50,12 +50,9 @@ To use our openBIS URL we write the following lines in the config file:
 # Replace the values defined after the respective CLI parameters (e.g. -u)
 # with your value of choice (e.g. qbcab01 as value for -u)
 
-# Set the AS_URL (ApplicationServerURL) to the value defined below
---application-server https://qbis.qbic.uni-tuebingen.de/openbis/openbis
-
-# Set the DSS_URL (DataStoreServerURL) to the value defined below
---datastore_server https://qbis.qbic.uni-tuebingen.de/datastore_server
---datastore_server https://qbis.qbic.uni-tuebingen.de/datastore_server2
+--suffix .txt,.fastq,.fastq.gz
+-u qbc001
+--password:env MY_PASSWORD
 ```
 A default file is provided here: [default-config](https://github.com/qbicsoftware/postman-cli/blob/development/config.txt).
 
