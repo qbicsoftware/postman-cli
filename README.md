@@ -16,8 +16,6 @@
 
 </div>
 
-[//]: # (todo: document -Dlog.level -Dlog.path) 
-
 A client software written in Java for dataset downloads from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
 
 We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from command line, in order to provide a quick data retrieval on server or cluster resources, where the download via the qPortal is impractical.
@@ -240,3 +238,14 @@ The `checksum-mismatch.log` file contains one line for each file that was not do
 ```
 
 In addition, Postman writes the CRC32 checksum in an additional file `<file-name-of-checked-file>.crc32` and stores it together with the according file.
+
+#### Advanced Options
+##### `posmtan`
+* `-Dlog.path`: provide the log directory
+* `-Dlog.level`: provide the log level to use for logging
+* `--source-sample-type <sample-type>`: specify which sample type to consider as source sample type.
+* `--server-timeout <millis>`: the server timeout in milli seconds
+
+##### `download`
+* `--download-attempts <download-attempts>` provide the maximal amount attempted downloads
+* `--buffer-size <buffer-size>` provide a custom buffer size. Please only specify values that are a multiple of `1024`.
