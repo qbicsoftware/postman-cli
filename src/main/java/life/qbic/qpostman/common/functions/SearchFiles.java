@@ -14,6 +14,8 @@ import java.util.stream.Stream;
 import life.qbic.qpostman.common.structures.DataFile;
 import life.qbic.qpostman.common.structures.DataSetWrapper;
 import life.qbic.qpostman.openbis.OpenBisSessionProvider;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Searches for data files based on a collection of DataSetWrapper objects.
@@ -21,6 +23,7 @@ import life.qbic.qpostman.openbis.OpenBisSessionProvider;
  */
 public class SearchFiles implements Function<Collection<DataSetWrapper>, Collection<DataFile>> {
 
+    private static final Logger log = LogManager.getLogger(SearchFiles.class);
     private final Collection<IDataStoreServerApi> dataStoreServerApis;
 
     public SearchFiles(Collection<IDataStoreServerApi> dataStoreServerApis) {
@@ -83,6 +86,9 @@ public class SearchFiles implements Function<Collection<DataSetWrapper>, Collect
                                     dataSetFileQuery.searchCriteria(),
                                     dataSetFileQuery.fetchOptions())
                             .getObjects();
+                    log.trace("Found " + files.size() + " files for "
+                        + dataSetFileQuery.dataSetPermId.getPermId() + " on "
+                        + dataStoreServerApi);
                     return files.stream();
                 })
                 .filter(file -> !file.isDirectory()); // filter out all folders but keeps the files
