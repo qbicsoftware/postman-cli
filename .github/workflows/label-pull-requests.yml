@@ -1,15 +1,17 @@
 name: Label Pull Requests
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   pull_request:
     types: [ opened, edited ]
 
 jobs:
-  label:
+  Assign-Label-To-Pull-Request:
     runs-on: ubuntu-latest
     steps:
-      - uses: TimonVS/pr-labeler-action@v3
+      - uses: actions/labeler@v5.0.0-alpha.1
         with:
-          configuration-path: .github/pr-labels.yml # optional, .github/pr-labeler.yml is the default value
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
