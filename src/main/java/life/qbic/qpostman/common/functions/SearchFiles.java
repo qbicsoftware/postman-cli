@@ -17,12 +17,8 @@ import life.qbic.qpostman.common.structures.DataSetWrapper;
 import life.qbic.qpostman.openbis.OpenBisSessionProvider;
 
 /**
- * TODO!
- * <b>short description</b>
- *
- * <p>detailed description</p>
- *
- * @since <version tag>
+ * Searches for data files based on a collection of DataSetWrapper objects.
+ * It utilizes a collection of IDataStoreServerApi instances to perform the search querying every datastore and aggregating the files.
  */
 public class SearchFiles implements Function<Collection<DataSetWrapper>, Collection<DataFile>> {
 

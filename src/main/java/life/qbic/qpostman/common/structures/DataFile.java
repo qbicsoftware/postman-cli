@@ -4,12 +4,8 @@ import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
 
 /**
- * TODO!
- * <b>short description</b>
- *
- * <p>detailed description</p>
- *
- * @since <version tag>
+ * A file stored in our datastore. This class provides information about the sample the data is
+ * attached to as well as about the source of the attached data.
  */
 public final class DataFile {
 
@@ -19,10 +15,6 @@ public final class DataFile {
     public DataFile(DataSetFile dataSetFile, DataSetWrapper dataSet) {
         this.file = dataSetFile;
         this.dataSet = dataSet;
-    }
-
-    public DataSetFilePermId dataSetFilePermId() {
-        return file.getPermId();
     }
 
     public FileSize fileSize() {

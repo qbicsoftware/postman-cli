@@ -20,12 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * TODO!
- * <b>short description</b>
- *
- * <p>detailed description</p>
- *
- * @since <version tag>
+ * A function writing a DataFile to disk and returning the write report.
  */
 public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
 
@@ -62,6 +57,12 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
         return reader.read().getInputStream();
     }
 
+    /**
+     * Download the specific data file.
+     *
+     * @param dataFile the data file to be applied
+     * @return the download report
+     */
     @Override
     public DownloadReport apply(DataFile dataFile) {
         int bufferSize =
@@ -110,7 +111,7 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
         }
     }
 
-    public DownloadReport writeToDisk(DataFile dataFile, WriteProgressListener progressListener) {
+    private DownloadReport writeToDisk(DataFile dataFile, WriteProgressListener progressListener) {
         Path outFile = toOutputPath(dataFile, outputDirectory);
 
         Path crc32File = Path.of(outFile.toAbsolutePath() + ".crc32");

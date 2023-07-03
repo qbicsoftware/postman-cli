@@ -9,12 +9,8 @@ import life.qbic.qpostman.common.FileSizeFormatter;
 import life.qbic.qpostman.common.structures.DataFile;
 
 /**
- * TODO!
- * <b>short description</b>
- *
- * <p>detailed description</p>
- *
- * @since <version tag>
+ * The DataFileFormatter class is responsible for formatting a list of DataFiles
+ * into a table format using specified delimiter and column settings.
  */
 public class DataFileFormatter {
 

@@ -8,13 +8,13 @@ import java.util.StringJoiner;
 
 public class ServerOptions {
 
-    @Option(names = {"--application_server"},
+    @Option(names = {"--application-server"},
             paramLabel = "url",
             description = "set the application server to find samples and datasets",
             hidden = true)
     public String as_url;
 
-    @Option(names = {"--datastore_server"},
+    @Option(names = {"--datastore-server"},
             paramLabel = "url",
             description = "add a data store server to find files on",
             hidden = true)

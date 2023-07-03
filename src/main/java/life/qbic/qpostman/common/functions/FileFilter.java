@@ -6,12 +6,7 @@ import java.util.function.Predicate;
 import life.qbic.qpostman.common.structures.DataFile;
 
 /**
- * TODO!
- * <b>short description</b>
- *
- * <p>detailed description</p>
- *
- * @since <version tag>
+ * A class implementing the {@link Predicate} interface and providing file filtering functionality based on suffixes.
  */
 public class FileFilter implements Predicate<DataFile> {
 

@@ -7,12 +7,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * TODO!
- * <b>short description</b>
- *
- * <p>detailed description</p>
- *
- * @since <version tag>
+ * Creates server instances given urls
  */
 public class ServerFactory {
     public static Collection<IDataStoreServerApi> dataStoreServers(List<String> dataStoreServerUrls, long serverTimeoutInMillis) {
