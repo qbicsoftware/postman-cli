@@ -4,8 +4,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import life.qbic.model.files.FileSize;
-import life.qbic.model.files.FileSizeFormatter;
+import life.qbic.qpostman.common.structures.FileSize;
 
 
 public class ProgressBar {

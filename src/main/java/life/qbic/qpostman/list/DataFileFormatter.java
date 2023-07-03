@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.function.Function;
-import life.qbic.model.files.FileSizeFormatter;
+import life.qbic.qpostman.common.FileSizeFormatter;
 import life.qbic.qpostman.common.structures.DataFile;
 
 /**

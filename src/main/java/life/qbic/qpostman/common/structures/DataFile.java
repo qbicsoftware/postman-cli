@@ -2,7 +2,6 @@ package life.qbic.qpostman.common.structures;
 
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.DataSetFile;
 import ch.ethz.sis.openbis.generic.dssapi.v3.dto.datasetfile.id.DataSetFilePermId;
-import life.qbic.model.files.FileSize;
 
 /**
  * TODO!
