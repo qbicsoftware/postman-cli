@@ -10,7 +10,7 @@ public class ListOptions {
     public boolean withChecksum;
 
     @Option(names = "--exact-filesize", defaultValue = "false",
-        description = "use exact byte count instead of unit suffixes: Byte, Kilobyte, Megabyte, Gigabyte, Terabyte and Petabyte",
+        description = "use exact byte count instead of unit suffixes: Byte, Kilobyte, Megabyte, Gigabyte, Terabyte and Petabyte using base 2 for sizes.",
         showDefaultValue = Visibility.ON_DEMAND)
     public boolean exactFilesize;
 

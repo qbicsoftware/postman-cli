@@ -80,6 +80,9 @@ Optional: specify a config file by running postman with '@/path/to/config.txt'.
 A detailed documentation can be found at
 https://github.com/qbicsoftware/postman-cli#readme.
 ``` 
+### Printed file sizes
+File sizes printed by postman Kilobyte, Megabyte, Gigabyte, Terabyte and Petabyte use base 2.
+
 ### How to specify your log directory
 By default postman will create log files in a directory `./logs/` in your working directory.
 You can specify where logs are written by setting the system property `log.path` to the desired directory.
@@ -187,6 +190,7 @@ The `list` command comes with some special options. You can change how your outp
 2. removing the header from the tabular output `--without-header`
 3. listing the crc32 checksum for every file `--with-checksum`
 4. specifying the output format.
+5. 
 #### `TSV` format
 ```text
 Dataset	Source	Registration	Size	File

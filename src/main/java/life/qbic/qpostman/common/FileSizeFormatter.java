@@ -61,7 +61,7 @@ public class FileSizeFormatter {
     Unit bestUnit = Unit.bestFor(fileSize);
     DecimalFormat decimalFormat = new DecimalFormat("#0.00");
     decimalFormat.setRoundingMode(RoundingMode.HALF_UP);
-    return String.format("%" + minWidth + "s%2s",
+    return String.format("%" + minWidth + "s %2s",
         decimalFormat.format(bestUnit.scaledValue(fileSize.bytes())), bestUnit.symbol());
   }
 
