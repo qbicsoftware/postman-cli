@@ -141,10 +141,11 @@ java -jar postman.jar -s .fastq,.fastq.gz
 ## `list`
 ```txt
 Usage: postman-cli list [-hV] [--exact-filesize] [--with-checksum]
-                        [--without-header] -u=<user> [-s=<suffix>[,
-                        <suffix>...]]... (--password:env=<environment-variable>
-                        | --password:prop=<system-property> | --password)
-                        (-f=<filePath> | SAMPLE_IDENTIFIER...)
+                        [--without-header] [--format=<outputFormat>] -u=<user>
+                        [-s=<suffix>[,<suffix>...]]... (--password:
+                        env=<environment-variable> | --password:
+                        prop=<system-property> | --password) (-f=<filePath> |
+                        SAMPLE_IDENTIFIER...)
 
 Description:
 lists all the datasets found for the given identifiers
@@ -169,7 +170,11 @@ Options:
       --exact-filesize       use exact byte count instead of unit suffixes:
                                Byte, Kilobyte, Megabyte, Gigabyte, Terabyte and
                                Petabyte
-      --without-header       remove the header line from the output
+      --format=<format>      The format to list files in. Case-insensitive.
+                               Possible values: LEGACY, TSV
+                               Default: LEGACY
+      --without-header       remove the header line from the output. Only takes
+                               effect for tabular output formats.
   -h, --help                 Show this help message and exit.
   -V, --version              Print version information and exit.
 
@@ -181,7 +186,32 @@ The `list` command comes with some special options. You can change how your outp
 1. listing the exact number of bytes for each file `--exact-filesize`
 2. removing the header from the tabular output `--without-header`
 3. listing the crc32 checksum for every file `--with-checksum`
+4. specifying the output format.
+#### `TSV` format
+```text
+Dataset	Source	Registration	Size	File
+NGSQSTTS015A0 (20211026111452695-847006)	NGSQSTTS015A0	2021-10-26T09:14:53.143812Z	  1,00 B	QSTTS015A0_awesome_genome.fastq/my_genome.fastq
+```
+```text
+Dataset	Source	Registration	Size	CRC32	File
+NGSQSTTS015A0 (20211026111452695-847006)	NGSQSTTS015A0	2021-10-26T09:14:53.143812Z	  1,00 B	fa0a3f23	QSTTS015A0_awesome_genome.fastq/my_genome.fastq
+```
 
+#### `LEGACY` format
+```text
+# Dataset         NGSQSTTS015A0 (20211026111452695-847006)
+# Source          NGSQSTTS015A0
+# Registration    2021-10-26T09:14:53.143812Z
+# Size            1,00 B
+1,00 B	my_genome.fastq
+```
+```text
+# Dataset         NGSQSTTS015A0 (20211026111452695-847006)
+# Source          NGSQSTTS015A0
+# Registration    2021-10-26T09:14:53.143812Z
+# Size            1,00 B
+1,00 B	fa0a3f23	my_genome.fastq
+```
 ## `download`
 
 ```txt
