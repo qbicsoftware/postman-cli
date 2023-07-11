@@ -67,7 +67,6 @@ public class DownloadCommand implements Runnable {
                 "Downloading %s files (%s)".formatted(sortedFiles.size(), FileSizeFormatter.format(
                     FileSize.of(sortedFiles.stream().mapToLong(file -> file.fileSize().bytes()
                     ).sum()), 6)));
-            int counter = 0;
             List<DownloadReport> downloadReports = sortedFiles.stream()
                 .map(functions.writeFileToDisk())
                 .peek(downloadReport -> {
@@ -130,9 +129,7 @@ public class DownloadCommand implements Runnable {
         SortFiles sortFiles = new SortFiles();
         DataSetWrapper.setFindSourceFunction(findSourceSample);
 
-        Functions functions = new Functions(searchDataSets, writeFileToDisk, sortFiles,
-            myAwesomeFileFilter);
-        return functions;
+        return new Functions(searchDataSets, writeFileToDisk, sortFiles, myAwesomeFileFilter);
     }
 
     private record Functions(SearchDataSets searchDataSets, WriteFileToDisk writeFileToDisk, SortFiles sortFiles, FileFilter fileFilter) {

@@ -11,7 +11,7 @@ public enum OutputFormat {
   public static class OutputFormatConverter implements ITypeConverter<OutputFormat> {
 
     @Override
-    public OutputFormat convert(String input) throws Exception {
+    public OutputFormat convert(String input) {
       return Arrays.stream(OutputFormat.values())
           .map(Enum::name)
           .filter(name -> name.equalsIgnoreCase(input))
