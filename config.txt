@@ -1,10 +1,9 @@
 # Config file for postman-cli
-# Replace the values defined after the respective CLI parameters (e.g. -as)
-# with your value of choice (e.g. https://qbis.qbic.uni-tuebingen.de/openbis/openbis as value for -as)
+# Replace the values defined after the respective CLI parameters
 
 # Set the AS_URL (ApplicationServerURL) to the value defined below
-# -as https://qbis.qbic.uni-tuebingen.de/openbis/openbis
--as https://openbis1605test.am10.uni-tuebingen.de/openbis/openbis
+--application-server https://qbis.qbic.uni-tuebingen.de/openbis/openbis
 
 # Set the DSS_URL (DataStoreServerURL) to the value defined below
--dss https://qbis.qbic.uni-tuebingen.de/datastore_server,https://qbis.qbic.uni-tuebingen.de/datastore_server2
+--datastore_server https://qbis.qbic.uni-tuebingen.de/datastore_server
+--datastore_server https://qbis.qbic.uni-tuebingen.de/datastore_server2

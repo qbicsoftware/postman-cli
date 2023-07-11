@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO">
+  <Properties>
+    <Property name="loglevel">$${sys:log.level:-$${env:LOG_LEVEL:-info}}</Property>
+    <Property name="logpath">$${sys:log.path:-logs}</Property>
+  </Properties>
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="[%d{HH:mm:ss.SSS}] %msg%n"/>
     </Console>
-    <File append="true" fileName="logs/postman-all.log" immediateFlush="false" name="MyFile">
-      <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+    <File append="true" fileName="${logpath}/postman.log" immediateFlush="true" name="LogFile">
+      <PatternLayout pattern="%d{ISO8601}{UTC}Z [%t/%-5level]  %msg%n"/>
+    </File>
+    <File append="true" fileName="${logpath}/postman.trace.log" immediateFlush="true" name="DebugFile">
+      <PatternLayout pattern="%d{ISO8601}{UTC}Z [%t/%-5level]  %msg%n"/>
     </File>
   </Appenders>
   <Loggers>
-    <Root level="debug">
-      <AppenderRef ref="Console" level="info"/>
-      <AppenderRef ref="MyFile"/>
+    <Root level="all">
+      <AppenderRef ref="Console" level="${loglevel}"/>
+      <AppenderRef ref="LogFile" level ="${loglevel}"/>
+      <AppenderRef ref="DebugFile" level="all"/>
     </Root>
   </Loggers>
 </Configuration>
