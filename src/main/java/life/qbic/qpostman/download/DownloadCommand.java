@@ -15,6 +15,7 @@ import life.qbic.qpostman.common.functions.FileFilter;
 import life.qbic.qpostman.common.functions.FindSourceSample;
 import life.qbic.qpostman.common.functions.SearchDataSets;
 import life.qbic.qpostman.common.functions.SearchFiles;
+import life.qbic.qpostman.common.functions.SearchFiles.DataSetCounterProgressDisplay;
 import life.qbic.qpostman.common.functions.SortFiles;
 import life.qbic.qpostman.common.options.AuthenticationOptions;
 import life.qbic.qpostman.common.options.FilterOptions;
@@ -54,7 +55,7 @@ public class DownloadCommand implements Runnable {
             Functions functions = functions();
 
             Collection<DataFile> dataSetFiles = functions.searchDataSets()
-                .andThen(functions.searchFiles())
+                .andThen(it -> searchFiles(it).apply(it))
                 .apply(sampleIdentifierOptions.getIds());
 
             List<DataFile> sortedFiles = dataSetFiles.stream()
@@ -101,25 +102,32 @@ public class DownloadCommand implements Runnable {
         }
     }
 
+    private SearchFiles searchFiles(Collection<DataSetWrapper> it) {
+        return new SearchFiles(dataStoreServerApis(), new DataSetCounterProgressDisplay(it.size()));
+    }
+
+    private Collection<IDataStoreServerApi> dataStoreServerApis() {
+        return ServerFactory.dataStoreServers(serverOptions.dss_urls,
+            serverOptions.timeoutInMillis);
+    }
+
     private Functions functions() {
         IApplicationServerApi applicationServerApi = ServerFactory.applicationServer(serverOptions.as_url, serverOptions.timeoutInMillis);
         OpenBisSessionProvider.init(applicationServerApi, authenticationOptions.user, new String(authenticationOptions.getPassword()));
         SearchDataSets searchDataSets = new SearchDataSets(applicationServerApi);
-        Collection<IDataStoreServerApi> dataStoreServerApis = ServerFactory.dataStoreServers(serverOptions.dss_urls, serverOptions.timeoutInMillis);
-        SearchFiles searchFiles = new SearchFiles(dataStoreServerApis);
         FileFilter myAwesomeFileFilter = FileFilter.create().withSuffixes(filterOptions.suffixes);
-        WriteFileToDisk writeFileToDisk = new WriteFileToDisk(dataStoreServerApis.toArray(IDataStoreServerApi[]::new)[0],
+        WriteFileToDisk writeFileToDisk = new WriteFileToDisk(dataStoreServerApis().toArray(IDataStoreServerApi[]::new)[0],
             downloadOptions.bufferSize, Path.of(downloadOptions.outputPath), downloadOptions.successiveDownloadAttempts);
         FindSourceSample findSourceSample = new FindSourceSample(serverOptions.sourceSampleType);
         SortFiles sortFiles = new SortFiles();
         DataSetWrapper.setFindSourceFunction(findSourceSample);
 
-        Functions functions = new Functions(searchDataSets, searchFiles, writeFileToDisk, sortFiles,
+        Functions functions = new Functions(searchDataSets, writeFileToDisk, sortFiles,
             myAwesomeFileFilter);
         return functions;
     }
 
-    private record Functions(SearchDataSets searchDataSets, SearchFiles searchFiles, WriteFileToDisk writeFileToDisk, SortFiles sortFiles, FileFilter fileFilter) {
+    private record Functions(SearchDataSets searchDataSets, WriteFileToDisk writeFileToDisk, SortFiles sortFiles, FileFilter fileFilter) {
 
     }
 }

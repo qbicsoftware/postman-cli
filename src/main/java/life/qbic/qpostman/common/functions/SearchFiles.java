@@ -25,47 +25,54 @@ public class SearchFiles implements Function<Collection<DataSetWrapper>, Collect
 
     private static final Logger log = LogManager.getLogger(SearchFiles.class);
     private final Collection<IDataStoreServerApi> dataStoreServerApis;
+    private DataSetCounterUpdateListener dataSetCounterUpdateListener;
 
-    public SearchFiles(Collection<IDataStoreServerApi> dataStoreServerApis) {
+    public SearchFiles(Collection<IDataStoreServerApi> dataStoreServerApis,
+        DataSetCounterUpdateListener dataSetCounterUpdateListener) {
         this.dataStoreServerApis = dataStoreServerApis;
+        this.dataSetCounterUpdateListener = dataSetCounterUpdateListener;
+
     }
 
     @Override
     public Collection<DataFile> apply(Collection<DataSetWrapper> dataSetWrappers) {
-        return searchFiles(dataSetWrappers);
+        return searchFiles(dataSetWrappers, dataSetCounterUpdateListener);
     }
 
+    @FunctionalInterface
     public interface DataSetCounterUpdateListener {
 
-        void dataSetQueried();
+        void updateCounter(int numberOfDatasets);
     }
 
-    private static class DataSetCounterProgressDisplay implements DataSetCounterUpdateListener {
+
+
+    public static class DataSetCounterProgressDisplay implements DataSetCounterUpdateListener {
 
         final int maxCount;
         int currCount;
 
-        private DataSetCounterProgressDisplay(int maxCount) {
+        public DataSetCounterProgressDisplay(int maxCount) {
             this.maxCount = maxCount;
             currCount = 0;
         }
 
         @Override
-        public void dataSetQueried() {
-            currCount++;
+        public void updateCounter(int numberOfDatasets) {
+            currCount += numberOfDatasets;
             System.out.printf("Indexing dataset %4s / %s\r", currCount, maxCount);
         }
     }
 
 
 
-    private List<DataFile> searchFiles(Collection<DataSetWrapper> dataSets) {
-        DataSetCounterUpdateListener updateListener = new DataSetCounterProgressDisplay(dataSets.size());
+    private List<DataFile> searchFiles(Collection<DataSetWrapper> dataSets,
+        DataSetCounterUpdateListener updateListener) {
         Stream<DataSetFileQuery> dataSetFileQueries = dataSets.stream()
             .map(DataSetWrapper::dataSetPermId)
             .map(DataSetFileQuery::new);
         Stream<DataSetFile> dataSetFiles = dataSetFileQueries
-            .peek(it -> updateListener.dataSetQueried())
+            .peek(it -> updateListener.updateCounter(1))
             .flatMap(this::queryDataStoresForFiles);
         Stream<DataFile> dataFiles = dataSetFiles
             .map(dataSetFile -> {
