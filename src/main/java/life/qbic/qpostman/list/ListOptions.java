@@ -17,7 +17,8 @@ public class ListOptions {
     @Option(names = "--format", defaultValue = "LEGACY",
         converter = OutputFormat.OutputFormatConverter.class,
         completionCandidates = OutputFormat.CompletionCandidates.class,
-        description = "the format to list files in. Possible values: ${COMPLETION-CANDIDATES}",
+        paramLabel = "<format>",
+        description = "The format to list files in. Case-insensitive. Possible values: ${COMPLETION-CANDIDATES}",
         showDefaultValue = Visibility.ALWAYS,
         required = true)
     public OutputFormat outputFormat;

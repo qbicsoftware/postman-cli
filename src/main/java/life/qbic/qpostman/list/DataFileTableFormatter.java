@@ -3,6 +3,7 @@ package life.qbic.qpostman.list;
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import life.qbic.qpostman.common.FileSizeFormatter;
@@ -16,18 +17,21 @@ public class DataFileTableFormatter {
 
   private final List<Column<String>> columns;
 
-  public DataFileTableFormatter(boolean exactFileSize) {
-    columns = List.of(
-        Column.create("Dataset",
+  public DataFileTableFormatter(boolean exactFileSize, boolean withChecksum) {
+    columns = new ArrayList<>();
+
+    columns.add(Column.create("Dataset",
             file -> file.dataSet().sampleCode() + " (" + file.dataSet().dataSetPermId().getPermId()
-                + ")"),
-        Column.create("Source", file -> file.dataSet().sourceSample().getCode()),
-        Column.create("Registration", file -> file.dataSet().registrationTime().toString()),
-        Column.create("Size", file -> exactFileSize
+                + ")"));
+    columns.add(Column.create("Source", file -> file.dataSet().sourceSample().getCode()));
+    columns.add(Column.create("Registration", file -> file.dataSet().registrationTime().toString()));
+    columns.add(Column.create("Size", file -> exactFileSize
             ? String.valueOf(file.fileSize().bytes())
-            : FileSizeFormatter.format(file.fileSize(), 6)),
-        Column.create("CRC32", file -> Long.toHexString(file.crc32())),
-        Column.create("File", DataFile::filePath));
+            : FileSizeFormatter.format(file.fileSize(), 6)));
+    if (withChecksum) {
+      columns.add(Column.create("CRC32", file -> Long.toHexString(file.crc32())));
+    };
+    columns.add(Column.create("File", DataFile::filePath));
   }
 
   public String formatAsTable(List<DataFile> files, String delimiter, boolean withHeader) {

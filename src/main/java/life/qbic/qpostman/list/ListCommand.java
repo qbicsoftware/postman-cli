@@ -95,7 +95,7 @@ public class ListCommand implements Runnable {
 
     private void listAsTsv(List<DataFile> processedFiles) {
         boolean withHeader = !listOptions.withoutHeader;
-        DataFileTableFormatter dataFileTableFormatter = new DataFileTableFormatter(listOptions.exactFilesize);
+        DataFileTableFormatter dataFileTableFormatter = new DataFileTableFormatter(listOptions.exactFilesize, listOptions.withChecksum);
         String tsvContent = dataFileTableFormatter
             .formatAsTable(processedFiles, "\t", withHeader);
         System.out.println(tsvContent);
