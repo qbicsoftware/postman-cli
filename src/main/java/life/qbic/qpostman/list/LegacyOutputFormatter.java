@@ -10,12 +10,7 @@ import life.qbic.qpostman.common.structures.DataSetWrapper;
 import life.qbic.qpostman.common.structures.FileSize;
 
 /**
- * TODO!
- * <b>short description</b>
- *
- * <p>detailed description</p>
- *
- * @since <version tag>
+ * Formats a list of data files in legacy format to support backwards compatibility.
  */
 public class LegacyOutputFormatter {
 
