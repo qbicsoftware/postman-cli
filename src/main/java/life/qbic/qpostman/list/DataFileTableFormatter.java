@@ -30,7 +30,7 @@ public class DataFileTableFormatter {
             : FileSizeFormatter.format(file.fileSize(), 6)));
     if (withChecksum) {
       columns.add(Column.create("CRC32", file -> Long.toHexString(file.crc32())));
-    };
+    }
     columns.add(Column.create("File", DataFile::filePath));
   }
 
