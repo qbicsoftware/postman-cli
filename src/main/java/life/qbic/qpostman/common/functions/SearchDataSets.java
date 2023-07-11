@@ -58,10 +58,13 @@ public class SearchDataSets implements Function<Collection<String>, Collection<D
         }
 
         public SampleFetchOptions fetchOptions() {
+            SampleFetchOptions parentFetchOptions = new SampleFetchOptions();
+            parentFetchOptions.withType();
             SampleFetchOptions sampleFetchOptions = new SampleFetchOptions();
             sampleFetchOptions.withDataSets().withSample();
             sampleFetchOptions.withType();
             sampleFetchOptions.withParents();
+            sampleFetchOptions.withParentsUsing(parentFetchOptions);
             sampleFetchOptions.withChildrenUsing(sampleFetchOptions);
             return sampleFetchOptions;
         }
