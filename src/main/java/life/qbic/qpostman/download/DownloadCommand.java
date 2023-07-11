@@ -78,6 +78,14 @@ public class DownloadCommand implements Runnable {
                     }
                 })
                 .toList();
+            List<DownloadReport> successfulDownloads = downloadReports.stream()
+                .filter(DownloadReport::isSuccess).toList();
+            List<DownloadReport> failedDownloads = downloadReports.stream()
+                .filter(DownloadReport::isFailure).toList();
+            log.info("Successfully downloaded " + successfulDownloads.size() +" files.");
+            if (!failedDownloads.isEmpty()) {
+                log.warn("Failed to download %s / %s files.".formatted(failedDownloads.size(), downloadReports.size()));
+            }
 
 
         } catch (RemoteAccessException remoteAccessException) {

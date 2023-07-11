@@ -25,7 +25,7 @@ public class SearchFiles implements Function<Collection<DataSetWrapper>, Collect
 
     private static final Logger log = LogManager.getLogger(SearchFiles.class);
     private final Collection<IDataStoreServerApi> dataStoreServerApis;
-    private DataSetCounterUpdateListener dataSetCounterUpdateListener;
+    private final DataSetCounterUpdateListener dataSetCounterUpdateListener;
 
     public SearchFiles(Collection<IDataStoreServerApi> dataStoreServerApis,
         DataSetCounterUpdateListener dataSetCounterUpdateListener) {
