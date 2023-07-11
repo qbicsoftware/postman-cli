@@ -9,14 +9,14 @@ import life.qbic.qpostman.common.FileSizeFormatter;
 import life.qbic.qpostman.common.structures.DataFile;
 
 /**
- * The DataFileFormatter class is responsible for formatting a list of DataFiles
+ * The DataFileTableFormatter class is responsible for formatting a list of DataFiles
  * into a table format using specified delimiter and column settings.
  */
-public class DataFileFormatter {
+public class DataFileTableFormatter {
 
   private final List<Column<String>> columns;
 
-  public DataFileFormatter(boolean exactFileSize) {
+  public DataFileTableFormatter(boolean exactFileSize) {
     columns = List.of(
         Column.create("Dataset",
             file -> file.dataSet().sampleCode() + " (" + file.dataSet().dataSetPermId().getPermId()
