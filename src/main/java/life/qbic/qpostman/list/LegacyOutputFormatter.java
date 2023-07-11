@@ -30,11 +30,11 @@ public class LegacyOutputFormatter {
     for (DataFile datafile : dataSetSummary.datafiles()) {
       String fileOutput = withChecksum
           ? "%s\t%s\t%s".formatted(exactFileSize ? datafile.fileSize().bytes()
-              : FileSizeFormatter.format(datafile.fileSize()),
+              : FileSizeFormatter.format(datafile.fileSize(), 6),
           Long.toHexString(datafile.crc32()),
           datafile.fileName())
           : "%s\t%s".formatted(
-              exactFileSize ? datafile.fileSize().bytes() : FileSizeFormatter.format(datafile.fileSize()),
+              exactFileSize ? datafile.fileSize().bytes() : FileSizeFormatter.format(datafile.fileSize(), 6),
               datafile.fileName()) ;
       result.append(fileOutput);
       result.append("\n");
