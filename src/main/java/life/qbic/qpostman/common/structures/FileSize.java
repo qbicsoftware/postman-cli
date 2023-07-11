@@ -21,4 +21,12 @@ public final class FileSize {
   public long bytes() {
     return bytes;
   }
+
+  public FileSize add(FileSize other) {
+    return add(this, other);
+  }
+
+  public static FileSize add(FileSize size1, FileSize size2) {
+    return FileSize.of(size1.bytes() + size2.bytes());
+  }
 }
