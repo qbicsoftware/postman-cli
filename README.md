@@ -16,16 +16,16 @@
 
 </div>
 
-A client software written in Java for dataset downloads from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
+Client software for downloading datasets from QBiC's data management system openBIS (https://wiki-bsse.ethz.ch/display/bis/Home).
 
-We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from command line, in order to provide a quick data retrieval on server or cluster resources, where the download via the qPortal is impractical.
+We are making use of the V3 API of openBIS (https://wiki-bsse.ethz.ch/display/openBISDoc1605/openBIS+V3+API) in order to interact with the data management system from the command line, in order to provide a quick data retrieval on the server or cluster resources, where the download via the qPortal is impractical.
 
 ## How to run
 
 ### Download
 You can download the compiled and executable Java binaries as JAR of postman from the GitHub release page: https://github.com/qbicsoftware/postman-cli/releases.
 
-If you want to build from source, checkout the commit of your choice and execute `mvn clean package`. We only recommend this if you are familiar with Java build systems though, as we cannot give you support here. In the normal case, the binary of a stable release is sufficient.
+If you want to build from source, check out the commit of your choice and execute `mvn clean package`. We only recommend this if you are familiar with Java build systems though, as we cannot give you support here. In the normal case, the binary of a stable release is sufficient.
 
 ### Requirements
 You need to have **Java JRE** or **JDK** installed (**openJDK** is fine), at least version 17. And the client's host must have allowance to connect to the server, which is determined by our firewall settings. If you are unsure, if your client is allowed to connect, contact us at support@qbic.zendesk.com.
@@ -59,7 +59,7 @@ A default file is provided here: [default-config](https://github.com/qbicsoftwar
 ## How to use
 
 ### Options
-Just execute the following command to get an overview over the available options. 
+Just execute the following command to get an overview of the available options. 
 ```bash 
 java -jar postman-cli.jar -h
 
@@ -84,12 +84,12 @@ https://github.com/qbicsoftware/postman-cli#readme.
 File sizes printed by postman Kilobyte, Megabyte, Gigabyte, Terabyte and Petabyte use base 2.
 
 ### How to specify your log directory
-By default postman will create log files in a directory `./logs/` in your working directory.
+By default, postman will create log files in a directory `./logs/` in your working directory.
 You can specify where logs are written by setting the system property `log.path` to the desired directory.
 
 ### How to provide your credentials
 After gaining access by applying through support@qbic.zendesk.com, you can log in using your credentials.
-The username is provided by us or if you have a uni-tuebingen account by the university of tuebingen.
+The username is provided by us or if you have a uni-tuebingen account by the university of Tuebingen.
 
 **Provide your username:**
 
@@ -123,7 +123,7 @@ You can provide identifiers using a file containing the identifiers. Lines start
 ```text
 # all files for the project
 QTEST*
-# all files associated to these samples
+# all files associated with these samples
 QSTTS001AB
 QSTTS002BC
 ```
@@ -134,7 +134,7 @@ java -jar postman.jar -f myids.txt
 ### How to filter files by suffix
 Both the `download` and the `list` command allow you to filter files by their suffix. The suffixes provided are not case-sensitive. 
 `.TXT` and `.txt` will have the same effect.
-Multiple suffixes can be provided separated by a comma. A suffix does not have to be the file ending but can be any substring from the end of a files name.
+Multiple suffixes can be provided separated by a comma. A suffix does not have to be the file ending but can be any substring from the end of a file's name.
 
 If you only want to download `fastq` and `fastq.gz` files you can run postman with 
 ```bash
@@ -258,10 +258,10 @@ The `download` command allows you to download data from our storage to your mach
 Use the `--output-dir` option to specify a location on your client the location will be interpreted relative to your working directory.
 
 ##### File integrity check
-Postman computes the CRC32 checksum for all input streams using the native Java utility class [CRC32](https://docs.oracle.com/javase/8/docs/api/java/util/zip/CRC32.html). Postman favors [`CheckedInputStream`](https://docs.oracle.com/javase/7/docs/api/java/util/zip/CheckedInputStream.html)
+Postman computes the CRC32 checksum for all input streams using the native Java utility class [CRC32](https://docs.oracle.com/javase/8/docs/api/java/util/zip/CRC32.html). Postman favours [`CheckedInputStream`](https://docs.oracle.com/javase/7/docs/api/java/util/zip/CheckedInputStream.html)
 over the traditional InputStream, and promotes the CRC checksum computation.
 
-Computed CRC32 checksums are compared with CRC32 checksum stored on our servers. 
+Computed CRC32 checksums are compared with CRC32 checksums stored on our servers. 
 When the checksum does not match, then the download failed. Each download is attempted multiple times. 
 When all attempts fail, the mismatching checksum is recorded in your log directory in the `checksum-mismatch.log` file.
 
@@ -274,11 +274,11 @@ The `checksum-mismatch.log` file contains one line for each file that was not do
 In addition, Postman writes the CRC32 checksum in an additional file `<file-name-of-checked-file>.crc32` and stores it together with the according file.
 
 #### Advanced Options
-##### `posmtan`
+##### `postman`
 * `-Dlog.path`: provide the log directory
 * `-Dlog.level`: provide the log level to use for logging
 * `--source-sample-type <sample-type>`: specify which sample type to consider as source sample type.
-* `--server-timeout <millis>`: the server timeout in milli seconds
+* `--server-timeout <millis>`: the server timeout in milliseconds
 
 ##### `download`
 * `--download-attempts <download-attempts>` provide the maximal amount attempted downloads
