@@ -190,7 +190,7 @@ The `list` command comes with some special options. You can change how your outp
 2. removing the header from the tabular output `--without-header`
 3. listing the crc32 checksum for every file `--with-checksum`
 4. specifying the output format.
-5. 
+
 #### `TSV` format
 ```text
 Dataset	Source	Registration	Size	File
