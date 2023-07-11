@@ -12,11 +12,11 @@
     <packaging>jar</packaging>
 
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <groovy.version>3.0.15</groovy.version>
-    <log4j.version>2.17.1</log4j.version>
+    <groovy.version>4.0.12</groovy.version>
+    <log4j.version>2.20.0</log4j.version>
   </properties>
 
   <!-- we only need to tell maven where to find our parent pom and other QBiC dependencies -->
@@ -60,12 +60,21 @@
       <name>QBiC Releases</name>
       <url>https://qbic-repo.qbic.uni-tuebingen.de/repository/maven-releases</url>
     </repository>
-    <repository>
-      <id>vaadin-addons</id>
-      <name>Vaadin Addons</name>
-      <url>https://maven.vaadin.com/vaadin-addons</url>
-    </repository>
   </repositories>
+  <distributionManagement>
+    <repository>
+      <uniqueVersion>true</uniqueVersion>
+      <id>nexus-releases</id>
+      <name>QBiC Releases</name>
+      <url>https://qbic-repo.qbic.uni-tuebingen.de/repository/maven-releases</url>
+    </repository>
+    <snapshotRepository>
+      <uniqueVersion>false</uniqueVersion>
+      <id>nexus-snapshots</id>
+      <name>QBiC Snapshots</name>
+      <url>https://qbic-repo.qbic.uni-tuebingen.de/repository/maven-snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <dependencies>
     <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
@@ -77,20 +86,13 @@
     <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
-      <version>4.6.2</version>
-    </dependency>
-    <dependency>
-      <groupId>jline</groupId>
-      <artifactId>jline</artifactId>
-      <version>2.14.6</version>
+      <version>4.7.4</version>
     </dependency>
 
-
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
       <version>${groovy.version}</version>
-      <classifier>indy</classifier>
     </dependency>
 
     <dependency>
@@ -112,13 +114,17 @@
       <version>18.06.2</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.9.3</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>2.4-M1-groovy-4.0</version>
+    </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -147,7 +153,7 @@
       <plugin>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>1.13.1</version>
+        <version>3.0.0</version>
         <executions>
           <execution>
             <id>default</id>
@@ -179,27 +185,35 @@
         </executions>
       </plugin>
       <!-- unit tests -->
+      <!--see https://github.com/spockframework/spock-example/blob/c9951e87aadb676441c80c54793e2770fa063ab0/pom.xml-->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M3</version>
+        <version>3.1.2</version>
         <configuration>
+          <useFile>false</useFile>
           <excludes>
             <exclude>**/*IntegrationTest.*</exclude>
           </excludes>
-          <includes>**/*Test.*</includes>
-          <includes>**/*Specification.*</includes>
-          <includes>**/*Spec.*</includes>
-          <systemPropertyVariables>
-            <jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
-          </systemPropertyVariables>
+          <includes>
+            <include>**/*Test</include>
+            <include>**/*Specification</include>
+            <include>**/*Spec</include>
+          </includes>
+          <statelessTestsetReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+            <disable>false</disable>
+            <version>3.1</version>
+            <usePhrasedFileName>false</usePhrasedFileName>
+            <usePhrasedTestSuiteClassName>true</usePhrasedTestSuiteClassName>
+            <usePhrasedTestCaseClassName>true</usePhrasedTestCaseClassName>
+            <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+          </statelessTestsetReporter>
         </configuration>
       </plugin>
       <!-- integration tests -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.0.0-M3</version>
+        <version>3.1.2</version>
         <executions>
           <execution>
             <goals>
@@ -219,18 +233,4 @@
       </plugin>
     </plugins>
   </build>
-  <distributionManagement>
-    <repository>
-      <uniqueVersion>true</uniqueVersion>
-      <id>nexus-releases</id>
-      <name>QBiC Releases</name>
-      <url>https://qbic-repo.qbic.uni-tuebingen.de/repository/maven-releases</url>
-    </repository>
-    <snapshotRepository>
-      <uniqueVersion>false</uniqueVersion>
-      <id>nexus-snapshots</id>
-      <name>QBiC Snapshots</name>
-      <url>https://qbic-repo.qbic.uni-tuebingen.de/repository/maven-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
 </project>
