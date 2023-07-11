@@ -14,7 +14,7 @@ import life.qbic.qpostman.common.structures.FileSize;
  */
 public class LegacyOutputFormatter {
 
-  public String format(DataSetSummary dataSetSummary, boolean exactFileSize) {
+  public String format(DataSetSummary dataSetSummary, boolean exactFileSize, boolean withChecksum) {
     String summaryOutput = """
         # Dataset         %s
         # Source          %s
@@ -28,10 +28,14 @@ public class LegacyOutputFormatter {
         ));
     StringBuilder result = new StringBuilder(summaryOutput);
     for (DataFile datafile : dataSetSummary.datafiles()) {
-      String fileOutput = "%s\t%s\t%s".formatted(
-          exactFileSize ? datafile.fileSize().bytes() : FileSizeFormatter.format(datafile.fileSize()),
+      String fileOutput = withChecksum
+          ? "%s\t%s\t%s".formatted(exactFileSize ? datafile.fileSize().bytes()
+              : FileSizeFormatter.format(datafile.fileSize()),
           Long.toHexString(datafile.crc32()),
-          datafile.fileName());
+          datafile.fileName())
+          : "%s\t%s".formatted(
+              exactFileSize ? datafile.fileSize().bytes() : FileSizeFormatter.format(datafile.fileSize()),
+              datafile.fileName()) ;
       result.append(fileOutput);
       result.append("\n");
     }

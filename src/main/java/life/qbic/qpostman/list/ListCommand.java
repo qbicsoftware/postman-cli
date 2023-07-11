@@ -108,7 +108,7 @@ public class ListCommand implements Runnable {
         for (Entry<DataSetWrapper, List<DataFile>> dataSetWrapperListEntry : groupedFiles.entrySet()) {
             String output = legacyOutputFormatter.format(
                 new DataSetSummary(dataSetWrapperListEntry.getValue()),
-                listOptions.exactFilesize);
+                listOptions.exactFilesize, listOptions.withChecksum);
             System.out.println(output);
         }
     }
