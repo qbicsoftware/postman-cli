@@ -20,7 +20,8 @@ public class ServerOptions {
         hidden = true)
     public List<String> dss_urls = new ArrayList<>(List.of(
         "https://qbis.qbic.uni-tuebingen.de/datastore_server",
-        "https://qbis.qbic.uni-tuebingen.de/datastore_server2"
+        "https://qbis.qbic.uni-tuebingen.de/datastore_server2",
+        "https://qbis.qbic.uni-tuebingen.de/datastore_server_attachments"
     ));
 
 
