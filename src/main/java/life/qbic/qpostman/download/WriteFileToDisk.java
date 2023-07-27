@@ -31,19 +31,25 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
     private final Path outputDirectory;
     private final int downloadAttempts;
 
+    private final boolean ignoreDirectories;
+
     private static final Logger log = LogManager.getLogger(WriteFileToDisk.class);
     public WriteFileToDisk(IDataStoreServerApi dataStoreServerApi, int bufferSize, Path outputDirectory,
-        int downloadAttempts) {
+        int downloadAttempts, boolean ignoreDirectories) {
         this.dataStoreServerApi = dataStoreServerApi;
         this.bufferSize = bufferSize;
         this.outputDirectory = outputDirectory;
         this.downloadAttempts = downloadAttempts;
+        this.ignoreDirectories = ignoreDirectories;
     }
 
-    private static Path toOutputPath(DataFile dataFile, Path outputDirectory) {
-        String originalFilePath = dataFile.filePath();
-        Path outFilePath = outputDirectory.resolve(originalFilePath);
-        return outFilePath;
+    private Path toOutputPath(DataFile dataFile, Path outputDirectory) {
+        if (this.ignoreDirectories) {
+            Path sampleOutDir = outputDirectory.resolve(dataFile.dataSet().sampleCode()); // outdir/QABCDEFG/
+            return sampleOutDir.resolve(dataFile.fileName()); // outdir/QABCDEF/file.name
+        } else {
+            return outputDirectory.resolve(dataFile.filePath()); // outdir/file/path/file.name
+        }
     }
 
     private AutoClosableDataSetFileDownloadReader toReader(DataFile dataFile) {
@@ -65,9 +71,9 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
      */
     @Override
     public DownloadReport apply(DataFile dataFile) {
-        int bufferSize =
-            (dataFile.fileSize().bytes() < this.bufferSize) ? (int) dataFile.fileSize().bytes()
-                : this.bufferSize;
+        int bufferSize = (dataFile.fileSize().bytes() < this.bufferSize)
+            ? (int) dataFile.fileSize().bytes()
+            : this.bufferSize;
         Path outputPath = toOutputPath(dataFile, outputDirectory);
         if (WriteUtils.doesExistWithCrc32(outputPath, dataFile.crc32(), bufferSize)) {
             log.info("File " + outputPath + " exists on your machine.");
