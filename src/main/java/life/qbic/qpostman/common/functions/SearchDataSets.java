@@ -39,6 +39,7 @@ public class SearchDataSets implements Function<Collection<String>, Collection<D
     }
 
     private Stream<Sample> searchSamples(SampleQuery sampleQuery) {
+
         return applicationServerApi.searchSamples(OpenBisSessionProvider.get().getToken(), sampleQuery.searchCriteria(), sampleQuery.fetchOptions()).getObjects().stream();
     }
 
@@ -58,15 +59,28 @@ public class SearchDataSets implements Function<Collection<String>, Collection<D
         }
 
         public SampleFetchOptions fetchOptions() {
+            // for all samples fetch the direct parents with type
             SampleFetchOptions parentFetchOptions = new SampleFetchOptions();
             parentFetchOptions.withType();
+            // fetch dataset with sample, sample type and parents with type, propagate fetch options to children.
             SampleFetchOptions sampleFetchOptions = new SampleFetchOptions();
             sampleFetchOptions.withDataSets().withSample();
             sampleFetchOptions.withType();
             sampleFetchOptions.withParents();
             sampleFetchOptions.withParentsUsing(parentFetchOptions);
             sampleFetchOptions.withChildrenUsing(sampleFetchOptions);
-            return sampleFetchOptions;
+            // for the root sample, fetch all parents recursively
+            SampleFetchOptions rootParentFetchOptions = new SampleFetchOptions();
+            rootParentFetchOptions.withType();
+            rootParentFetchOptions.withParentsUsing(rootParentFetchOptions);
+            // use same fetch options as for all other samples + fetching all parents recursively instead of direct parents.
+            SampleFetchOptions rootSampleFetchOptions = new SampleFetchOptions();
+            rootSampleFetchOptions.withDataSets().withSample();
+            rootSampleFetchOptions.withType();
+            rootSampleFetchOptions.withParents();
+            rootSampleFetchOptions.withChildrenUsing(sampleFetchOptions);
+            rootSampleFetchOptions.withParentsUsing(rootParentFetchOptions);
+            return rootSampleFetchOptions;
         }
     }
 
