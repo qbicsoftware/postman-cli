@@ -31,18 +31,22 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
     private final Path outputDirectory;
     private final int downloadAttempts;
 
+    private final boolean ignoreDirectories;
+
     private static final Logger log = LogManager.getLogger(WriteFileToDisk.class);
     public WriteFileToDisk(IDataStoreServerApi dataStoreServerApi, int bufferSize, Path outputDirectory,
-        int downloadAttempts) {
+        int downloadAttempts, boolean ignoreDirectories) {
         this.dataStoreServerApi = dataStoreServerApi;
         this.bufferSize = bufferSize;
         this.outputDirectory = outputDirectory;
         this.downloadAttempts = downloadAttempts;
+        this.ignoreDirectories = ignoreDirectories;
     }
 
-    private static Path toOutputPath(DataFile dataFile, Path outputDirectory) {
+    private Path toOutputPath(DataFile dataFile, Path outputDirectory) {
         Path dataSetDirectory = outputDirectory.resolve(dataFile.dataSet().sampleCode());
-        return dataSetDirectory.resolve(dataFile.filePath());
+        String fileSpecific = ignoreDirectories ? dataFile.fileName() :dataFile.filePath();
+      return dataSetDirectory.resolve(fileSpecific);
     }
 
     private AutoClosableDataSetFileDownloadReader toReader(DataFile dataFile) {
@@ -64,9 +68,9 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
      */
     @Override
     public DownloadReport apply(DataFile dataFile) {
-        int bufferSize =
-            (dataFile.fileSize().bytes() < this.bufferSize) ? (int) dataFile.fileSize().bytes()
-                : this.bufferSize;
+        int bufferSize = (dataFile.fileSize().bytes() < this.bufferSize)
+            ? (int) dataFile.fileSize().bytes()
+            : this.bufferSize;
         Path outputPath = toOutputPath(dataFile, outputDirectory);
         if (WriteUtils.doesExistWithCrc32(outputPath, dataFile.crc32(), bufferSize)) {
             log.info("File " + outputPath + " exists on your machine.");

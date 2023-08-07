@@ -5,6 +5,7 @@ import static picocli.CommandLine.Option;
 
 import java.util.Optional;
 import java.util.StringJoiner;
+import picocli.CommandLine.Help.Visibility;
 
 public class DownloadOptions {
     @Option(names = {"--buffer-size"},
@@ -25,6 +26,11 @@ public class DownloadOptions {
         description = "how often to attempt file download in case the download failed",
         hidden = true)
     public int successiveDownloadAttempts;
+
+    @Option(names = "--ignore-subdirectories", defaultValue = "false",
+        description = "put all files into one directory regardless of the directory structure on the server; conflicts with files with equal names are not addressed",
+        showDefaultValue = Visibility.ON_DEMAND)
+    public boolean ignoreSubDirectories;
 
     @Override
     public String toString() {

@@ -219,9 +219,9 @@ NGSQSTTS015A0 (20211026111452695-847006)	NGSQSTTS015A0	2021-10-26T09:14:53.14381
 ## `download`
 
 ```txt
-Usage: postman-cli download [-hV] [-o=<outputPath>] -u=<user> [-s=<suffix>[,
-                            <suffix>...]]... (--password:
-                            env=<environment-variable> | --password:
+Usage: postman-cli download [-hV] [--ignore-subdirectories] [-o=<outputPath>]
+                            -u=<user> [-s=<suffix>[,<suffix>...]]...
+                            (--password:env=<environment-variable> | --password:
                             prop=<system-property> | --password) (-f=<filePath>
                             | SAMPLE_IDENTIFIER...)
 
@@ -246,17 +246,36 @@ Options:
                                (case-insensitive) suffixes
   -o, --output-dir=<outputPath>
                              specify where to write the downloaded data
+      --ignore-subdirectories
+                             put all files into one directory regardless of the
+                               directory structure on the server; conflicts
+                               with files with equal names are not addressed
   -h, --help                 Show this help message and exit.
   -V, --version              Print version information and exit.
 
 Optional: specify a config file by running postman with '@/path/to/config.txt'.
-A detailed documentation can be found at
-https://github.com/qbicsoftware/postman-cli#readme.
+A detailed documentation can be found at https://github.com/qbicsoftware/postman-cli#readme.
 ```
 The `download` command allows you to download data from our storage to your machine. 
 
 Use the `--output-dir` option to specify a location on your client the location will be interpreted relative to your working directory.
 
+By using the `--ignore-subdirectories` flag, you signal qpostman that you are not interested in the directory structure on the server.
+qpostman will thus put all files it finds into the same top-level folder.
+
+**default download behaviour**
+```text
+my/awesome/path/file1.fastq.gz            -> QABCD/my/awesome/path/file1.fastq.gz
+my/awesome/other/path/file2.fastq.gz      -> QABCD/my/awesome/other/path/file2.fastq.gz
+my/awesome/additional/path/file3.fastq.gz -> QABCD/my/awesome/additional/path/file3.fastq.gz
+```
+**with `--ignore-subdirectories`**
+```text
+with --ignore-subdirectories
+my/awesome/path/file1.fastq.gz            -> QABCD/file1.fastq.gz
+my/awesome/other/path/file2.fastq.gz      -> QABCD/file2.fastq.gz
+my/awesome/additional/path/file3.fastq.gz -> QABCD/file3.fastq.gz
+```
 ##### File integrity check
 Postman computes the CRC32 checksum for all input streams using the native Java utility class [CRC32](https://docs.oracle.com/javase/8/docs/api/java/util/zip/CRC32.html). Postman favours [`CheckedInputStream`](https://docs.oracle.com/javase/7/docs/api/java/util/zip/CheckedInputStream.html)
 over the traditional InputStream, and promotes the CRC checksum computation.
