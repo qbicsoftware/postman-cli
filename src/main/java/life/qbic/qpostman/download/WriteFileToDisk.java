@@ -44,9 +44,9 @@ public class WriteFileToDisk implements Function<DataFile, DownloadReport> {
     }
 
     private Path toOutputPath(DataFile dataFile, Path outputDirectory) {
-        Path datasetSampleOut = outputDirectory.resolve(dataFile.dataSet().sampleCode());
-        String fileSpecific = ignoreDirectories ? dataFile.fileName() : dataFile.filePath();
-        return datasetSampleOut.resolve(fileSpecific);
+        Path dataSetDirectory = outputDirectory.resolve(dataFile.dataSet().sampleCode());
+        String fileSpecific = ignoreDirectories ? dataFile.fileName() :dataFile.filePath();
+      return dataSetDirectory.resolve(fileSpecific);
     }
 
     private AutoClosableDataSetFileDownloadReader toReader(DataFile dataFile) {
