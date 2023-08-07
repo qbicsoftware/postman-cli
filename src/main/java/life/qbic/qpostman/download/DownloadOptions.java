@@ -27,10 +27,10 @@ public class DownloadOptions {
         hidden = true)
     public int successiveDownloadAttempts;
 
-    @Option(names = "--ignore-directories", defaultValue = "false",
-        description = "put all files into one directory regardless of the directory structure on the server; conflicts with files with equal names are not addressed ",
+    @Option(names = "--ignore-subdirectories", defaultValue = "false",
+        description = "put all files into one directory regardless of the directory structure on the server; conflicts with files with equal names are not addressed",
         showDefaultValue = Visibility.ON_DEMAND)
-    public boolean ignoreDirectories;
+    public boolean ignoreSubDirectories;
 
     @Override
     public String toString() {

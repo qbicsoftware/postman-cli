@@ -125,7 +125,7 @@ public class DownloadCommand implements Runnable {
         FileFilter myAwesomeFileFilter = FileFilter.create().withSuffixes(filterOptions.suffixes);
         WriteFileToDisk writeFileToDisk = new WriteFileToDisk(dataStoreServerApis().toArray(IDataStoreServerApi[]::new)[0],
             downloadOptions.bufferSize, Path.of(downloadOptions.outputPath), downloadOptions.successiveDownloadAttempts,
-            downloadOptions.ignoreDirectories);
+            downloadOptions.ignoreSubDirectories);
         FindSourceSample findSourceSample = new FindSourceSample(serverOptions.sourceSampleType);
         SortFiles sortFiles = new SortFiles();
         DataSetWrapper.setFindSourceFunction(findSourceSample);
