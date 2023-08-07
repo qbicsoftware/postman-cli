@@ -1,9 +1,11 @@
 # Config file for postman-cli
 # Replace the values defined after the respective CLI parameters
 
-# Set the AS_URL (ApplicationServerURL) to the value defined below
---application-server https://qbis.qbic.uni-tuebingen.de/openbis/openbis
+--password
+#--password:env <MY_ENV_VARIABLE>
+#--password:prop <mySystemProperty>
 
-# Set the DSS_URL (DataStoreServerURL) to the value defined below
---datastore_server https://qbis.qbic.uni-tuebingen.de/datastore_server
---datastore_server https://qbis.qbic.uni-tuebingen.de/datastore_server2
+#--user <my-user-id>
+
+#--file <my-manifest.txt>
+#--suffix .fastq.gz,.fastq 
