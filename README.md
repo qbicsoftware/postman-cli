@@ -271,7 +271,6 @@ my/awesome/additional/path/file3.fastq.gz -> QABCD/my/awesome/additional/path/fi
 ```
 **with `--ignore-subdirectories`**
 ```text
-with --ignore-subdirectories
 my/awesome/path/file1.fastq.gz            -> QABCD/file1.fastq.gz
 my/awesome/other/path/file2.fastq.gz      -> QABCD/file2.fastq.gz
 my/awesome/additional/path/file3.fastq.gz -> QABCD/file3.fastq.gz
