@@ -104,7 +104,7 @@ When using the application, you can either:
 ```bash
 java -jar -Dmy.awesome.property=ABCDEFG postman.jar -u qbc001a --password:prop my.awesome.property
 ```
-3. enter the name of an environment variable containing your password `--password:env MY_PASSWORD`
+3. enter the name of an environment variable containing your password `--password:env MY_PASSWORD`. Make sure to *not* use the `$` sign before the environment variable (as in bash variables) otherwise the password is not recognized (`--password:env $MY_PASSWORD` will fail)
 ```bash
 MY_PASSWORD=ABCDEFG java -jar postman.jar -u qbc001a --password:env MY_PASSWORD
 ```
@@ -271,7 +271,6 @@ my/awesome/additional/path/file3.fastq.gz -> QABCD/my/awesome/additional/path/fi
 ```
 **with `--ignore-subdirectories`**
 ```text
-with --ignore-subdirectories
 my/awesome/path/file1.fastq.gz            -> QABCD/file1.fastq.gz
 my/awesome/other/path/file2.fastq.gz      -> QABCD/file2.fastq.gz
 my/awesome/additional/path/file3.fastq.gz -> QABCD/file3.fastq.gz
