@@ -69,17 +69,29 @@ public class SampleIdentifierOptions {
     public List<String> ids = new ArrayList<>();
 
     public List<String> getIds() {
-      if (ids.isEmpty()) {
-        List<String> identities = IdentityFileParser.parseIdentityFile(filePath).stream()
-            .filter(it -> !it.isBlank()).toList();
-
-        if (identities.isEmpty()) {
-          log.error(filePath.toString() + " does not contain any identifiers.");
-          System.exit(2);
-        }
-        return identities;
+      var identifiers = ids.isEmpty()
+          ? parseIdentifiers() :
+          ids;
+      // we want to prevent matching to something shorter than a project code.
+      List<String> toShortSampleIds = identifiers.stream()
+          .filter(it -> !it.matches("^\\w{5,}"))
+          .toList();
+      if (toShortSampleIds.size() > 0) {
+        log.error("Please provide at least 5 letters for your sample identifiers. The following sample identifiers are to short: " + toShortSampleIds);
+        System.exit(2);
       }
-      return ids;
+      return identifiers;
+    }
+
+    private List<String> parseIdentifiers() {
+      List<String> identities = IdentityFileParser.parseIdentityFile(filePath).stream()
+          .filter(it -> !it.isBlank()).toList();
+
+      if (identities.isEmpty()) {
+        log.error(filePath.toString() + " does not contain any identifiers.");
+        System.exit(2);
+      }
+      return identities;
     }
 
 
