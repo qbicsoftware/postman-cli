@@ -12,6 +12,11 @@ public class FilterOptions {
             paramLabel = "<suffix>")
     public List<String> suffixes = new ArrayList<>(0);
 
+    @CommandLine.Option(names = {"--pattern"},
+        description= "only include files with paths matching this pattern",
+        paramLabel = "<regex_pattern>")
+    public String pattern = null;
+
     @Override
     public String toString() {
         return new StringJoiner(", ", FilterOptions.class.getSimpleName() + "[", "]")

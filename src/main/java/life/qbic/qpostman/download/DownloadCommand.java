@@ -122,7 +122,8 @@ public class DownloadCommand implements Runnable {
         IApplicationServerApi applicationServerApi = ServerFactory.applicationServer(serverOptions.as_url, serverOptions.timeoutInMillis);
         OpenBisSessionProvider.init(applicationServerApi, authenticationOptions.user, new String(authenticationOptions.getPassword()));
         SearchDataSets searchDataSets = new SearchDataSets(applicationServerApi);
-        FileFilter myAwesomeFileFilter = FileFilter.create().withSuffixes(filterOptions.suffixes);
+        FileFilter myAwesomeFileFilter = FileFilter.create().withSuffixes(filterOptions.suffixes)
+            .withPattern(filterOptions.pattern);
         WriteFileToDisk writeFileToDisk = new WriteFileToDisk(dataStoreServerApis().toArray(IDataStoreServerApi[]::new)[0],
             downloadOptions.bufferSize, Path.of(downloadOptions.outputPath), downloadOptions.successiveDownloadAttempts,
             downloadOptions.ignoreSubDirectories);

@@ -141,14 +141,33 @@ If you only want to download `fastq` and `fastq.gz` files you can run postman wi
 java -jar postman.jar -s .fastq,.fastq.gz
 ```
 
+### How to filter by regular expression
+Both the `download` and the `list` command allow you to filter files using [a regular expression](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html). 
+When filtering with a regular expression pattern, the path of the file as well as the filename are matched against the pattern. Only matching files are included in the output.
+
+If you only want to download files containing `test` in their path or in their name, you can run postman with
+```bash
+java -jar postman.jar --pattern ".*test.*"
+```
+Although this can be used to filter for suffixes as well, please use the `--suffix` option. 
+
+Instead of
+```bash
+java -jar postman.jar --pattern".*\.fastq\.gz"
+```
+do
+```bash
+java -jar postman.jar -s .fastq.gz
+```
+
 ## `list`
 ```txt
 Usage: postman-cli list [-hV] [--exact-filesize] [--with-checksum]
-                        [--without-header] [--format=<outputFormat>] -u=<user>
-                        [-s=<suffix>[,<suffix>...]]... (--password:
-                        env=<environment-variable> | --password:
-                        prop=<system-property> | --password) (-f=<filePath> |
-                        SAMPLE_IDENTIFIER...)
+                        [--without-header] [--format=<format>]
+                        [--pattern=<regex_pattern>] -u=<user> [-s=<suffix>[,
+                        <suffix>...]]... (--password:env=<environment-variable>
+                        | --password:prop=<system-property> | --password)
+                        (-f=<filePath> | SAMPLE_IDENTIFIER...)
 
 Description:
 lists all the datasets found for the given identifiers
@@ -169,6 +188,8 @@ Options:
   -s, --suffix=<suffix>[,<suffix>...]
                              only include files ending with one of these
                                (case-insensitive) suffixes
+      --pattern=<regex_pattern>
+                             only include files with paths matching this pattern
       --with-checksum        list the crc32 checksum for each file
       --exact-filesize       use exact byte count instead of unit suffixes:
                                Byte, Kilobyte, Megabyte, Gigabyte, Terabyte and
@@ -220,8 +241,9 @@ NGSQSTTS015A0 (20211026111452695-847006)	NGSQSTTS015A0	2021-10-26T09:14:53.14381
 
 ```txt
 Usage: postman-cli download [-hV] [--ignore-subdirectories] [-o=<outputPath>]
-                            -u=<user> [-s=<suffix>[,<suffix>...]]...
-                            (--password:env=<environment-variable> | --password:
+                            [--pattern=<regex_pattern>] -u=<user> [-s=<suffix>[,
+                            <suffix>...]]... (--password:
+                            env=<environment-variable> | --password:
                             prop=<system-property> | --password) (-f=<filePath>
                             | SAMPLE_IDENTIFIER...)
 
@@ -244,6 +266,8 @@ Options:
   -s, --suffix=<suffix>[,<suffix>...]
                              only include files ending with one of these
                                (case-insensitive) suffixes
+      --pattern=<regex_pattern>
+                             only include files with paths matching this pattern
   -o, --output-dir=<outputPath>
                              specify where to write the downloaded data
       --ignore-subdirectories
@@ -252,7 +276,7 @@ Options:
                                with files with equal names are not addressed
   -h, --help                 Show this help message and exit.
   -V, --version              Print version information and exit.
-
+  
 Optional: specify a config file by running postman with '@/path/to/config.txt'.
 A detailed documentation can be found at https://github.com/qbicsoftware/postman-cli#readme.
 ```

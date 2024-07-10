@@ -87,8 +87,9 @@ public class ListCommand implements Runnable {
             log.debug(e.getMessage(), e);
             System.exit(1);
         } catch (RuntimeException e) {
-            log.error("Something went wrong. For more detailed output see " + Path.of(LOG_PATH,
-                "postman.log").toAbsolutePath());
+            log.error(
+                "Something went wrong. For more detailed output see %s".formatted(Path.of(LOG_PATH,
+                    "postman.log").toAbsolutePath()));
             log.debug(e.getMessage(), e);
         }
     }
@@ -122,7 +123,8 @@ public class ListCommand implements Runnable {
             serverOptions.dss_urls, serverOptions.timeoutInMillis);
         SearchDataSets searchDataSets = new SearchDataSets(applicationServerApi);
         FileFilter myAwesomeFileFilter = FileFilter.create()
-            .withSuffixes(filterOptions.suffixes);
+            .withSuffixes(filterOptions.suffixes)
+            .withPattern(filterOptions.pattern);
         SearchFiles searchFiles = new SearchFiles(dataStoreServerApis, number -> {});
         FindSourceSample findSourceSample = new FindSourceSample(serverOptions.sourceSampleType);
 
