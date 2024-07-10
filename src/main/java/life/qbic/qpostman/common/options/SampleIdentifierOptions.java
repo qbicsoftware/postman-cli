@@ -70,8 +70,8 @@ public class SampleIdentifierOptions {
 
     public List<String> getIds() {
       var identifiers = ids.isEmpty()
-          ? parseIdentifiers() :
-          ids;
+          ? parseIdentifiers()
+          : ids;
       // we want to prevent matching to something shorter than a project code.
       List<String> toShortSampleIds = identifiers.stream()
           .filter(it -> !it.matches("^\\w{5,}"))
