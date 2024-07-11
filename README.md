@@ -102,11 +102,11 @@ When using the application, you can either:
 1. enter your password interactively `--password`
 2. enter the name of a system property containing your password `--password:prop my.awesome.property`
 ```bash
-java -jar -Dmy.awesome.property=ABCDEFG postman.jar -u qbc001a --password:prop my.awesome.property
+java -jar -Dmy.awesome.property=ABCDEFG postman.jar -u qbc001a --password:prop my.awesome.property @path/to/config.txt 
 ```
 3. enter the name of an environment variable containing your password `--password:env MY_PASSWORD`. Make sure to *not* use the `$` sign before the environment variable (as in bash variables) otherwise the password is not recognized (`--password:env $MY_PASSWORD` will fail)
 ```bash
-MY_PASSWORD=ABCDEFG java -jar postman.jar -u qbc001a --password:env MY_PASSWORD
+MY_PASSWORD=ABCDEFG java -jar postman.jar -u qbc001a --password:env MY_PASSWORD @path/to/config.txt 
 ```
 ### How to provide QBiC identifiers
 To specify which data you want to list or download, you need to provide us with QBiC identifiers. 
@@ -128,7 +128,7 @@ QSTTS001AB
 QSTTS002BC
 ```
 ```bash
-java -jar postman.jar -f myids.txt
+java -jar postman.jar -f myids.txt @path/to/config.txt 
 ```
 
 ### How to filter files by suffix
@@ -138,7 +138,7 @@ Multiple suffixes can be provided separated by a comma. A suffix does not have t
 
 If you only want to download `fastq` and `fastq.gz` files you can run postman with 
 ```bash
-java -jar postman.jar -s .fastq,.fastq.gz
+java -jar postman.jar -s .fastq,.fastq.gz @path/to/config.txt 
 ```
 
 ### How to filter by regular expression
@@ -147,17 +147,17 @@ When filtering with a regular expression pattern, the path of the file as well a
 
 If you only want to download files containing `test` in their path or in their name, you can run postman with
 ```bash
-java -jar postman.jar --pattern ".*test.*"
+java -jar postman.jar --pattern ".*test.*" @path/to/config.txt 
 ```
 Although this can be used to filter for suffixes as well, please use the `--suffix` option. 
 
 Instead of
 ```bash
-java -jar postman.jar --pattern".*\.fastq\.gz"
+java -jar postman.jar --pattern".*\.fastq\.gz" @path/to/config.txt 
 ```
 do
 ```bash
-java -jar postman.jar -s .fastq.gz
+java -jar postman.jar -s .fastq.gz @path/to/config.txt 
 ```
 
 ## `list`
