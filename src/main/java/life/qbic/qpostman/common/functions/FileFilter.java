@@ -40,10 +40,29 @@ public class FileFilter implements Predicate<DataFile> {
         try {
             compiledPattern = Pattern.compile(pattern);
         } catch (PatternSyntaxException e) {
-            log.error("The pattern %s is malformed. %s".formatted(e.getPattern(), e.getMessage()));
-            System.exit(1);
+            throw new MalformedPatternException(e, pattern, e.getMessage());
         }
         return new FileFilter(suffixes, caseSensitive, compiledPattern);
+    }
+
+    public static class MalformedPatternException extends RuntimeException {
+
+        private final String patternString;
+        private final String errorDescription;
+        public MalformedPatternException(Throwable cause, String patternString,
+            String errorDescription) {
+            super(cause);
+          this.patternString = patternString;
+          this.errorDescription = errorDescription;
+        }
+
+        public String getPatternString() {
+            return patternString;
+        }
+
+        public String getErrorDescription() {
+            return errorDescription;
+        }
     }
 
     private FileFilter(List<String> suffixes, boolean caseSensitive, Pattern pattern) {
