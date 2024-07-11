@@ -4,14 +4,11 @@ import static java.util.Objects.nonNull;
 import static picocli.CommandLine.ArgGroup;
 
 import java.util.StringJoiner;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.Option;
 
 public class AuthenticationOptions {
-    private static final Logger log = LogManager.getLogger(AuthenticationOptions.class);
 
-    @Option(
+  @Option(
             names = {"-u", "--user"},
             required = true,
             description = "openBIS user name")
@@ -55,11 +52,11 @@ public class AuthenticationOptions {
             if (nonNull(environmentVariable) && !environmentVariable.isBlank()) {
                 return environmentVariable.toCharArray();
             }
-            log.error("No password provided. Please provide your password.");
-            System.exit(2);
-            return null; // not reachable due to System.exit in previous line
+            throw new NoPasswordException();
         }
+    }
 
+    public static class NoPasswordException extends RuntimeException {
     }
 
     @Override
