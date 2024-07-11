@@ -2,6 +2,7 @@ package life.qbic.qpostman.common;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import life.qbic.qpostman.common.functions.FileFilter.MalformedPatternException;
 import life.qbic.qpostman.common.options.AuthenticationOptions.NoPasswordException;
 import life.qbic.qpostman.common.options.SampleIdentifierOptions.IdentityFileEmptyException;
 import life.qbic.qpostman.common.options.SampleIdentifierOptions.IdentityFileNotFoundException;
@@ -49,6 +50,13 @@ public class DefaultExceptionHandler implements IExecutionExceptionHandler {
       log.error(
           "Please provide at least 5 letters for your sample identifiers. The following sample identifiers are to short: "
               + toShortSampleIdsException.getIdentifiers());
+    } else if (e instanceof MalformedPatternException malformedPatternException) {
+      log.error(
+          "The pattern %s is malformed:%s".formatted(malformedPatternException.getPatternString(),
+              malformedPatternException.getErrorDescription()));
+      log.debug(
+          "The pattern %s is malformed:%s".formatted(malformedPatternException.getPatternString(),
+              malformedPatternException.getErrorDescription()), malformedPatternException);
     } else {
       log.error("Something went wrong. For more detailed output see " + Path.of(LOG_PATH, "postman.log").toAbsolutePath());
       log.debug(e.getMessage(), e);

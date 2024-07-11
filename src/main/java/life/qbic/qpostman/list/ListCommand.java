@@ -90,7 +90,8 @@ public class ListCommand implements Runnable {
             serverOptions.dss_urls, serverOptions.timeoutInMillis);
         SearchDataSets searchDataSets = new SearchDataSets(applicationServerApi);
         FileFilter myAwesomeFileFilter = FileFilter.create()
-            .withSuffixes(filterOptions.suffixes);
+            .withSuffixes(filterOptions.suffixes)
+            .withPattern(filterOptions.pattern);
         SearchFiles searchFiles = new SearchFiles(dataStoreServerApis, number -> {});
         FindSourceSample findSourceSample = new FindSourceSample(serverOptions.sourceSampleType);
 
