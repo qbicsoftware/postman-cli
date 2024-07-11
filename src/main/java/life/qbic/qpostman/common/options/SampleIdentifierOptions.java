@@ -1,5 +1,6 @@
 package life.qbic.qpostman.common.options;
 
+import static java.util.Objects.requireNonNull;
 import static picocli.CommandLine.ArgGroup;
 import static picocli.CommandLine.Option;
 import static picocli.CommandLine.Parameters;
@@ -12,12 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class SampleIdentifierOptions {
-
-  private static final Logger log = LogManager.getLogger(SampleIdentifierOptions.class);
 
   @ArgGroup(multiplicity = "1")
   public SampleInput sampleInput;
@@ -35,25 +32,64 @@ public class SampleIdentifierOptions {
 
   static class IdentityFileParser {
 
+    private IdentityFileParser() {
+
+    }
     public static List<String> parseIdentityFile(Path path) {
       File file = path.toFile();
       if (!file.exists()) {
-        log.error("File not found: " + file);
-        System.exit(2);
+        throw new IdentityFileNotFoundException(file);
       }
       if (!file.canRead()) {
-        log.error("Not allowed to read file " + file);
-        System.exit(2);
+        throw new IdentityFileNotReadableException(file);
       }
       try {
-        return Files.readAllLines(path).stream()
+        List<String> readIdentifiers = Files.readAllLines(path).stream()
             .filter(it -> !it.isBlank())
             .filter(it -> !it.startsWith("#"))
             .map(String::strip)
             .collect(Collectors.toList());
+        if (readIdentifiers.isEmpty()) {
+          throw new IdentityFileEmptyException(file);
+        }
+        return readIdentifiers;
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+  }
+
+  public static class IdentityFileParsingException extends RuntimeException {
+    protected final File file;
+
+    public IdentityFileParsingException(File file) {
+      this.file = file;
+    }
+
+    public File getFile() {
+      return file;
+    }
+  }
+
+  public static class IdentityFileNotFoundException extends IdentityFileParsingException {
+
+    public IdentityFileNotFoundException(File file) {
+      super(file);
+    }
+  }
+
+  public static class IdentityFileNotReadableException extends IdentityFileParsingException {
+
+
+    public IdentityFileNotReadableException(File file) {
+      super(file);
+    }
+  }
+
+  public static class IdentityFileEmptyException extends IdentityFileParsingException {
+
+    public IdentityFileEmptyException(File file) {
+      super(file);
     }
   }
 
@@ -76,22 +112,31 @@ public class SampleIdentifierOptions {
       List<String> toShortSampleIds = identifiers.stream()
           .filter(it -> !it.matches("^\\w{5,}"))
           .toList();
-      if (toShortSampleIds.size() > 0) {
-        log.error("Please provide at least 5 letters for your sample identifiers. The following sample identifiers are to short: " + toShortSampleIds);
-        System.exit(2);
+      if (!toShortSampleIds.isEmpty()) {
+        throw new ToShortSampleIdsException(toShortSampleIds);
       }
       return identifiers;
     }
 
-    private List<String> parseIdentifiers() {
-      List<String> identities = IdentityFileParser.parseIdentityFile(filePath).stream()
-          .filter(it -> !it.isBlank()).toList();
+    public static class SampleIdParsingException extends RuntimeException {
+    }
 
-      if (identities.isEmpty()) {
-        log.error(filePath.toString() + " does not contain any identifiers.");
-        System.exit(2);
+    public static class ToShortSampleIdsException extends SampleIdParsingException {
+      protected final List<String> identifiers;
+
+      public ToShortSampleIdsException(List<String> identifiers) {
+        this.identifiers = requireNonNull(identifiers, "identifiers must not be null");
       }
-      return identities;
+
+      public List<String> getIdentifiers() {
+        return identifiers;
+      }
+    }
+
+    private List<String> parseIdentifiers() {
+      return IdentityFileParser.parseIdentityFile(filePath).stream()
+          .filter(it -> !it.isBlank())
+          .toList();
     }
 
 

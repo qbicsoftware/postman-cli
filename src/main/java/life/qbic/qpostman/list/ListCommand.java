@@ -5,15 +5,12 @@ import static picocli.CommandLine.Mixin;
 
 import ch.ethz.sis.openbis.generic.asapi.v3.IApplicationServerApi;
 import ch.ethz.sis.openbis.generic.dssapi.v3.IDataStoreServerApi;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import life.qbic.qpostman.common.AuthenticationException;
 import life.qbic.qpostman.common.functions.FileFilter;
 import life.qbic.qpostman.common.functions.FindSourceSample;
 import life.qbic.qpostman.common.functions.SearchDataSets;
@@ -26,20 +23,14 @@ import life.qbic.qpostman.common.options.ServerOptions;
 import life.qbic.qpostman.common.structures.DataFile;
 import life.qbic.qpostman.common.structures.DataSetWrapper;
 import life.qbic.qpostman.list.LegacyOutputFormatter.DataSetSummary;
-import life.qbic.qpostman.openbis.ConnectionException;
 import life.qbic.qpostman.openbis.OpenBisSessionProvider;
 import life.qbic.qpostman.openbis.ServerFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.remoting.RemoteAccessException;
 
 @Command(name = "list",
         description = "lists all the datasets found for the given identifiers")
 public class ListCommand implements Runnable {
-    private static final Logger log = LogManager.getLogger(ListCommand.class);
-    private static final String LOG_PATH = Optional.ofNullable(System.getProperty("log.path"))
-        .orElse("logs");
-    @Mixin
+
+  @Mixin
     AuthenticationOptions authenticationOptions;
     @Mixin
     SampleIdentifierOptions sampleIdentifierOptions;
@@ -52,7 +43,6 @@ public class ListCommand implements Runnable {
 
     @Override
     public void run() {
-        try {
             Functions functions = setupFunctions();
 
             Collection<DataFile> dataSetFiles = functions.searchDataSets()
@@ -69,28 +59,6 @@ public class ListCommand implements Runnable {
                 case TSV -> this::listAsTsv;
             };
             output.accept(processedFiles);
-
-        } catch (RemoteAccessException remoteAccessException) {
-            log.error(
-                "Failed to connect to OpenBis: " + remoteAccessException.getCause().getMessage());
-            log.debug(remoteAccessException.getMessage(), remoteAccessException);
-            System.exit(1);
-        } catch (AuthenticationException authenticationException) {
-            log.error(
-                "Could not authenticate user %s. Please make sure to provide the correct password.".formatted(
-                    authenticationException.username()));
-            log.debug(authenticationException.getMessage(), authenticationException);
-            System.exit(1);
-        } catch (ConnectionException e) {
-          log.error("Could not connect to QBiC's data source. Have you requested access to the "
-              + "server? If not please write to support@qbic.zendesk.com");
-            log.debug(e.getMessage(), e);
-            System.exit(1);
-        } catch (RuntimeException e) {
-            log.error("Something went wrong. For more detailed output see " + Path.of(LOG_PATH,
-                "postman.log").toAbsolutePath());
-            log.debug(e.getMessage(), e);
-        }
     }
 
     private void listAsTsv(List<DataFile> processedFiles) {

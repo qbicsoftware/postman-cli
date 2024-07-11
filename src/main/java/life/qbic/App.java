@@ -1,6 +1,7 @@
 package life.qbic;
 
 import java.util.Arrays;
+import life.qbic.qpostman.common.DefaultExceptionHandler;
 import life.qbic.qpostman.common.PostmanCommand;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,7 @@ public class App {
   public static void main(String[] args) {
     LOG.debug("command line arguments: " + Arrays.deepToString(args));
     CommandLine cmd = new CommandLine(new PostmanCommand());
+    cmd.setExecutionExceptionHandler(new DefaultExceptionHandler());
     int exitCode = cmd.execute(args);
     System.exit(exitCode);
   }
