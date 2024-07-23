@@ -110,7 +110,7 @@ public class SampleIdentifierOptions {
           : ids;
       // we want to prevent matching to something shorter than a project code.
       List<String> toShortSampleIds = identifiers.stream()
-          .filter(it -> !it.matches("^\\w{5,}"))
+          .filter(it -> !it.matches("^\\w{5,}\\*?"))
           .toList();
       if (!toShortSampleIds.isEmpty()) {
         throw new ToShortSampleIdsException(toShortSampleIds);
