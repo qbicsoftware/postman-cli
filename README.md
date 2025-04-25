@@ -99,8 +99,11 @@ Use the option `-u / --user` to provide us with your username.
 
 Please never send your password over email. We will never ask you for it!<br>
 When using the application, you can either:
-1. enter your password interactively `--password`
-2. enter the name of a system property containing your password `--password:prop my.awesome.property`
+1. enter your password interactively `--password`. Do not enter your password in the command but wait for postman to ask it interactively!
+```bash
+java -jar -u qbc001a --password @path/to/config.txt 
+```
+3. enter the name of a system property containing your password `--password:prop my.awesome.property`
 ```bash
 java -jar -Dmy.awesome.property=ABCDEFG postman.jar -u qbc001a --password:prop my.awesome.property @path/to/config.txt 
 ```
